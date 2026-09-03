@@ -1,0 +1,39 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+
+  // Бесплатные модели OpenCode Zen подключаются интерактивно:
+  // /connect -> OpenCode Zen -> /models
+  // Практический старт курса: Muse Spark 1.3 Contributor Free.
+  // Перед занятием обязательно проверьте актуальный список.
+
+  // LSP полезен для диагностики, но требует установленного language server.
+  "lsp": false,
+
+  // MCP-серверы выключены по умолчанию: включайте только нужные.
+  "mcp": {
+    "context7": {
+      "type": "remote",
+      "url": "https://mcp.context7.com/mcp",
+      "enabled": false
+    },
+    "grep_app": {
+      "type": "remote",
+      "url": "https://mcp.grep.app",
+      "enabled": false
+    },
+    "codegraph": {
+      "type": "local",
+      "command": ["codegraphcontext", "mcp", "start"],
+      "enabled": false
+    }
+  },
+
+  "permission": {
+    "edit": "ask",
+    "bash": "ask",
+    "webfetch": "ask",
+    "skill": {
+      "*": "ask"
+    }
+  }
+}
