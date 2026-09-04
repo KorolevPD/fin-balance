@@ -13,6 +13,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(upload_router)
+
 @app.get("/")
 async def root():
     return {"message": "FinBalance API"}
