@@ -14,7 +14,7 @@ from app.security import (
     verify_password,
 )
 
-router = APIRouter(tags=["auth"])
+router = APIRouter(prefix="/auth", tags=["auth"])
 
 
 class UserCreate(BaseModel):
@@ -43,7 +43,7 @@ class TokenOut(BaseModel):
 
 @router.post(
     "/register",
-    response_model=UserOut,
+    response_model=TokenOut,
     status_code=status.HTTP_201_CREATED,
     summary="Регистрация пользователя",
 )
@@ -61,7 +61,8 @@ def register(payload: UserCreate, db: Session = Depends(get_db)):
     db.add(user)
     db.commit()
     db.refresh(user)
-    return user
+    token = create_access_token(subject=str(user.id))
+    return {"access_token": token, "token_type": "bearer"}
 
 
 @router.post(

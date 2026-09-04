@@ -11,7 +11,7 @@ client = TestClient(app)
 def test_эндпоинт_upload_принимает_csv_файл():
     content = b"date,amount\n2026-09-01,100.0\n"
     files = {"file": ("statement.csv", io.BytesIO(content), "text/csv")}
-    response = client.post("/upload", files=files)
+    response = client.post("/api/upload", files=files)
 
     assert response.status_code == 201
     body = response.json()
@@ -24,7 +24,7 @@ def test_эндпоинт_upload_принимает_csv_файл():
 def test_upload_отклоняет_файл_не_csv():
     file_bytes = io.BytesIO(b"data")
     files = {"file": ("statement.xlsx", file_bytes, "application/octet-stream")}
-    response = client.post("/upload", files=files)
+    response = client.post("/api/upload", files=files)
 
     assert response.status_code == 400
     assert "csv" in response.json()["detail"].lower()
@@ -32,7 +32,7 @@ def test_upload_отклоняет_файл_не_csv():
 
 def test_upload_отклоняет_неподдерживаемый_mime():
     files = {"file": ("statement.csv", io.BytesIO(b"data"), "image/png")}
-    response = client.post("/upload", files=files)
+    response = client.post("/api/upload", files=files)
 
     assert response.status_code == 400
     assert "mime" in response.json()["detail"].lower()
@@ -41,10 +41,10 @@ def test_upload_отклоняет_неподдерживаемый_mime():
 def test_новая_загрузка_не_перезаписывает_предыдущий_файл():
     content = b"date,amount\n2026-09-01,100.0\n"
     first = client.post(
-        "/upload", files={"file": ("s.csv", io.BytesIO(content), "text/csv")}
+        "/api/upload", files={"file": ("s.csv", io.BytesIO(content), "text/csv")}
     )
     second = client.post(
-        "/upload", files={"file": ("s.csv", io.BytesIO(content), "text/csv")}
+        "/api/upload", files={"file": ("s.csv", io.BytesIO(content), "text/csv")}
     )
 
     assert first.status_code == 201
