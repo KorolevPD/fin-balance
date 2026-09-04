@@ -1,18 +1,18 @@
 # Журнал задач проекта
 
-Последнее обновление: 2026-09-04T12:00:00Z
+Последнее обновление: 2026-09-04T15:20:07Z
 
 ## Текущая задача
 
-T-001
+T-004
 
 ## Список задач
 
 | ID | Задача | Детали реализации | Владелец | Статус | Прогресс | Последний файл выполнения | Точный следующий шаг |
 |---|---|---|---|---|---:|---|---|
-| T-001 | Инициализация Docker Compose | Создать docker-compose.yml с сервисами: backend (FastAPI), frontend (React), db (PostgreSQL), nginx, bot (aiogram). Базовые Dockerfile для каждого сервиса. | основной агент | IN_PROGRESS | 0/4 | — | Создать корневой docker-compose.yml |
-| T-002 | Базовый CI | Настроить GitHub Actions workflow: lint (ruff для Python, eslint для JS) + тесты на push. | основной агент | TODO | 0/2 | — | — |
-| T-003 | Структура репозитория | Создать каталоги: backend/, frontend/, bot/, nginx/, docs/, tests/. Переместить существующие файлы. | основной агент | TODO | 0/3 | — | — |
+| T-001 | Инициализация Docker Compose | Создать docker-compose.yml с сервисами: backend (FastAPI), frontend (React), db (PostgreSQL), nginx, bot (aiogram). Базовые Dockerfile для каждого сервиса. | основной агент | DONE | 4/4 | docs/agent/tasks/T-001/20260904T150000Z_opencode_a02.md | — |
+| T-002 | Базовый CI | Настроить GitHub Actions workflow: lint (ruff для Python) + тесты на push. eslint для JS отложен до появления React-фронтенда (T-011+). | основной агент | DONE | 2/2 | docs/agent/tasks/T-002/20260904T152007Z_main_a01.md | eslint для JS добавить в T-011+ |
+| T-003 | Структура репозитория | Создать каталоги: backend/, frontend/, bot/, nginx/, docs/, tests/. Переместить существующие файлы. | основной агент | DONE | 3/3 | docs/agent/tasks/T-003/20260904T153100Z_opencode_a01.md | — |
 | T-004 | Модели данных Backend | SQLAlchemy модели: User, Family, FamilyMember, Transaction, Category, UserCorrection. Миграции через Alembic. | backend-агент | TODO | 0/4 | — | — |
 | T-005 | Auth (JWT) | Регистрация, вход, JWT-токены. Эндпоинты: /register, /login, /me. | backend-агент | TODO | 0/3 | — | — |
 | T-006 | CRUD семей | Эндпоинты: создание семьи, генерация invite_code, присоединение по коду, список участников. | backend-агент | TODO | 0/4 | — | — |

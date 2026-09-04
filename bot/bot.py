@@ -29,7 +29,7 @@ async def main():
     if not BOT_TOKEN:
         logger.error("BOT_TOKEN не задан")
         sys.exit(1)
-    
+
     logger.info("Бот запущен")
     await dp.start_polling(bot)
 
