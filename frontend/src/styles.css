@@ -11,8 +11,17 @@ body {
   place-items: center;
 }
 
-.container {
-  width: min(680px, calc(100% - 48px));
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  font-size: 1.2rem;
+  color: #666;
+}
+
+.auth-form {
+  width: min(400px, calc(100% - 48px));
   padding: 48px;
   background: white;
   border: 1px solid #dfe3ee;
@@ -20,22 +29,260 @@ body {
   box-shadow: 0 16px 48px rgb(20 33 61 / 10%);
 }
 
-.eyebrow {
-  margin: 0 0 8px;
+.auth-form h1 {
+  margin: 0 0 24px;
+  font-size: 1.8rem;
+  text-align: center;
+}
+
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #dfe3ee;
+  border-radius: 8px;
+  font-size: 1rem;
+  box-sizing: border-box;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: #5b5bea;
+  box-shadow: 0 0 0 3px rgb(91 91 234 / 15%);
+}
+
+.error {
+  padding: 10px;
+  margin-bottom: 16px;
+  background: #fee2e2;
+  color: #dc2626;
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+
+button[type="submit"] {
+  width: 100%;
+  padding: 12px;
+  background: #5b5bea;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+button[type="submit"]:hover {
+  background: #4a4ad4;
+}
+
+button[type="submit"]:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+}
+
+.auth-link {
+  margin-top: 16px;
+  text-align: center;
+  font-size: 0.9rem;
+}
+
+.auth-link a {
   color: #5b5bea;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
+  text-decoration: none;
+  font-weight: 600;
 }
 
-h1 {
-  margin: 0 0 16px;
-  font-size: clamp(2rem, 7vw, 4rem);
-  line-height: 1;
+.auth-link a:hover {
+  text-decoration: underline;
 }
 
-#status {
+.dashboard {
+  width: 100%;
+  min-height: 100vh;
+}
+
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  background: white;
+  border-bottom: 1px solid #dfe3ee;
+}
+
+.dashboard-header h1 {
   margin: 0;
+  font-size: 1.4rem;
+  color: #5b5bea;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.user-info span {
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.logout-btn {
+  padding: 8px 16px;
+  background: transparent;
+  color: #dc2626;
+  border: 1px solid #dc2626;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.logout-btn:hover {
+  background: #dc2626;
+  color: white;
+}
+
+.dashboard-main {
+  padding: 24px;
+}
+
+.dashboard-nav {
+  display: flex;
+  gap: 16px;
+  margin-left: 40px;
+}
+
+.dashboard-nav a {
+  color: #14213d;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.dashboard-nav a:hover {
+  color: #5b5bea;
+}
+
+.page {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.page h1 {
+  margin: 0 0 24px;
+  font-size: 1.6rem;
+}
+
+.card {
+  padding: 24px;
+  margin-bottom: 24px;
+  background: white;
+  border: 1px solid #dfe3ee;
+  border-radius: 12px;
+}
+
+.card h2 {
+  margin: 0 0 16px;
   font-size: 1.1rem;
-  line-height: 1.6;
+}
+
+.muted {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.family-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.family-list li {
+  border-bottom: 1px solid #dfe3ee;
+}
+
+.family-list li:last-child {
+  border-bottom: none;
+}
+
+.family-list a {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 0;
+  text-decoration: none;
+  color: #14213d;
+}
+
+.family-list a:hover .family-name {
+  color: #5b5bea;
+}
+
+.family-name {
+  font-weight: 600;
+}
+
+.family-code {
+  font-size: 0.85rem;
+  color: #666;
+}
+
+.invite-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.copy-btn {
+  padding: 8px 16px;
+  background: #5b5bea;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.copy-btn:hover {
+  background: #4a4ad4;
+}
+
+.member-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.member-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid #dfe3ee;
+}
+
+.member-list li:last-child {
+  border-bottom: none;
+}
+
+.member-email {
+  font-weight: 500;
+}
+
+.member-role {
+  font-size: 0.85rem;
+  color: #666;
 }
