@@ -2,28 +2,10 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import Families from './pages/Families';
+import FamilyDetail from './pages/FamilyDetail';
 import PrivateRoute from './components/PrivateRoute';
-
-function Dashboard() {
-  const { user, logout } = useAuth();
-
-  return (
-    <div className="dashboard">
-      <header className="dashboard-header">
-        <h1>FinBalance</h1>
-        <div className="user-info">
-          <span>{user.email}</span>
-          <button onClick={logout} className="logout-btn">
-            Выйти
-          </button>
-        </div>
-      </header>
-      <main className="dashboard-main">
-        <p>Добро пожаловать, {user.email}!</p>
-      </main>
-    </div>
-  );
-}
+import Layout from './components/Layout';
 
 export default function App() {
   const { loading } = useAuth();
@@ -40,7 +22,29 @@ export default function App() {
         path="/"
         element={
           <PrivateRoute>
-            <Dashboard />
+            <Layout>
+              <p>Добро пожаловать!</p>
+            </Layout>
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/family"
+        element={
+          <PrivateRoute>
+            <Layout>
+              <Families />
+            </Layout>
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/family/:id"
+        element={
+          <PrivateRoute>
+            <Layout>
+              <FamilyDetail />
+            </Layout>
           </PrivateRoute>
         }
       />
