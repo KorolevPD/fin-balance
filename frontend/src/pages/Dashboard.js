@@ -64,6 +64,8 @@ export default function Dashboard() {
   const [editing, setEditing] = useState(null);
   const [sortBy, setSortBy] = useState('date');
   const [sortDir, setSortDir] = useState('desc');
+  const [catSortBy, setCatSortBy] = useState('amount');
+  const [catSortDir, setCatSortDir] = useState('desc');
 
   const handleSort = (key) => {
     if (sortBy === key) {
@@ -71,6 +73,15 @@ export default function Dashboard() {
     } else {
       setSortBy(key);
       setSortDir(key === 'category' ? 'asc' : 'desc');
+    }
+  };
+
+  const handleCatSort = (key) => {
+    if (catSortBy === key) {
+      setCatSortDir(catSortDir === 'asc' ? 'desc' : 'asc');
+    } else {
+      setCatSortBy(key);
+      setCatSortDir(key === 'category' ? 'asc' : 'desc');
     }
   };
 
@@ -130,8 +141,33 @@ export default function Dashboard() {
   };
 
   const members = summary?.family_members || [];
-  const categories = summary?.by_category || [];
   const files = summary?.uploaded_files || [];
+
+  const total = Math.abs(summary?.total_amount || 0);
+  const categories = useMemo(() => {
+    const source = summary?.by_category || [];
+    if (source.length === 0) return source;
+    let list = source;
+    if (!source.some((entry) => entry.category === 'Прочее')) {
+      list = [...source, { category: 'Прочее', amount: 0, count: 0 }];
+    }
+    return [...list].sort((a, b) => {
+      let cmp = 0;
+      if (catSortBy === 'category') {
+        cmp = (a.category || '').localeCompare(b.category || '', 'ru');
+      } else if (catSortBy === 'amount') {
+        cmp = Math.abs(Number(a.amount || 0)) - Math.abs(Number(b.amount || 0));
+      } else if (catSortBy === 'count') {
+        cmp = (a.count ?? 0) - (b.count ?? 0);
+      } else if (catSortBy === 'share') {
+        const sa = total > 0 ? (Math.abs(Number(a.amount || 0)) / total) * 100 : 0;
+        const sb = total > 0 ? (Math.abs(Number(b.amount || 0)) / total) * 100 : 0;
+        cmp = sa - sb;
+      }
+      return catSortDir === 'asc' ? cmp : -cmp;
+    });
+  }, [summary, catSortBy, catSortDir, total]);
+  const chartCategories = categories.filter((item) => Math.abs(Number(item.amount || 0)) > 0);
   const payees = summary?.top_payees || [];
   const monthly = summary?.monthly || [];
   const hasData = categories.length > 0 || transactions.length > 0;
@@ -176,14 +212,14 @@ export default function Dashboard() {
 
             <section className="card demo-block" aria-label="Траты по категориям">
               <h2>Траты по категориям</h2>
-              {categories.length === 0 ? (
+              {chartCategories.length === 0 ? (
                 <p className="muted">Категорий пока нет.</p>
               ) : (
                 <div className="chart-box demo-chart">
                   <ResponsiveContainer width="100%" height={280}>
                     <PieChart>
                       <Pie
-                        data={categories}
+                        data={chartCategories}
                         dataKey="amount"
                         nameKey="category"
                         cx="50%"
@@ -191,7 +227,7 @@ export default function Dashboard() {
                         outerRadius={100}
                         label={(entry) => entry.category}
                       >
-                        {categories.map((entry, index) => (
+                        {chartCategories.map((entry, index) => (
                           <Cell
                             key={entry.category}
                             fill={CATEGORY_COLORS[index % CATEGORY_COLORS.length]}
@@ -263,15 +299,93 @@ export default function Dashboard() {
                 <table className="data-table">
                   <thead>
                     <tr>
-                      <th>Категория</th>
-                      <th className="num">Сумма</th>
-                      <th className="num">Операций</th>
-                      <th className="num">Доля</th>
+                      <th
+                        aria-sort={
+                          catSortBy === 'category'
+                            ? catSortDir === 'asc'
+                              ? 'ascending'
+                              : 'descending'
+                            : 'none'
+                        }
+                      >
+                        <button
+                          type="button"
+                          className="sort-btn"
+                          onClick={() => handleCatSort('category')}
+                        >
+                          Категория{' '}
+                          <span className={`sort-indicator${catSortBy === 'category' ? ' active' : ''}`}>
+                            {sortIndicator('category', catSortBy, catSortDir)}
+                          </span>
+                        </button>
+                      </th>
+                      <th
+                        className="num"
+                        aria-sort={
+                          catSortBy === 'amount'
+                            ? catSortDir === 'asc'
+                              ? 'ascending'
+                              : 'descending'
+                            : 'none'
+                        }
+                      >
+                        <button
+                          type="button"
+                          className="sort-btn"
+                          onClick={() => handleCatSort('amount')}
+                        >
+                          Сумма{' '}
+                          <span className={`sort-indicator${catSortBy === 'amount' ? ' active' : ''}`}>
+                            {sortIndicator('amount', catSortBy, catSortDir)}
+                          </span>
+                        </button>
+                      </th>
+                      <th
+                        className="num"
+                        aria-sort={
+                          catSortBy === 'count'
+                            ? catSortDir === 'asc'
+                              ? 'ascending'
+                              : 'descending'
+                            : 'none'
+                        }
+                      >
+                        <button
+                          type="button"
+                          className="sort-btn"
+                          onClick={() => handleCatSort('count')}
+                        >
+                          Операций{' '}
+                          <span className={`sort-indicator${catSortBy === 'count' ? ' active' : ''}`}>
+                            {sortIndicator('count', catSortBy, catSortDir)}
+                          </span>
+                        </button>
+                      </th>
+                      <th
+                        className="num"
+                        aria-sort={
+                          catSortBy === 'share'
+                            ? catSortDir === 'asc'
+                              ? 'ascending'
+                              : 'descending'
+                            : 'none'
+                        }
+                      >
+                        <button
+                          type="button"
+                          className="sort-btn"
+                          onClick={() => handleCatSort('share')}
+                        >
+                          Доля{' '}
+                          <span className={`sort-indicator${catSortBy === 'share' ? ' active' : ''}`}>
+                            {sortIndicator('share', catSortBy, catSortDir)}
+                          </span>
+                        </button>
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
                     {categories.map((item) => {
-                      const total = Math.abs(summary.total_amount || 0);
                       const percent = total > 0 ? Math.abs(item.amount) / total * 100 : 0;
                       return (
                         <tr key={item.category}>
