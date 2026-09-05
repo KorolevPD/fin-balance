@@ -97,6 +97,58 @@ class TestFamilyMembersAggregations:
         assert len(summary["family_members"]) == 3
 
 
+class TestIncomeExcluded:
+    def test_доходы_не_входят_в_расходы_и_категории(self, db):
+        user1, _, family = _prepare(db)
+        category = db.query(Category).one()
+        db.add(
+            Transaction(
+                family_id=family.id,
+                user_id=user1.id,
+                category_id=category.id,
+                date=datetime(2026, 1, 10),
+                amount=1000.0,
+                type="income",
+                original_description="Зарплата",
+                source_file="january.csv",
+            )
+        )
+        db.commit()
+
+        summary = get_family_summary(db, family.id, user_id=user1.id)
+
+        assert summary["total_amount"] == 350.0
+        assert summary["by_category"][0]["amount"] == 350.0
+        assert "Зарплата" not in {p["payee"] for p in summary["top_payees"]}
+        members = {m["name"]: m["total_expenses"] for m in summary["family_members"]}
+        assert members["Анна"] == 150.0
+        assert members["b@test.ru"] == 200.0
+
+    def test_период_файла_учитывает_доходы(self, db):
+        user1, _, family = _prepare(db)
+        category = db.query(Category).one()
+        db.add(
+            Transaction(
+                family_id=family.id,
+                user_id=user1.id,
+                category_id=category.id,
+                date=datetime(2026, 1, 30),
+                amount=1000.0,
+                type="income",
+                original_description="Зарплата",
+                source_file="january.csv",
+            )
+        )
+        db.commit()
+
+        file_info = get_family_summary(db, family.id, user_id=user1.id)[
+            "uploaded_files"
+        ][0]
+
+        assert file_info["period_end"] == "2026-01-30"
+        assert file_info["operations_count"] == 3
+
+
 class TestUploadedFilesAggregations:
     def test_файлы_только_текущего_пользователя(self, db):
         user1, user2, family = _prepare(db)

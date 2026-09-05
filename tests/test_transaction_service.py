@@ -77,6 +77,43 @@ class TestSaveTransactions:
 
         assert db.query(Category).filter(Category.name == "Продукты").count() == 1
 
+    def test_сохраняется_тип_операции(self, db):
+        income = CategorizedTransaction(
+            date=date(2026, 9, 1),
+            amount=1000.0,
+            description="Зарплата",
+            type="income",
+            category="Прочее",
+        )
+        expense = tx(date(2026, 9, 2), 250.0, "Лента", "Продукты")
+        save_transactions(
+            db,
+            family_id=FAMILY_A,
+            user_id=USER,
+            transactions=[income, expense],
+        )
+
+        saved = {t.original_description: t.type for t in db.query(Transaction).all()}
+        assert saved["Зарплата"] == "income"
+        assert saved["Лента"] == "expense"
+
+    def test_неизвестный_тип_подменяется_на_расход(self, db):
+        unknown = CategorizedTransaction(
+            date=date(2026, 9, 1),
+            amount=100.0,
+            description="Лента",
+            type="unknown",
+            category="Прочее",
+        )
+        save_transactions(
+            db,
+            family_id=FAMILY_A,
+            user_id=USER,
+            transactions=[unknown],
+        )
+
+        assert db.query(Transaction).one().type == "expense"
+
     def test_дубли_в_одном_импорте_сохраняются_один_раз(self, db):
         duplicated_operations = [
             tx(date(2026, 9, 1), 100.0, "Лента"),

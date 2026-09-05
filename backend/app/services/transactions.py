@@ -101,6 +101,7 @@ def save_transactions(
                 category_id=category.id,
                 date=_as_dt(item.date),
                 amount=round(item.amount, 2),
+                type=item.type if item.type in ("income", "expense") else "expense",
                 original_description=item.description,
                 cleaned_description=None,
                 source_file=source_file,

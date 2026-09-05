@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import api from '../api';
 
 function isSupported(file) {
@@ -20,38 +21,29 @@ function formatAmount(value) {
 
 export default function Upload() {
   const [file, setFile] = useState(null);
+  const [families, setFamilies] = useState([]);
+  const [familyId, setFamilyId] = useState('');
   const [progress, setProgress] = useState(null);
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
   const [dragOver, setDragOver] = useState(false);
-  const [familyId, setFamilyId] = useState(null);
-  const [familyName, setFamilyName] = useState('');
+  const [loadingFamilies, setLoadingFamilies] = useState(true);
   const [transactions, setTransactions] = useState([]);
   const [transactionsLoading, setTransactionsLoading] = useState(false);
 
-  const reset = () => {
-    setFile(null);
-    setProgress(null);
-    setResult(null);
-    setError('');
-  };
-
-  const loadFamily = () => {
+  useEffect(() => {
     api
       .get('/families/my')
       .then((res) => {
-        if (res.data.length === 0) {
-          setFamilyId(null);
-          setFamilyName('');
-          return;
-        }
-        const family = res.data[0];
-        setFamilyId(family.id);
-        setFamilyName(family.name);
+        setFamilies(res.data);
+        if (res.data.length === 1) setFamilyId(res.data[0].id);
       })
-      .catch(() => setError('Не удалось загрузить список семей'));
-  };
+      .catch((err) => setError(err.response?.data?.detail || 'Не удалось загрузить семьи'))
+      .finally(() => setLoadingFamilies(false));
+  }, []);
+
+  const selectedFamily = families.find((f) => f.id === familyId);
 
   const loadTransactions = (family) => {
     if (!family) return;
@@ -64,12 +56,15 @@ export default function Upload() {
   };
 
   useEffect(() => {
-    loadFamily();
-  }, []);
-
-  useEffect(() => {
     if (familyId) loadTransactions(familyId);
   }, [familyId]);
+
+  const reset = () => {
+    setFile(null);
+    setProgress(null);
+    setResult(null);
+    setError('');
+  };
 
   const handleFile = (nextFile) => {
     setError('');
@@ -97,11 +92,7 @@ export default function Upload() {
 
   const handleUpload = async (e) => {
     e.preventDefault();
-    if (!file) return;
-    if (!familyId) {
-      setError('Сначала создайте семью в разделе «Создать семью»');
-      return;
-    }
+    if (!file || !familyId) return;
     setError('');
     setResult(null);
     setInfo('');
@@ -123,22 +114,59 @@ export default function Upload() {
       setInfo(`${res.data.parsed} операций разобрано, ${res.data.created} сохранено, ${res.data.duplicates_skipped} дублей`);
       loadTransactions(familyId);
     } catch (err) {
-      setError(err.response?.data?.detail || 'Не удалось загрузить файл');
+      setError(err.response?.data?.detail || 'Не удалось импортировать выписку');
       setProgress(null);
     }
   };
 
+  if (loadingFamilies) {
+    return <p className="muted">Загрузка...</p>;
+  }
+
+  if (families.length === 0) {
+    return (
+      <div className="page">
+        <h1>Загрузка выписки</h1>
+        <div className="card">
+          <h2>Нужна семья</h2>
+          <p className="muted">
+            Загрузка выписки выполняется в семью. Сначала создайте семью или
+            присоединитесь к существующей по коду.
+          </p>
+          <Link to="/family" className="btn">Перейти к семье</Link>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="page">
-      <h1>Загрузка файла</h1>
+      <h1>Загрузка выписки</h1>
 
       {error && <div className="error">{error}</div>}
 
-      {familyName && (
-        <p className="muted">Импорт выписки в семью: {familyName}</p>
+      {selectedFamily && (
+        <p className="muted">Импорт выписки в семью: {selectedFamily.name}</p>
       )}
 
       <form onSubmit={handleUpload}>
+        <div className="form-group">
+          <label htmlFor="familySelect">Семья</label>
+          <select
+            id="familySelect"
+            value={familyId}
+            onChange={(e) => setFamilyId(e.target.value)}
+            required
+          >
+            {!familyId && <option value="">Выберите семью</option>}
+            {families.map((family) => (
+              <option key={family.id} value={family.id}>
+                {family.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
         <label
           htmlFor="csvFile"
           className={`upload-zone${dragOver ? ' drag-over' : ''}`}
@@ -197,6 +225,9 @@ export default function Upload() {
             <li><span>Создано:</span><strong>{result.created}</strong></li>
             <li><span>Дублей пропущено:</span><strong>{result.duplicates_skipped}</strong></li>
           </ul>
+          <Link className="btn" to={`/family/${result.family_id}/dashboard`}>
+            Открыть дашборд
+          </Link>
         </div>
       )}
 

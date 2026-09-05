@@ -160,3 +160,5 @@ class TestListTransactions:
             "Лента",
             "Яндекс Такси",
         }
+        # положительные суммы в универсальном формате считаются доходами
+        assert {item["type"] for item in body} == {"income"}

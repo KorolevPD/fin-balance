@@ -66,6 +66,18 @@ body {
   box-shadow: 0 0 0 3px rgb(91 91 234 / 15%);
 }
 
+.form-group select {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #dfe3ee;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-family: inherit;
+  color: #14213d;
+  background: white;
+  box-sizing: border-box;
+}
+
 .error {
   padding: 10px;
   margin-bottom: 16px;

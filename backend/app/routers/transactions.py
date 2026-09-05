@@ -42,6 +42,7 @@ class TransactionOut(BaseModel):
     category: str | None = None
     date: datetime
     amount: float
+    type: str = "expense"
     original_description: str
     cleaned_description: str | None = None
     source_file: str | None = None
@@ -129,6 +130,7 @@ def list_transactions(
             category=t.category.name if t.category is not None else None,
             date=t.date,
             amount=t.amount,
+            type=t.type or "expense",
             original_description=t.original_description,
             cleaned_description=t.cleaned_description,
             source_file=t.source_file,
@@ -226,6 +228,7 @@ def update_transaction(
         category=category_name,
         date=transaction.date,
         amount=transaction.amount,
+        type=transaction.type or "expense",
         original_description=transaction.original_description,
         cleaned_description=transaction.cleaned_description,
         source_file=transaction.source_file,
