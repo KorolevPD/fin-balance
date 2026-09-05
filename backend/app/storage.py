@@ -12,7 +12,17 @@ ALLOWED_CONTENT_TYPES = {
     "application/octet-stream",
 }
 
+AVATAR_ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp", ".gif"}
+AVATAR_CONTENT_TYPES = {
+    "image/jpeg",
+    "image/png",
+    "image/webp",
+    "image/gif",
+}
+MAX_AVATAR_SIZE = 5 * 1024 * 1024
+
 UPLOAD_DIR = Path(os.environ.get("UPLOAD_DIR", "uploads")).resolve()
+AVATAR_DIR_NAME = "avatars"
 
 
 def validate_filename(filename: str) -> bool:
@@ -32,3 +42,31 @@ def save_upload(file_stream, original_filename: str) -> tuple[Path, str]:
     with open(target, "wb") as f:
         shutil.copyfileobj(file_stream, f)
     return target, stored_name
+
+
+def avatar_dir() -> Path:
+    directory = UPLOAD_DIR / AVATAR_DIR_NAME
+    directory.mkdir(parents=True, exist_ok=True)
+    return directory
+
+
+def avatar_path(stored_name: str) -> Path:
+    return (UPLOAD_DIR / AVATAR_DIR_NAME / sanitize_filename(stored_name)).resolve()
+
+
+def save_avatar(file_stream, original_filename: str) -> str:
+    directory = avatar_dir()
+    ext = Path(original_filename or "").suffix.lower()
+    if ext not in AVATAR_ALLOWED_EXTENSIONS:
+        ext = ""
+    stored_name = f"{uuid.uuid4().hex}{ext}"
+    target = directory / stored_name
+    with open(target, "wb") as f:
+        shutil.copyfileobj(file_stream, f)
+    return stored_name
+
+
+def delete_avatar(stored_name: str) -> None:
+    path = avatar_path(stored_name)
+    if path.is_file():
+        path.unlink()
