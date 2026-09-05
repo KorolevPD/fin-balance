@@ -1,5 +1,6 @@
 from app.models.models import (
     Base,
+    BotLink,
     Category,
     Family,
     FamilyMember,
@@ -10,6 +11,7 @@ from app.models.models import (
 
 __all__ = [
     "Base",
+    "BotLink",
     "Category",
     "Family",
     "FamilyMember",
