@@ -22,10 +22,15 @@ export default function Layout({ children }) {
           <Link to="/family">Создать семью</Link>
           <Link to="/upload">Загрузить</Link>
           <Link to="/dashboard">Дашборд</Link>
-          <Link to="/profile">Профиль</Link>
         </nav>
         <div className="user-info">
-          <span>{user.name || user.email}</span>
+          <Link
+            to="/profile"
+            className="user-info-name"
+            title="Мой профиль"
+          >
+            {user.name || user.email}
+          </Link>
           <Link
             to="/profile"
             className="header-avatar"
