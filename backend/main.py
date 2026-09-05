@@ -26,3 +26,4 @@ async def health():
 app.include_router(auth.router, prefix="/api")
 app.include_router(families.router, prefix="/api")
 app.include_router(transactions.router, prefix="/api")
+app.include_router(bot.router, prefix="/api")
