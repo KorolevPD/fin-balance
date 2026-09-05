@@ -17,7 +17,7 @@ export default function Login() {
 
     try {
       await login(email, password);
-      navigate('/');
+      navigate('/upload');
     } catch (err) {
       setError(err.response?.data?.detail || 'Ошибка входа');
     } finally {

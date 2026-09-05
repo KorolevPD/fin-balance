@@ -7,8 +7,12 @@
 body {
   margin: 0;
   min-height: 100vh;
-  display: grid;
-  place-items: center;
+}
+
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 .loading {
@@ -22,6 +26,7 @@ body {
 
 .auth-form {
   width: min(400px, calc(100% - 48px));
+  margin: auto;
   padding: 48px;
   background: white;
   border: 1px solid #dfe3ee;
@@ -135,11 +140,22 @@ button[type="submit"]:disabled {
   display: block;
 }
 
-.header-actions {
+.dashboard-nav {
   display: flex;
-  align-items: center;
-  gap: 24px;
+  gap: 16px;
   justify-self: center;
+}
+
+.dashboard-nav a {
+  color: #14213d;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.95rem;
+  white-space: nowrap;
+}
+
+.dashboard-nav a:hover {
+  color: #5b5bea;
 }
 
 .user-info {
@@ -171,24 +187,13 @@ button[type="submit"]:disabled {
 }
 
 .dashboard-main {
-  padding: 24px;
+  padding: 32px 48px;
 }
 
-.dashboard-nav {
-  display: flex;
-  gap: 16px;
-}
-
-.dashboard-nav a {
-  color: #14213d;
-  text-decoration: none;
-  font-weight: 600;
-  font-size: 0.95rem;
-  white-space: nowrap;
-}
-
-.dashboard-nav a:hover {
-  color: #5b5bea;
+@media (min-width: 1400px) {
+  .dashboard-header {
+    padding: 16px 64px;
+  }
 }
 
 @media (max-width: 720px) {
@@ -208,7 +213,7 @@ button[type="submit"]:disabled {
     grid-area: user;
   }
 
-  .header-actions {
+  .dashboard-nav {
     grid-area: nav;
     justify-self: stretch;
     flex-wrap: wrap;
@@ -222,7 +227,7 @@ button[type="submit"]:disabled {
 }
 
 .page {
-  max-width: 720px;
+  max-width: 1200px;
   margin: 0 auto;
 }
 
@@ -503,7 +508,7 @@ button[type="submit"]:disabled {
 }
 
 .dashboard-page {
-  max-width: 960px;
+  max-width: 1400px;
 }
 
 .summary-cards {
