@@ -92,17 +92,33 @@ export default function Upload() {
 
   const handleUpload = async (e) => {
     e.preventDefault();
-    if (!file || !familyId) return;
+    if (!file) return;
     setError('');
     setResult(null);
     setInfo('');
     setProgress(0);
 
+    let activeFamilyId = familyId;
+
+    if (!activeFamilyId) {
+      try {
+        const familyRes = await api.post('/families', { name: 'Мои финансы' });
+        const newFamily = familyRes.data;
+        setFamilies([newFamily]);
+        setFamilyId(newFamily.id);
+        activeFamilyId = newFamily.id;
+      } catch {
+        setError('Не удалось создать семью');
+        setProgress(null);
+        return;
+      }
+    }
+
     const formData = new FormData();
     formData.append('file', file);
 
     try {
-      const res = await api.post(`/families/${familyId}/transactions/import`, formData, {
+      const res = await api.post(`/families/${activeFamilyId}/transactions/import`, formData, {
         onUploadProgress: (event) => {
           if (!event.total) return;
           const percent = Math.round((event.loaded * 100) / event.total);
@@ -112,7 +128,7 @@ export default function Upload() {
       setProgress(100);
       setResult(res.data);
       setInfo(`${res.data.parsed} операций разобрано, ${res.data.created} сохранено, ${res.data.duplicates_skipped} дублей`);
-      loadTransactions(familyId);
+      loadTransactions(activeFamilyId);
     } catch (err) {
       setError(err.response?.data?.detail || 'Не удалось импортировать выписку');
       setProgress(null);
@@ -127,14 +143,64 @@ export default function Upload() {
     return (
       <div className="page">
         <h1>Загрузка выписки</h1>
-        <div className="card">
-          <h2>Нужна семья</h2>
+
+        {error && <div className="error">{error}</div>}
+
+        <form onSubmit={handleUpload}>
           <p className="muted">
-            Загрузка выписки выполняется в семью. Сначала создайте семью или
-            присоединитесь к существующей по коду.
+            У вас пока нет семьи. При загрузке выписки будет создана личная
+            семья «Мои финансы». Позже вы сможете переименовать её или
+            пригласить участников.
           </p>
-          <Link to="/family" className="btn">Перейти к семье</Link>
-        </div>
+
+          <label
+            htmlFor="csvFile"
+            className={`upload-zone${dragOver ? ' drag-over' : ''}`}
+            onDragOver={(e) => {
+              e.preventDefault();
+              setDragOver(true);
+            }}
+            onDragLeave={() => setDragOver(false)}
+            onDrop={handleDrop}
+          >
+            <input
+              id="csvFile"
+              type="file"
+              accept=".csv,.pdf,application/pdf"
+              className="upload-input"
+              onChange={handleSelect}
+            />
+            <span className="upload-icon">&#8681;</span>
+            <span className="upload-title">
+              {file ? `Выбран файл: ${file.name}` : 'Перетащите файл выписки (CSV или PDF) сюда'}
+            </span>
+            <span className="upload-hint">или нажмите, чтобы выбрать файл</span>
+          </label>
+
+          {progress !== null && (
+            <div className="upload-progress" role="progressbar" aria-valuenow={progress}>
+              <div className="progress-bar" style={{ width: `${progress}%` }} />
+              <span className="progress-label">Загрузка... {progress}%</span>
+            </div>
+          )}
+
+          <div className="upload-actions">
+            <button
+              type="submit"
+              disabled={!file || progress !== null}
+              className="upload-btn"
+            >
+              {progress === null ? 'Загрузить' : 'Загружается...'}
+            </button>
+            {file && (
+              <button type="button" onClick={reset} className="upload-reset">
+                Сбросить
+              </button>
+            )}
+          </div>
+        </form>
+
+        {info && <div className="success">{info}</div>}
       </div>
     );
   }
