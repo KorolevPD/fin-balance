@@ -89,6 +89,71 @@ async def me(message: types.Message):
                 )
 
 
+def _format_amount(amount: float) -> str:
+    return f"{amount:,.2f}".replace(",", " ").replace(".", ",")
+
+
+def _format_summary(data: dict) -> str:
+    total = float(data.get("total_amount", 0.0))
+    by_category = data.get("by_category", []) or []
+    top_payees = data.get("top_payees", []) or []
+
+    if not by_category:
+        return (
+            "У вас пока нет расходов в выбранной семье. 📭\n\n"
+            "Загрузите CSV-выписку, чтобы увидеть сводку."
+        )
+
+    lines = [f"💰 Общая сумма расходов: {_format_amount(total)} ₽", ""]
+    if by_category:
+        lines.append("📊 По категориям:")
+        for item in by_category[:5]:
+            cat = item.get("category", "—")
+            amount = float(item.get("amount", 0.0))
+            count = item.get("count", 0)
+            lines.append(
+                f"• {cat}: {_format_amount(amount)} ₽ ({count} оп.)"
+            )
+    lines.append("")
+    if top_payees:
+        lines.append("🏷 Топ получателей:")
+        for item in top_payees[:3]:
+            payee = item.get("payee", "—")
+            amount = float(item.get("amount", 0.0))
+            lines.append(f"• {payee}: {_format_amount(amount)} ₽")
+
+    return "\n".join(lines)
+
+
+@dp.message(Command("summary"))
+async def summary(message: types.Message):
+    telegram_id = str(message.from_user.id)
+    async with aiohttp.ClientSession() as session:
+        async with session.get(
+            f"{API_URL}/api/bot/summary", params={"telegram_id": telegram_id}
+        ) as resp:
+            try:
+                data = await resp.json()
+            except Exception:  # noqa: BLE001
+                data = {}
+            if resp.status == 200:
+                await message.answer(_format_summary(data))
+            elif resp.status == 401:
+                await message.answer(
+                    "Ваш Telegram не привязан к веб-аккаунту.\n\n"
+                    "Получите код в веб-приложении и отправьте /link <код>."
+                )
+            elif resp.status == 400:
+                await message.answer(
+                    "Вы не состоите ни в одной семье. 👨‍👩‍👧\n\n"
+                    "Создайте или присоединитесь к семье в веб-приложении."
+                )
+            else:
+                await message.answer(
+                    "Не удалось получить сводку. Попробуйте ещё раз позже."
+                )
+
+
 async def _download_document(message: types.Message) -> bytes | None:
     document = message.document
     if document is None:
