@@ -451,3 +451,77 @@ button[type="submit"]:disabled {
   font-variant-numeric: tabular-nums;
   font-weight: 600;
 }
+
+.btn-small {
+  padding: 6px 12px;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.btn-secondary {
+  background: transparent;
+  color: #14213d;
+  border: 1px solid #dfe3ee;
+}
+
+.btn-secondary:hover {
+  background: #f1f2f9;
+}
+
+.actions-cell {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgb(20 33 61 / 45%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  z-index: 100;
+}
+
+.modal {
+  width: min(480px, 100%);
+  padding: 28px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 24px 64px rgb(20 33 61 / 25%);
+}
+
+.modal h2 {
+  margin: 0 0 20px;
+  font-size: 1.25rem;
+}
+
+.modal select {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #dfe3ee;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-family: inherit;
+  color: #14213d;
+  background: white;
+  box-sizing: border-box;
+}
+
+.modal select:focus {
+  outline: none;
+  border-color: #5b5bea;
+  box-shadow: 0 0 0 3px rgb(91 91 234 / 15%);
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.modal-actions .btn {
+  width: auto;
+}
