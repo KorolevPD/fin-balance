@@ -7,7 +7,7 @@ import Families from './pages/Families';
 import FamilyDetail from './pages/FamilyDetail';
 import Upload from './pages/Upload';
 import Dashboard from './pages/Dashboard';
-import DashboardStub from './pages/DashboardStub';
+import DemoDashboard from './pages/DemoDashboard';
 import PrivateRoute from './components/PrivateRoute';
 import Layout from './components/Layout';
 
@@ -48,7 +48,7 @@ export default function App() {
         element={
           <PrivateRoute>
             <Layout>
-              <DashboardStub />
+              <DemoDashboard />
             </Layout>
           </PrivateRoute>
         }
