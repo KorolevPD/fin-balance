@@ -4,7 +4,7 @@
 
 ## Текущая задача
 
-T-024
+T-025
 
 ## Список задач
 
@@ -34,6 +34,7 @@ T-024
 | T-022 | Исправление багов | Фикс критических ошибок, найденных при тестировании. | основной агент | TODO | 0/0 | — | — |
 | T-023 | Hotfix: docker compose up | CRLF в entrypoint.sh (.gitattributes, eol=lf) + недостающий импорт bot в backend/main.py. Проверено: стек поднимается, API/SPA через nginx работают. | основной агент | DONE | 4/4 | docs/agent/tasks/T-023/20260905T082000Z_main_a01.md | PR #20 на ревью координатора |
 | T-024 | Hotfix: дашборд и правка операций | Backend: GET /families/{id}/summary (агрегации) и PATCH /families/{id}/transactions/{tid} (название+категория, UserCorrection). Эндпоинты заложены в T-010/T-014/T-015, но не были реализованы. Проверено end-to-end через nginx. | основной агент | IN_PROGRESS | 4/4 | docs/agent/tasks/T-024/20260905T083000Z_main_a01.md | Проверка diff, затем ветка + PR |
+| T-025 | Hotfix: кнопка «Загрузить» некликабельна | Frontend: исправлено условие disabled кнопки в Upload.js (progress === null → progress !== null). После выбора CSV кнопка активна, на время загрузки блокируется. Проверено: npm run check — Compiled successfully. | основной агент | DONE | 2/2 | docs/agent/tasks/T-024/20260905T094252Z_main_a02.md | Проверка diff, затем ветка + PR |
 
 Допустимые статусы: `TODO`, `IN_PROGRESS`, `BLOCKED`, `DONE`.
 

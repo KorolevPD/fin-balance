@@ -116,7 +116,7 @@ export default function Upload() {
         <div className="upload-actions">
           <button
             type="submit"
-            disabled={!file || progress === null}
+            disabled={!file || progress !== null}
             className="upload-btn"
           >
             {progress === null ? 'Загрузить' : 'Загружается...'}
