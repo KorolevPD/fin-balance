@@ -3,15 +3,17 @@ from typing import List
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy.orm import Session
 
 from app.categorization import categorize_transactions
 from app.database import get_db
-from app.models import FamilyMember, Transaction, User
+from app.models import FamilyMember, Transaction, User, UserCorrection
 from app.parsers import parse_csv_bytes
 from app.security import get_current_user
 from app.services import save_transactions
+from app.services.analytics import get_family_summary
+from app.services.transactions import _resolve_or_create_category
 
 router = APIRouter(prefix="/families", tags=["transactions"])
 
@@ -125,3 +127,98 @@ def list_transactions(
         )
         for t in transactions
     ]
+
+
+class TransactionUpdate(BaseModel):
+    cleaned_description: str | None = Field(
+        default=None, min_length=1, max_length=255
+    )
+    category: str | None = Field(default=None, min_length=1, max_length=255)
+
+
+@router.get(
+    "/{family_id}/summary",
+    summary="Сводка расходов семьи для дашборда",
+)
+def family_summary(
+    family_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    _require_membership(db, family_id, current_user.id)
+    return get_family_summary(db, family_id)
+
+
+@router.patch(
+    "/{family_id}/transactions/{transaction_id}",
+    response_model=TransactionOut,
+    summary="Редактирование операции: название и категория",
+)
+def update_transaction(
+    family_id: UUID,
+    transaction_id: UUID,
+    payload: TransactionUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    _require_membership(db, family_id, current_user.id)
+    transaction = (
+        db.query(Transaction)
+        .filter(
+            Transaction.id == transaction_id,
+            Transaction.family_id == family_id,
+        )
+        .first()
+    )
+    if transaction is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Операция не найдена",
+        )
+
+    if payload.category is not None:
+        old_category = transaction.category.name if transaction.category else None
+        if payload.category != old_category:
+            category = _resolve_or_create_category(db, payload.category)
+            transaction.category_id = category.id
+            db.add(
+                UserCorrection(
+                    user_id=current_user.id,
+                    transaction_id=transaction.id,
+                    field_name="category",
+                    old_value=old_category,
+                    new_value=payload.category,
+                )
+            )
+
+    if payload.cleaned_description is not None:
+        old_description = transaction.cleaned_description
+        if payload.cleaned_description != old_description:
+            transaction.cleaned_description = payload.cleaned_description
+            db.add(
+                UserCorrection(
+                    user_id=current_user.id,
+                    transaction_id=transaction.id,
+                    field_name="cleaned_description",
+                    old_value=old_description,
+                    new_value=payload.cleaned_description,
+                )
+            )
+
+    db.commit()
+    db.refresh(transaction)
+    category_name = (
+        transaction.category.name if transaction.category is not None else None
+    )
+    return TransactionOut(
+        id=transaction.id,
+        family_id=transaction.family_id,
+        user_id=transaction.user_id,
+        category=category_name,
+        date=transaction.date,
+        amount=transaction.amount,
+        original_description=transaction.original_description,
+        cleaned_description=transaction.cleaned_description,
+        source_file=transaction.source_file,
+        created_at=transaction.created_at,
+    )
