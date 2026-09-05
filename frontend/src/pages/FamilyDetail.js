@@ -54,7 +54,12 @@ export default function FamilyDetail() {
 
       {family && (
         <div className="card">
-          <h1>{family.name}</h1>
+          <div className="card-header">
+            <h1>{family.name}</h1>
+            <Link className="btn" to={`/family/${family.id}/dashboard`}>
+              Дашборд
+            </Link>
+          </div>
           <div className="invite-row">
             <span className="family-code">Код приглашения: {family.invite_code}</span>
             <button type="button" className="copy-btn" onClick={handleCopy}>
