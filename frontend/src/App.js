@@ -8,6 +8,7 @@ import FamilyDetail from './pages/FamilyDetail';
 import Upload from './pages/Upload';
 import Dashboard from './pages/Dashboard';
 import DemoDashboard from './pages/DemoDashboard';
+import Profile from './pages/Profile';
 import PrivateRoute from './components/PrivateRoute';
 import Layout from './components/Layout';
 
@@ -59,6 +60,16 @@ export default function App() {
           <PrivateRoute>
             <Layout>
               <Upload />
+            </Layout>
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/profile"
+        element={
+          <PrivateRoute>
+            <Layout>
+              <Profile />
             </Layout>
           </PrivateRoute>
         }

@@ -1,10 +1,10 @@
 # Журнал задач проекта
 
-Последнее обновление: 2026-09-05T09:25:00Z
+Последнее обновление: 2026-09-05T12:35:00Z
 
 ## Текущая задача
 
-T-025
+T-031
 
 ## Список задач
 
@@ -35,6 +35,7 @@ T-025
 | T-023 | Hotfix: docker compose up | CRLF в entrypoint.sh (.gitattributes, eol=lf) + недостающий импорт bot в backend/main.py. Проверено: стек поднимается, API/SPA через nginx работают. | основной агент | DONE | 4/4 | docs/agent/tasks/T-023/20260905T082000Z_main_a01.md | PR #20 на ревью координатора |
 | T-024 | Hotfix: дашборд и правка операций | Backend: GET /families/{id}/summary (агрегации) и PATCH /families/{id}/transactions/{tid} (название+категория, UserCorrection). Эндпоинты заложены в T-010/T-014/T-015, но не были реализованы. Проверено end-to-end через nginx. | основной агент | IN_PROGRESS | 4/4 | docs/agent/tasks/T-024/20260905T083000Z_main_a01.md | Проверка diff, затем ветка + PR |
 | T-025 | Hotfix: кнопка «Загрузить» некликабельна | Frontend: исправлено условие disabled кнопки в Upload.js (progress === null → progress !== null). После выбора CSV кнопка активна, на время загрузки блокируется. Проверено: npm run check — Compiled successfully. | основной агент | DONE | 2/2 | docs/agent/tasks/T-024/20260905T094252Z_main_a02.md | Проверка diff, затем ветка + PR |
+| T-031 | Форма просмотра/редактирования профиля и фото | Backend: колонка User.avatar + миграция 004, PATCH /auth/me (имя), POST /auth/me/avatar (валидация типа/размера), GET /auth/me/avatar/{stored_name}. Frontend: страница Profile (имя + фото, расширяемая по полям), роут /profile, ссылка и аватар в шапке, AuthContext.updateUser. Проверено: pytest 85 passed (11 новых), ruff clean, npm run check — Compiled successfully. | основной агент | DONE | 6/6 | docs/agent/tasks/T-031/20260905T122753Z_opencode_a01.md | Проверка diff, затем ветка + PR |
 
 Допустимые статусы: `TODO`, `IN_PROGRESS`, `BLOCKED`, `DONE`.
 
