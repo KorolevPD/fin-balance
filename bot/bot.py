@@ -1,6 +1,5 @@
 import asyncio
 import logging
-import sys
 from os import getenv
 
 import aiohttp
@@ -13,7 +12,7 @@ logger = logging.getLogger(__name__)
 BOT_TOKEN = getenv("BOT_TOKEN")
 API_URL = getenv("API_URL", "http://backend:8000").rstrip("/")
 
-bot = Bot(token=BOT_TOKEN)
+bot = Bot(token=BOT_TOKEN) if BOT_TOKEN else None
 dp = Dispatcher()
 
 
@@ -90,9 +89,13 @@ async def me(message: types.Message):
 
 
 async def main():
-    if not BOT_TOKEN:
-        logger.error("BOT_TOKEN не задан")
-        sys.exit(1)
+    if not bot:
+        logger.warning(
+            "BOT_TOKEN не задан — telegram-бот отключён. "
+            "Задайте BOT_TOKEN в .env и перезапустите сервис."
+        )
+        while True:
+            await asyncio.sleep(3600)
 
     logger.info("Бот запущен")
     await dp.start_polling(bot)
