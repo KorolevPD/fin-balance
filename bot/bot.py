@@ -3,7 +3,7 @@ import logging
 from os import getenv
 
 import aiohttp
-from aiogram import Bot, Dispatcher, types
+from aiogram import Bot, Dispatcher, F, types
 from aiogram.filters import Command, CommandStart
 
 logging.basicConfig(level=logging.INFO)
@@ -25,7 +25,8 @@ async def start(message: types.Message):
         "/start - Начать работу\n"
         "/link <код> - Привязать Telegram к веб-аккаунту\n"
         "/me - Проверить статус привязки\n"
-        "/summary - Получить сводку расходов"
+        "/summary - Получить сводку расходов\n\n"
+        "Отправьте CSV-выписку, чтобы загрузить операции в вашу семью."
     )
 
 
@@ -86,6 +87,87 @@ async def me(message: types.Message):
                     "Ваш Telegram ещё не привязан к веб-аккаунту.\n\n"
                     "Получите код в веб-приложении и отправьте /link <код>."
                 )
+
+
+async def _download_document(message: types.Message) -> bytes | None:
+    document = message.document
+    if document is None:
+        return None
+    file = await message.bot.get_file(document.file_id)
+    buffer = await message.bot.download_file(file.file_path)
+    return buffer.read()
+
+
+@dp.message(F.document)
+async def handle_document(message: types.Message):
+    document = message.document
+    if document is None:
+        return
+
+    filename = document.file_name or ""
+    if not filename.lower().endswith(".csv"):
+        await message.answer(
+            "Принимаю только CSV-выписки (*.csv).\n\n"
+            "Экспортируйте выписку из интернет-банка и пришлите файл сюда."
+        )
+        return
+
+    telegram_id = str(message.from_user.id)
+    try:
+        content = await _download_document(message)
+    except Exception:  # noqa: BLE001
+        await message.answer(
+            "Не удалось скачать файл. Попробуйте ещё раз или отправьте другой файл."
+        )
+        return
+
+    if content is None:
+        await message.answer("Файл пуст. Пришлите валидную CSV-выписку.")
+        return
+
+    await message.answer("Файл получен, обрабатываю выписку…")
+
+    form = aiohttp.FormData()
+    form.add_field(
+        "file",
+        content,
+        filename=filename,
+        content_type="text/csv",
+    )
+    form.add_field("telegram_id", telegram_id)
+
+    async with aiohttp.ClientSession() as session:
+        async with session.post(f"{API_URL}/api/bot/upload", data=form) as resp:
+            try:
+                data = await resp.json()
+            except Exception:  # noqa: BLE001
+                data = {}
+            if resp.status == 201:
+                await message.answer(
+                    "Выписка успешно импортирована! ✅\n\n"
+                    f"Разобрано операций: {data.get('parsed', 0)}\n"
+                    f"Создано: {data.get('created', 0)}\n"
+                    f"Пропущено дублей: {data.get('duplicates_skipped', 0)}\n\n"
+                    "Посмотреть расходы можно в дашборде "
+                    "веб-приложения или через /summary."
+                )
+            else:
+                detail = data.get("detail", "")
+                status_code = resp.status
+                if status_code == 401:
+                    await message.answer(
+                        "Ваш Telegram не привязан к веб-аккаунту.\n\n"
+                        "Получите код в веб-приложении и отправьте /link <код>."
+                    )
+                elif status_code == 400:
+                    await message.answer(
+                        "Не удалось импортировать выписку: "
+                        f"{detail or 'файл не подходит'}"
+                    )
+                else:
+                    await message.answer(
+                        "Внутренняя ошибка сервиса. Попробуйте ещё раз позже."
+                    )
 
 
 async def main():
