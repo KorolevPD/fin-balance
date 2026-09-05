@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.routers import auth, families, uploads
+from app.routers import auth, families, transactions, uploads
 
 app = FastAPI(title="FinBalance API", version="0.1.0")
 
@@ -25,3 +25,5 @@ async def health():
 
 app.include_router(auth.router, prefix="/api")
 app.include_router(families.router, prefix="/api")
+app.include_router(transactions.router, prefix="/api")
+app.include_router(bot.router, prefix="/api")

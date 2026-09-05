@@ -1,0 +1,98 @@
+import { useState, useEffect, useRef } from 'react';
+import api from '../api';
+
+function formatError(err) {
+  return err.response?.data?.detail || 'Не удалось сохранить изменения';
+}
+
+export default function TransactionEditModal({ transaction, familyId, categories, onClose, onSaved }) {
+  const [title, setTitle] = useState(transaction.cleaned_description || transaction.original_description || '');
+  const [category, setCategory] = useState(transaction.category || categories[0] || 'Прочее');
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const titleRef = useRef(null);
+
+  useEffect(() => {
+    titleRef.current?.focus();
+  }, []);
+
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    const trimmed = title.trim();
+    if (!trimmed) {
+      setError('Название не может быть пустым');
+      return;
+    }
+    setSaving(true);
+    setError('');
+    try {
+      await api.patch(`/families/${familyId}/transactions/${transaction.id}`, {
+        cleaned_description: trimmed,
+        category,
+      });
+      onSaved();
+    } catch (err) {
+      setError(formatError(err));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div
+        className="modal"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Редактирование операции"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <h2>Редактирование операции</h2>
+        <form onSubmit={handleSubmit}>
+          <div className="form-group">
+            <label htmlFor="txnTitle">Название</label>
+            <input
+              id="txnTitle"
+              type="text"
+              ref={titleRef}
+              value={title}
+              onChange={(event) => setTitle(event.target.value)}
+              maxLength={255}
+            />
+          </div>
+          <div className="form-group">
+            <label htmlFor="txnCategory">Категория</label>
+            <select
+              id="txnCategory"
+              value={category}
+              onChange={(event) => setCategory(event.target.value)}
+            >
+              {categories.map((name) => (
+                <option key={name} value={name}>
+                  {name}
+                </option>
+              ))}
+            </select>
+          </div>
+          {error && <div className="error">{error}</div>}
+          <div className="modal-actions">
+            <button type="button" className="btn btn-secondary" onClick={onClose}>
+              Отмена
+            </button>
+            <button type="submit" className="btn" disabled={saving}>
+              {saving ? 'Сохранение...' : 'Сохранить'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}

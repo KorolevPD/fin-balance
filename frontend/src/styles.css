@@ -425,3 +425,242 @@ button[type="submit"]:disabled {
 .upload-result span {
   color: #666;
 }
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.card-header h1 {
+  margin: 0;
+}
+
+.btn {
+  display: inline-block;
+  padding: 10px 20px;
+  background: #5b5bea;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.btn:hover {
+  background: #4a4ad4;
+}
+
+.dashboard-page {
+  max-width: 960px;
+}
+
+.summary-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.stat-card {
+  padding: 20px 24px;
+  background: white;
+  border: 1px solid #dfe3ee;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.stat-label {
+  font-size: 0.85rem;
+  color: #666;
+}
+
+.stat-value {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #14213d;
+}
+
+.category-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  align-items: center;
+}
+
+@media (max-width: 720px) {
+  .category-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.chart-box {
+  min-width: 0;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+}
+
+.data-table th,
+.data-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #dfe3ee;
+  text-align: left;
+}
+
+.data-table th {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #666;
+}
+
+.data-table th.num,
+.data-table td.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.data-table tr:last-child td {
+  border-bottom: none;
+}
+
+.nowrap {
+  white-space: nowrap;
+}
+
+.table-scroll {
+  overflow-x: auto;
+}
+
+.bar-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 120px;
+}
+
+.percent-bar {
+  display: inline-block;
+  height: 8px;
+  background: #5b5bea;
+  border-radius: 4px;
+}
+
+.percent-value {
+  font-size: 0.82rem;
+  color: #666;
+  white-space: nowrap;
+}
+
+.payee-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.payee-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid #dfe3ee;
+}
+
+.payee-list li:last-child {
+  border-bottom: none;
+}
+
+.payee-name {
+  flex: 1;
+  font-weight: 500;
+}
+
+.payee-amount {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.btn-small {
+  padding: 6px 12px;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.btn-secondary {
+  background: transparent;
+  color: #14213d;
+  border: 1px solid #dfe3ee;
+}
+
+.btn-secondary:hover {
+  background: #f1f2f9;
+}
+
+.actions-cell {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgb(20 33 61 / 45%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  z-index: 100;
+}
+
+.modal {
+  width: min(480px, 100%);
+  padding: 28px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 24px 64px rgb(20 33 61 / 25%);
+}
+
+.modal h2 {
+  margin: 0 0 20px;
+  font-size: 1.25rem;
+}
+
+.modal select {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #dfe3ee;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-family: inherit;
+  color: #14213d;
+  background: white;
+  box-sizing: border-box;
+}
+
+.modal select:focus {
+  outline: none;
+  border-color: #5b5bea;
+  box-shadow: 0 0 0 3px rgb(91 91 234 / 15%);
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.modal-actions .btn {
+  width: auto;
+}

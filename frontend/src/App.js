@@ -5,6 +5,7 @@ import Register from './pages/Register';
 import Families from './pages/Families';
 import FamilyDetail from './pages/FamilyDetail';
 import Upload from './pages/Upload';
+import Dashboard from './pages/Dashboard';
 import PrivateRoute from './components/PrivateRoute';
 import Layout from './components/Layout';
 
@@ -55,6 +56,16 @@ export default function App() {
           <PrivateRoute>
             <Layout>
               <Upload />
+            </Layout>
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/family/:id/dashboard"
+        element={
+          <PrivateRoute>
+            <Layout>
+              <Dashboard />
             </Layout>
           </PrivateRoute>
         }
