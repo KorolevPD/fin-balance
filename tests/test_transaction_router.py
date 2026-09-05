@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import io
+from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
@@ -9,6 +10,9 @@ from app.database import get_db
 from app.models import Family, FamilyMember, User
 from app.security import create_access_token, hash_password
 from main import app
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+SBER_PDF_PATH = REPO_ROOT / "examples" / "sber.pdf"
 
 
 @pytest.fixture()
@@ -113,6 +117,27 @@ class TestImportTransactions:
         response = _upload(client, family.id, "", _csv_bytes())
 
         assert response.status_code == 401
+
+    def test_импорт_pdf_выписки_создаёт_транзакции(self, client_db):
+        client, session = client_db
+        user, family = _prepare(session)
+        token = _token(user)
+
+        pdf_bytes = SBER_PDF_PATH.read_bytes()
+        files = {
+            "file": ("sber.pdf", io.BytesIO(pdf_bytes), "application/pdf")
+        }
+        response = client.post(
+            f"/api/families/{family.id}/transactions/import",
+            files=files,
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+        assert response.status_code == 201
+        body = response.json()
+        assert body["parsed"] == 8
+        assert body["created"] == 8
+        assert body["duplicates_skipped"] == 0
 
 
 class TestListTransactions:

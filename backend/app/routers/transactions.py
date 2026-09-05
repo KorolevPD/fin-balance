@@ -9,13 +9,20 @@ from sqlalchemy.orm import Session
 from app.categorization import categorize_transactions
 from app.database import get_db
 from app.models import FamilyMember, Transaction, User, UserCorrection
-from app.parsers import parse_csv_bytes
+from app.parsers import parse_csv_bytes, parse_pdf_bytes
 from app.security import get_current_user
 from app.services import save_transactions
 from app.services.analytics import get_family_summary
 from app.services.transactions import _resolve_or_create_category
 
 router = APIRouter(prefix="/families", tags=["transactions"])
+
+
+def _parse_file(raw: bytes, filename: str) -> list:
+    """Разобрать выписку по расширению файла: PDF или CSV."""
+    if (filename or "").lower().endswith(".pdf"):
+        return parse_pdf_bytes(raw)
+    return parse_csv_bytes(raw)
 
 
 class ImportResult(BaseModel):
@@ -72,7 +79,9 @@ def import_transactions(
     _require_membership(db, family_id, current_user.id)
 
     try:
-        parsed = categorize_transactions(parse_csv_bytes(file.file.read()))
+        parsed = categorize_transactions(
+            _parse_file(file.file.read(), file.filename or "")
+        )
     except ValueError as exc:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
