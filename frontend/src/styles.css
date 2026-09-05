@@ -721,6 +721,14 @@ button[type="submit"]:disabled {
   white-space: nowrap;
 }
 
+.amount-income {
+  color: #16a34a;
+}
+
+.amount-expense {
+  color: #dc2626;
+}
+
 .modal-overlay {
   position: fixed;
   inset: 0;

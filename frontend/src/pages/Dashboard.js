@@ -30,10 +30,15 @@ const CATEGORY_COLORS = [
   '#64748b',
 ];
 
-function formatAmount(value) {
+function formatAmount(value, type) {
   const num = Number(value || 0);
-  const sign = num < 0 ? '−' : '';
-  return `${sign}${Math.abs(num).toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₽`;
+  const isIncome = type === 'income';
+  const sign = isIncome ? '+' : '−';
+  return `${sign} ${Math.abs(num).toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₽`;
+}
+
+function amountClassName(type) {
+  return type === 'income' ? 'amount-income' : 'amount-expense';
 }
 
 function formatDate(iso) {
@@ -311,7 +316,7 @@ export default function Dashboard() {
                             <td className="nowrap">{formatDate(txn.date)}</td>
                             <td>{txn.cleaned_description || txn.original_description || '—'}</td>
                             <td>{txn.category || 'Прочее'}</td>
-                            <td className="num">{formatAmount(txn.amount)}</td>
+                            <td className={`num ${amountClassName(txn.type)}`}>{formatAmount(txn.amount, txn.type)}</td>
                             <td className="actions-cell">
                               <button
                                 type="button"
