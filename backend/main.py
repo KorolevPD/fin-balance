@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.routers import auth, families
+from app.routers import auth, families, uploads
 
 app = FastAPI(title="FinBalance API", version="0.1.0")
 
@@ -13,7 +13,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(upload_router)
+app.include_router(uploads.router, prefix="/api")
 
 @app.get("/")
 async def root():
@@ -23,5 +23,5 @@ async def root():
 async def health():
     return {"status": "healthy"}
 
-app.include_router(auth.router)
-app.include_router(families.router)
+app.include_router(auth.router, prefix="/api")
+app.include_router(families.router, prefix="/api")
