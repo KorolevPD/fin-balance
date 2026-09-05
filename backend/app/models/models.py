@@ -88,6 +88,19 @@ class Transaction(Base):
     corrections = relationship("UserCorrection", back_populates="transaction")
 
 
+class BotLink(Base):
+    __tablename__ = "bot_links"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    code = Column(String(16), unique=True, nullable=False, index=True)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    telegram_id = Column(String(255), nullable=True)
+    expires_at = Column(DateTime, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    user = relationship("User")
+
+
 class UserCorrection(Base):
     __tablename__ = "user_corrections"
 
