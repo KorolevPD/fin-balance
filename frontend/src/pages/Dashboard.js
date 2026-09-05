@@ -111,6 +111,17 @@ export default function Dashboard() {
 
       {error && <div className="error">{error}</div>}
 
+      {!loading && (
+        <section className="summary-cards" aria-label="Сводка расходов">
+          <div className="stat-card">
+            <span className="stat-label">Общая сумма расходов</span>
+            <span className="stat-value">
+              {summary ? formatAmount(summary.total_amount) : '—'}
+            </span>
+          </div>
+        </section>
+      )}
+
       {loading ? (
         <p className="muted">Загрузка...</p>
       ) : (
@@ -215,15 +226,6 @@ export default function Dashboard() {
             </div>
           ) : (
             <>
-              <section className="summary-cards" aria-label="Сводка расходов">
-                <div className="stat-card">
-                  <span className="stat-label">Общая сумма расходов</span>
-                  <span className="stat-value">
-                    {summary ? formatAmount(summary.total_amount) : '—'}
-                  </span>
-                </div>
-              </section>
-
               <section className="card" aria-label="Разбивка по категориям">
                 <h2>Расходы по категориям</h2>
                 <table className="data-table">
