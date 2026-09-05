@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.routers import auth, families, transactions, uploads
+from app.routers import auth, bot, families, transactions, uploads
 
 app = FastAPI(title="FinBalance API", version="0.1.0")
 
