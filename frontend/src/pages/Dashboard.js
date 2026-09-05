@@ -185,6 +185,17 @@ export default function Dashboard() {
         <p className="muted">Загрузка...</p>
       ) : (
         <>
+          {hasData && (
+            <section className="summary-cards" aria-label="Сводка расходов">
+              <div className="stat-card">
+                <span className="stat-label">Общая сумма расходов</span>
+                <span className="stat-value">
+                  {summary ? formatAmount(summary.total_amount) : '—'}
+                </span>
+              </div>
+            </section>
+          )}
+
           <div className="demo-grid">
             <section className="card demo-block" aria-label="Члены семьи">
               <h2>Члены семьи</h2>
@@ -285,15 +296,6 @@ export default function Dashboard() {
             </div>
           ) : (
             <>
-              <section className="summary-cards" aria-label="Сводка расходов">
-                <div className="stat-card">
-                  <span className="stat-label">Общая сумма расходов</span>
-                  <span className="stat-value">
-                    {summary ? formatAmount(summary.total_amount) : '—'}
-                  </span>
-                </div>
-              </section>
-
               <section className="card" aria-label="Разбивка по категориям">
                 <h2>Расходы по категориям</h2>
                 <table className="data-table">
