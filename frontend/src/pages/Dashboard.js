@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useLocation, useParams, Link } from 'react-router-dom';
 import {
   ResponsiveContainer,
@@ -14,6 +14,8 @@ import {
   CartesianGrid,
 } from 'recharts';
 import api from '../api';
+import { CATEGORIES } from '../categories';
+import TransactionEditModal from '../components/TransactionEditModal';
 
 const CATEGORY_COLORS = [
   '#5b5bea',
@@ -49,45 +51,44 @@ export default function Dashboard() {
   const [familyName, setFamilyName] = useState(location.state?.family?.name || '');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [editing, setEditing] = useState(null);
+
+  const loadData = useCallback(() => {
+    setLoading(true);
+    setError('');
+    api
+      .get(`/families/${id}/summary`)
+      .then((res) => setSummary(res.data))
+      .catch((err) => {
+        setError(err.response?.data?.detail || 'Не удалось загрузить данные дашборда');
+      });
+
+    api
+      .get(`/families/${id}/transactions`)
+      .then((res) => setTransactions(res.data))
+      .catch((err) => {
+        setError(err.response?.data?.detail || 'Не удалось загрузить операции');
+      })
+      .finally(() => setLoading(false));
+  }, [id]);
 
   useEffect(() => {
-    let cancelled = false;
-
     if (!familyName) {
       api
         .get('/families/my')
         .then((res) => {
           const found = res.data.find((family) => family.id === id);
-          if (found && !cancelled) setFamilyName(found.name);
+          if (found) setFamilyName(found.name);
         })
         .catch(() => {});
     }
+    loadData();
+  }, [id, familyName, loadData]);
 
-    api
-      .get(`/families/${id}/summary`)
-      .then((res) => {
-        if (!cancelled) setSummary(res.data);
-      })
-      .catch((err) => {
-        if (!cancelled) setError(err.response?.data?.detail || 'Не удалось загрузить данные дашборда');
-      });
-
-    api
-      .get(`/families/${id}/transactions`)
-      .then((res) => {
-        if (!cancelled) setTransactions(res.data);
-      })
-      .catch((err) => {
-        if (!cancelled) setError(err.response?.data?.detail || 'Не удалось загрузить операции');
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [id, familyName]);
+  const handleSaved = () => {
+    setEditing(null);
+    loadData();
+  };
 
   const categories = summary?.by_category || [];
   const payees = summary?.top_payees || [];
@@ -227,6 +228,7 @@ export default function Dashboard() {
                       <th>Название</th>
                       <th>Категория</th>
                       <th className="num">Сумма</th>
+                      <th></th>
                     </tr>
                   </thead>
                   <tbody>
@@ -236,6 +238,15 @@ export default function Dashboard() {
                         <td>{txn.cleaned_description || txn.original_description || '—'}</td>
                         <td>{txn.category || 'Прочее'}</td>
                         <td className="num">{formatAmount(txn.amount)}</td>
+                        <td className="actions-cell">
+                          <button
+                            type="button"
+                            className="btn btn-small"
+                            onClick={() => setEditing(txn)}
+                          >
+                            Изменить
+                          </button>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -244,6 +255,16 @@ export default function Dashboard() {
             )}
           </section>
         </>
+      )}
+
+      {editing && (
+        <TransactionEditModal
+          transaction={editing}
+          familyId={id}
+          categories={CATEGORIES}
+          onClose={() => setEditing(null)}
+          onSaved={handleSaved}
+        />
       )}
     </div>
   );
