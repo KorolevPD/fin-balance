@@ -4,6 +4,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Families from './pages/Families';
 import FamilyDetail from './pages/FamilyDetail';
+import Upload from './pages/Upload';
 import PrivateRoute from './components/PrivateRoute';
 import Layout from './components/Layout';
 
@@ -44,6 +45,16 @@ export default function App() {
           <PrivateRoute>
             <Layout>
               <FamilyDetail />
+            </Layout>
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/upload"
+        element={
+          <PrivateRoute>
+            <Layout>
+              <Upload />
             </Layout>
           </PrivateRoute>
         }
