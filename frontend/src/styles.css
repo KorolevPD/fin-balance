@@ -648,6 +648,16 @@ button[type="submit"]:disabled {
   color: #5b5bea;
 }
 
+.sort-indicator {
+  margin-left: 6px;
+  font-size: 0.7em;
+  color: #b9c0d4;
+}
+
+.sort-indicator.active {
+  color: #5b5bea;
+}
+
 .data-table th.num,
 .data-table td.num {
   text-align: right;

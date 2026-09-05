@@ -48,6 +48,11 @@ function formatDate(iso) {
   return date.toLocaleDateString('ru-RU');
 }
 
+function sortIndicator(key, sortBy, sortDir) {
+  if (sortBy === key) return sortDir === 'asc' ? '▲' : '▼';
+  return '▼';
+}
+
 export default function Dashboard() {
   const { id } = useParams();
   const location = useLocation();
@@ -346,7 +351,10 @@ export default function Dashboard() {
                               className="sort-btn"
                               onClick={() => handleSort('date')}
                             >
-                              Дата {sortBy === 'date' && (sortDir === 'asc' ? '▲' : '▼')}
+                              Дата{' '}
+                              <span className={`sort-indicator${sortBy === 'date' ? ' active' : ''}`}>
+                                {sortIndicator('date', sortBy, sortDir)}
+                              </span>
                             </button>
                           </th>
                           <th>Название</th>
@@ -364,7 +372,10 @@ export default function Dashboard() {
                               className="sort-btn"
                               onClick={() => handleSort('category')}
                             >
-                              Категория {sortBy === 'category' && (sortDir === 'asc' ? '▲' : '▼')}
+                              Категория{' '}
+                              <span className={`sort-indicator${sortBy === 'category' ? ' active' : ''}`}>
+                                {sortIndicator('category', sortBy, sortDir)}
+                              </span>
                             </button>
                           </th>
                           <th className="num">Сумма</th>
