@@ -483,6 +483,18 @@ button[type="submit"]:disabled {
   color: #14213d;
 }
 
+.upload-progress.done {
+  background: #dcfce7;
+}
+
+.upload-progress.done .progress-bar {
+  background: #16a34a;
+}
+
+.progress-label.done {
+  color: #15803d;
+}
+
 .upload-result {
   list-style: none;
   margin: 0 0 16px;

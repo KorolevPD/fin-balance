@@ -1,10 +1,10 @@
 # Журнал задач проекта
 
-Последнее обновление: 2026-09-05T16:42:23Z
+Последнее обновление: 2026-09-05T16:45:00Z
 
 ## Текущая задача
 
-T-037
+T-038
 
 ## Список задач
 
@@ -41,7 +41,8 @@ T-037
 | T-034 | Аналитика «доход/расход» и веб-импорт выписки | Backend: колонка Transaction.type (income/expense, default expense) + миграция 005, save_transactions пишет тип, TransactionOut отдаёт type, аналитика считает total_amount/by_category/top_payees/monthly/family_members только по расходам. Frontend: Upload.js выбирает семью (/families/my) и импортирует через POST /families/{id}/transactions/import, показывает parsed/created/duplicates. Доп. фикс: загрузка файла без семьи — форма видна всегда, при отсутствии семей автосоздаётся семья «Мои финансы». Проверено: pytest 89 passed (новые тесты: тип в сервисе/роутере/аналитике), ruff clean по затронутым файлам, npm run check — Compiled successfully. | основной агент | DONE | 5/5 | docs/agent/tasks/T-034/20260905T153500Z_opencode_a02.md | Проверка diff, затем ветка + PR |
 | T-035 | Реальный дашборд по ссылке «Дашборд» | Frontend: DemoDashboard.js при переходе на /dashboard проверяет /families/my и summary каждой семьи; если найдены операции (total_amount>0 или by_category/uploaded_files не пусты) — редирект на реальный дашборд /family/{id}/dashboard, иначе — «Примерный дашборд». Проверено: npm run check — Compiled successfully. | основной агент | DONE | 3/3 | docs/agent/tasks/T-035/20260905T150457Z_opencode_a01.md | Проверка diff, затем ветка + PR |
 | T-036 | Знак и цвет сумм операций | Frontend: в списках операций (Dashboard, Upload, DemoDashboard) суммы показываются со знаком: «+» для пополнений (`type == income`) и «−» для вычетов (`type == expense`). Пополнения — зелёным (`.amount-income`, #16a34a), вычеты — красным (`.amount-expense`, #dc2626). Основано на поле `type`, которое backend уже отдаёт в `TransactionOut`. Проверено: npm run check — Compiled successfully. | основной агент | DONE | 3/3 | docs/agent/tasks/T-036/20260905T160920Z_opencode_a01.md | PR #38 уже влит в main |
-| T-037 | Сортировка операций по категории на дашборде | Frontend: на дашборде семьи (Dashboard.js) операции по умолчанию идут «сначала новые» (дата по убыванию). Клик по заголовку «Категория» сортирует список по категории (повторный клик — обратное направление), заголовки «Дата» и «Категория» кликабельны, справа всегда показан треугольник ▼ (активная колонка — ▲/▼ цветом) и aria-sort. Проверено: npm run check — Compiled successfully, ручная проверка сортировки через API + Node на реальных данных. | основной агент | DONE | 4/4 | docs/agent/tasks/T-037/20260905T164223Z_opencode_a02.md | Проверка diff, затем ветка + PR |
+| T-037 | Состояние «Готово» в загрузке файла | Frontend: после успешного импорта прогресс «Загрузка... 100%» сменяется зелёным `✓ Готово` (`.upload-progress.done`), кнопка «Загружается...» становится активной «Загрузите файл» и открывает выбор нового файла; `value` input сбрасывается, повторный выбор того же файла работает. Проверено: npm run check — Compiled successfully. | основной агент | DONE | 2/2 | docs/agent/tasks/T-037/20260905T164000Z_opencode_a01.md | PR #40 уже влит в main |
+| T-038 | Сортировка операций по категории на дашборде | Frontend: на дашборде семьи (Dashboard.js) операции по умолчанию идут «сначала новые» (дата по убыванию). Клик по заголовку «Категория» сортирует список по категории (повторный клик — обратное направление), заголовки «Дата» и «Категория» кликабельны, справа всегда показан треугольник ▼ (активная колонка — ▲/▼ цветом) и aria-sort. Проверено: npm run check — Compiled successfully, ручная проверка сортировки через API + Node на реальных данных. | основной агент | DONE | 4/4 | docs/agent/tasks/T-038/20260905T162352Z_opencode_a01.md | См. также a02; ветка feature/T-037-sort-by-category, PR #39 |
 
 Допустимые статусы: `TODO`, `IN_PROGRESS`, `BLOCKED`, `DONE`.
 
