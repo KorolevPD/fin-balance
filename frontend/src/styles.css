@@ -483,6 +483,18 @@ button[type="submit"]:disabled {
   color: #14213d;
 }
 
+.upload-progress.done {
+  background: #dcfce7;
+}
+
+.upload-progress.done .progress-bar {
+  background: #16a34a;
+}
+
+.progress-label.done {
+  color: #15803d;
+}
+
 .upload-result {
   list-style: none;
   margin: 0 0 16px;
@@ -633,6 +645,31 @@ button[type="submit"]:disabled {
   color: #666;
 }
 
+.sort-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  text-transform: inherit;
+  letter-spacing: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.sort-btn:hover {
+  color: #5b5bea;
+}
+
+.sort-indicator {
+  margin-left: 6px;
+  font-size: 0.7em;
+  color: #b9c0d4;
+}
+
+.sort-indicator.active {
+  color: #5b5bea;
+}
+
 .data-table th.num,
 .data-table td.num {
   text-align: right;
@@ -719,6 +756,14 @@ button[type="submit"]:disabled {
 .actions-cell {
   text-align: right;
   white-space: nowrap;
+}
+
+.amount-income {
+  color: #16a34a;
+}
+
+.amount-expense {
+  color: #dc2626;
 }
 
 .modal-overlay {

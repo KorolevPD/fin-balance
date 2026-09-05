@@ -14,9 +14,15 @@ function formatDate(iso) {
   return date.toLocaleDateString('ru-RU');
 }
 
-function formatAmount(value) {
+function formatAmount(value, type) {
   const num = Number(value || 0);
-  return `${num.toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₽`;
+  const isIncome = type === 'income';
+  const sign = isIncome ? '+' : '−';
+  return `${sign} ${Math.abs(num).toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₽`;
+}
+
+function amountClassName(type) {
+  return type === 'income' ? 'amount-income' : 'amount-expense';
 }
 
 export default function Upload() {
@@ -24,6 +30,7 @@ export default function Upload() {
   const [families, setFamilies] = useState([]);
   const [familyId, setFamilyId] = useState('');
   const [progress, setProgress] = useState(null);
+  const [done, setDone] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
@@ -63,6 +70,7 @@ export default function Upload() {
     setFile(null);
     setProgress(null);
     setResult(null);
+    setDone(false);
     setError('');
   };
 
@@ -70,6 +78,7 @@ export default function Upload() {
     setError('');
     setResult(null);
     setProgress(null);
+    setDone(false);
     if (!nextFile) return;
     if (!isSupported(nextFile)) {
       setFile(null);
@@ -92,11 +101,12 @@ export default function Upload() {
 
   const handleUpload = async (e) => {
     e.preventDefault();
-    if (!file) return;
+    if (!file || done) return;
     setError('');
     setResult(null);
     setInfo('');
     setProgress(0);
+    setDone(false);
 
     let activeFamilyId = familyId;
 
@@ -126,12 +136,24 @@ export default function Upload() {
         },
       });
       setProgress(100);
+      setDone(true);
       setResult(res.data);
       setInfo(`${res.data.parsed} операций разобрано, ${res.data.created} сохранено, ${res.data.duplicates_skipped} дублей`);
       loadTransactions(activeFamilyId);
+      const input = document.getElementById('csvFile');
+      if (input) input.value = '';
     } catch (err) {
       setError(err.response?.data?.detail || 'Не удалось импортировать выписку');
       setProgress(null);
+      setDone(false);
+    }
+  };
+
+  const handleBtnClick = (e) => {
+    if (done) {
+      e.preventDefault();
+      const input = document.getElementById('csvFile');
+      if (input) input.click();
     }
   };
 
@@ -178,19 +200,22 @@ export default function Upload() {
           </label>
 
           {progress !== null && (
-            <div className="upload-progress" role="progressbar" aria-valuenow={progress}>
+            <div className={`upload-progress${done ? ' done' : ''}`} role="progressbar" aria-valuenow={progress}>
               <div className="progress-bar" style={{ width: `${progress}%` }} />
-              <span className="progress-label">Загрузка... {progress}%</span>
+              <span className={`progress-label${done ? ' done' : ''}`}>
+                {done ? '\u2713 Готово' : `Загрузка... ${progress}%`}
+              </span>
             </div>
           )}
 
           <div className="upload-actions">
             <button
               type="submit"
-              disabled={!file || progress !== null}
+              onClick={handleBtnClick}
+              disabled={!file || (progress !== null && !done)}
               className="upload-btn"
             >
-              {progress === null ? 'Загрузить' : 'Загружается...'}
+              {done ? 'Загрузите файл' : progress === null ? 'Загрузить' : 'Загружается...'}
             </button>
             {file && (
               <button type="button" onClick={reset} className="upload-reset">
@@ -258,19 +283,22 @@ export default function Upload() {
         </label>
 
         {progress !== null && (
-          <div className="upload-progress" role="progressbar" aria-valuenow={progress}>
+          <div className={`upload-progress${done ? ' done' : ''}`} role="progressbar" aria-valuenow={progress}>
             <div className="progress-bar" style={{ width: `${progress}%` }} />
-            <span className="progress-label">Загрузка... {progress}%</span>
+            <span className={`progress-label${done ? ' done' : ''}`}>
+              {done ? '\u2713 Готово' : `Загрузка... ${progress}%`}
+            </span>
           </div>
         )}
 
         <div className="upload-actions">
           <button
             type="submit"
-            disabled={!file || !familyId || progress !== null}
+            onClick={handleBtnClick}
+            disabled={!file || !familyId || (progress !== null && !done)}
             className="upload-btn"
           >
-            {progress === null ? 'Загрузить' : 'Загружается...'}
+            {done ? 'Загрузите файл' : progress === null ? 'Загрузить' : 'Загружается...'}
           </button>
           {file && (
             <button type="button" onClick={reset} className="upload-reset">
@@ -321,7 +349,7 @@ export default function Upload() {
                       <td className="nowrap">{formatDate(txn.date)}</td>
                       <td>{txn.cleaned_description || txn.original_description || '—'}</td>
                       <td>{txn.category || 'Прочее'}</td>
-                      <td className="num">{formatAmount(txn.amount)}</td>
+                      <td className={`num ${amountClassName(txn.type)}`}>{formatAmount(txn.amount, txn.type)}</td>
                     </tr>
                   ))}
                 </tbody>

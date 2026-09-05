@@ -13,9 +13,11 @@ const DEMO_COLORS = [
   '#64748b',
 ];
 
-function formatAmount(value) {
+function formatAmount(value, type) {
   const num = Number(value || 0);
-  return `${num.toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₽`;
+  const isIncome = type === 'income';
+  const sign = isIncome ? '+' : '−';
+  return `${sign} ${Math.abs(num).toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₽`;
 }
 
 function formatDate(iso) {
