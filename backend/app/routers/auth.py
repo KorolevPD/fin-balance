@@ -20,6 +20,7 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 class UserCreate(BaseModel):
     email: str = Field(min_length=3, max_length=255)
     password: str = Field(min_length=6, max_length=128)
+    name: str | None = Field(default=None, max_length=255)
 
 
 class UserLogin(BaseModel):
@@ -32,6 +33,7 @@ class UserOut(BaseModel):
 
     id: uuid.UUID
     email: str
+    name: str | None = None
     telegram_id: str | None = None
     created_at: datetime
 
@@ -57,6 +59,7 @@ def register(payload: UserCreate, db: Session = Depends(get_db)):
     user = User(
         email=payload.email,
         password_hash=hash_password(payload.password),
+        name=(payload.name or "").strip() or None,
     )
     db.add(user)
     db.commit()

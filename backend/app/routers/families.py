@@ -52,6 +52,7 @@ class FamilyJoin(BaseModel):
 class MemberOut(BaseModel):
     user_id: UUID
     email: str
+    name: str | None = None
     role: str
     joined_at: datetime
 
@@ -180,6 +181,7 @@ def list_members(
         MemberOut(
             user_id=member.user_id,
             email=member.user.email,
+            name=member.user.name,
             role=member.role,
             joined_at=member.joined_at,
         )
