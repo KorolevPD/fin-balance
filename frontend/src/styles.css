@@ -113,24 +113,40 @@ button[type="submit"]:disabled {
 }
 
 .dashboard-header {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  padding: 16px 24px;
+  gap: 16px;
+  padding: 12px 24px;
   background: white;
   border-bottom: 1px solid #dfe3ee;
 }
 
-.dashboard-header h1 {
-  margin: 0;
-  font-size: 1.4rem;
-  color: #5b5bea;
+.logo-link {
+  display: flex;
+  align-items: center;
+  justify-self: start;
+  text-decoration: none;
+}
+
+.logo {
+  height: 40px;
+  width: auto;
+  display: block;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  justify-self: center;
 }
 
 .user-info {
   display: flex;
   align-items: center;
   gap: 16px;
+  justify-self: end;
 }
 
 .user-info span {
@@ -146,6 +162,7 @@ button[type="submit"]:disabled {
   border-radius: 8px;
   font-size: 0.9rem;
   cursor: pointer;
+  white-space: nowrap;
 }
 
 .logout-btn:hover {
@@ -160,7 +177,6 @@ button[type="submit"]:disabled {
 .dashboard-nav {
   display: flex;
   gap: 16px;
-  margin-left: 40px;
 }
 
 .dashboard-nav a {
@@ -168,10 +184,41 @@ button[type="submit"]:disabled {
   text-decoration: none;
   font-weight: 600;
   font-size: 0.95rem;
+  white-space: nowrap;
 }
 
 .dashboard-nav a:hover {
   color: #5b5bea;
+}
+
+@media (max-width: 720px) {
+  .dashboard-header {
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      "logo user"
+      "nav nav";
+    gap: 8px 16px;
+  }
+
+  .logo-link {
+    grid-area: logo;
+  }
+
+  .user-info {
+    grid-area: user;
+  }
+
+  .header-actions {
+    grid-area: nav;
+    justify-self: stretch;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: space-between;
+  }
+
+  .user-info span {
+    display: none;
+  }
 }
 
 .page {
