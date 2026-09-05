@@ -1,10 +1,10 @@
 # Журнал задач проекта
 
-Последнее обновление: 2026-09-05T13:02:00Z
+Последнее обновление: 2026-09-05T15:10:00Z
 
 ## Текущая задача
 
-T-032
+T-033
 
 ## Список задач
 
@@ -37,6 +37,7 @@ T-032
 | T-025 | Hotfix: кнопка «Загрузить» некликабельна | Frontend: исправлено условие disabled кнопки в Upload.js (progress === null → progress !== null). После выбора CSV кнопка активна, на время загрузки блокируется. Проверено: npm run check — Compiled successfully. | основной агент | DONE | 2/2 | docs/agent/tasks/T-024/20260905T094252Z_main_a02.md | Проверка diff, затем ветка + PR |
 | T-031 | Форма просмотра/редактирования профиля и фото | Backend: колонка User.avatar + миграция 004, PATCH /auth/me (имя), POST /auth/me/avatar (валидация типа/размера), GET /auth/me/avatar/{stored_name}. Frontend: страница Profile (имя + фото, расширяемая по полям), роут /profile, ссылка и аватар в шапке, AuthContext.updateUser. Проверено: pytest 85 passed (11 новых), ruff clean, npm run check — Compiled successfully. | основной агент | DONE | 6/6 | docs/agent/tasks/T-031/20260905T122753Z_opencode_a01.md | Проверка diff, затем ветка + PR |
 | T-032 | Кликабельное имя пользователя в шапке | Frontend: из nav убран пункт «Профиль», имя пользователя в .user-info стало ссылкой на /profile (класс user-info-name), мобильное скрытие обновлено. Проверено: npm run check — Compiled successfully. | основной агент | DONE | 3/3 | docs/agent/tasks/T-032/20260905T125912Z_opencode_a01.md | Проверка diff, затем ветка + PR |
+| T-033 | Загрузка операций из PDF | Backend: парсер PDF-выписки Сбербанка (examples/sber.pdf) через pypdf + диспетч парсера по расширению в POST /families/{id}/transactions/import. Frontend: вкладка «Загрузить» принимает CSV и PDF, импорт в семью, отладочный список операций. Проверено: pytest 90 passed (5 новых), ruff clean, npm run check — Compiled successfully. | основной агент | DONE | 3/3 | docs/agent/tasks/T-033/20260905T142308Z_main_a01.md | Проверка diff, затем ветка + PR |
 
 Допустимые статусы: `TODO`, `IN_PROGRESS`, `BLOCKED`, `DONE`.
 
