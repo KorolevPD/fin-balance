@@ -142,7 +142,7 @@ button[type="submit"]:disabled {
 
 .dashboard-nav {
   display: flex;
-  gap: 16px;
+  gap: 20px;
   justify-self: center;
 }
 
