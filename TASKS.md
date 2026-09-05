@@ -1,10 +1,10 @@
 # Журнал задач проекта
 
-Последнее обновление: 2026-09-05T15:10:00Z
+Последнее обновление: 2026-09-05T15:30:00Z
 
 ## Текущая задача
 
-T-033
+T-034
 
 ## Список задач
 
@@ -38,6 +38,7 @@ T-033
 | T-031 | Форма просмотра/редактирования профиля и фото | Backend: колонка User.avatar + миграция 004, PATCH /auth/me (имя), POST /auth/me/avatar (валидация типа/размера), GET /auth/me/avatar/{stored_name}. Frontend: страница Profile (имя + фото, расширяемая по полям), роут /profile, ссылка и аватар в шапке, AuthContext.updateUser. Проверено: pytest 85 passed (11 новых), ruff clean, npm run check — Compiled successfully. | основной агент | DONE | 6/6 | docs/agent/tasks/T-031/20260905T122753Z_opencode_a01.md | Проверка diff, затем ветка + PR |
 | T-032 | Кликабельное имя пользователя в шапке | Frontend: из nav убран пункт «Профиль», имя пользователя в .user-info стало ссылкой на /profile (класс user-info-name), мобильное скрытие обновлено. Проверено: npm run check — Compiled successfully. | основной агент | DONE | 3/3 | docs/agent/tasks/T-032/20260905T125912Z_opencode_a01.md | Проверка diff, затем ветка + PR |
 | T-033 | Загрузка операций из PDF | Backend: парсер PDF-выписки Сбербанка (examples/sber.pdf) через pypdf + диспетч парсера по расширению в POST /families/{id}/transactions/import. Frontend: вкладка «Загрузить» принимает CSV и PDF, импорт в семью, отладочный список операций. Проверено: pytest 90 passed (5 новых), ruff clean, npm run check — Compiled successfully. | основной агент | DONE | 3/3 | docs/agent/tasks/T-033/20260905T142308Z_main_a01.md | Проверка diff, затем ветка + PR |
+| T-034 | Аналитика «доход/расход» и веб-импорт выписки | Backend: колонка Transaction.type (income/expense, default expense) + миграция 005, save_transactions пишет тип, TransactionOut отдаёт type, аналитика считает total_amount/by_category/top_payees/monthly/family_members только по расходам. Frontend: Upload.js выбирает семью (/families/my) и импортирует через POST /families/{id}/transactions/import, показывает parsed/created/duplicates. Проверено: pytest 89 passed (новые тесты: тип в сервисе/роутере/аналитике), ruff clean по затронутым файлам, npm run check — Compiled successfully. | основной агент | DONE | 4/4 | docs/agent/tasks/T-034/20260905T142902Z_opencode_a01.md | Проверка diff, затем ветка + PR |
 
 Допустимые статусы: `TODO`, `IN_PROGRESS`, `BLOCKED`, `DONE`.
 

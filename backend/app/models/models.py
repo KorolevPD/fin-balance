@@ -79,6 +79,9 @@ class Transaction(Base):
     category_id = Column(UUID(as_uuid=True), ForeignKey("categories.id"), nullable=True)
     date = Column(DateTime, nullable=False)
     amount = Column(Float, nullable=False)
+    type = Column(
+        String(20), nullable=False, default="expense", server_default="expense"
+    )
     original_description = Column(Text, nullable=False)
     cleaned_description = Column(Text, nullable=True)
     source_file = Column(String(255), nullable=True)

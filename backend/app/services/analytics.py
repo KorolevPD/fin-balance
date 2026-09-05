@@ -21,6 +21,8 @@ def get_family_summary(
     ``top_payees``, ``monthly``, ``family_members`` (члены семьи с
     суммарными тратами, отсортированы по убыванию) и ``uploaded_files``
     (файлы текущего пользователя с периодом первой/последней операции).
+    Финансовые агрегаты учитывают только расходы (``type == "expense"``);
+    ``uploaded_files`` — все операции независимо от типа.
     Суммы округляются до двух знаков.
     """
     rows = db.query(Transaction).filter(Transaction.family_id == family_id).all()
@@ -34,25 +36,30 @@ def get_family_summary(
 
     for row in rows:
         amount = float(row.amount or 0.0)
-        total_amount += amount
+        is_expense = (row.type or "expense") == "expense"
 
-        category_name = (
-            row.category.name if row.category is not None else DEFAULT_CATEGORY
-        )
-        cat = by_category.setdefault(category_name, {"amount": 0.0, "count": 0})
-        cat["amount"] += amount
-        cat["count"] += 1
+        if is_expense:
+            total_amount += amount
 
-        payee = row.cleaned_description or row.original_description or "Без названия"
-        payee_item = by_payee.setdefault(payee, {"amount": 0.0, "count": 0})
-        payee_item["amount"] += amount
-        payee_item["count"] += 1
+            category_name = (
+                row.category.name if row.category is not None else DEFAULT_CATEGORY
+            )
+            cat = by_category.setdefault(category_name, {"amount": 0.0, "count": 0})
+            cat["amount"] += amount
+            cat["count"] += 1
 
-        if row.date is not None:
-            month = row.date.strftime("%Y-%m")
-            by_month[month] = by_month.get(month, 0.0) + amount
+            payee = (
+                row.cleaned_description or row.original_description or "Без названия"
+            )
+            payee_item = by_payee.setdefault(payee, {"amount": 0.0, "count": 0})
+            payee_item["amount"] += amount
+            payee_item["count"] += 1
 
-        by_member_total[row.user_id] += amount
+            if row.date is not None:
+                month = row.date.strftime("%Y-%m")
+                by_month[month] = by_month.get(month, 0.0) + amount
+
+            by_member_total[row.user_id] += amount
 
         if row.user_id == user_id and row.source_file:
             file_item = files.setdefault(
