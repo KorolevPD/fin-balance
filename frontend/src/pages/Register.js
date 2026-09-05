@@ -29,7 +29,7 @@ export default function Register() {
 
     try {
       await register(email, password);
-      navigate('/');
+      navigate('/upload');
     } catch (err) {
       setError(err.response?.data?.detail || 'Ошибка регистрации');
     } finally {

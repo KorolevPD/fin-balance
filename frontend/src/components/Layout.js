@@ -7,10 +7,13 @@ export default function Layout({ children }) {
   return (
     <div className="dashboard">
       <header className="dashboard-header">
-        <h1>FinBalance</h1>
+        <Link to="/dashboard" className="logo-link" aria-label="FinBalance — дашборд">
+          <img src="/logo.png" alt="FinBalance" className="logo" />
+        </Link>
         <nav className="dashboard-nav">
-          <Link to="/family">Моя семья</Link>
-          <Link to="/upload">Загрузить файл</Link>
+          <Link to="/family">Создать семью</Link>
+          <Link to="/upload">Загрузить</Link>
+          <Link to="/dashboard">Дашборд</Link>
         </nav>
         <div className="user-info">
           <span>{user.email}</span>
