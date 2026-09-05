@@ -511,6 +511,36 @@ button[type="submit"]:disabled {
   max-width: 1400px;
 }
 
+.demo-grid {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  grid-template-rows: auto auto;
+  gap: 24px;
+}
+
+.demo-block {
+  margin-bottom: 0;
+  min-width: 0;
+}
+
+.demo-block-empty {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  border-style: dashed;
+  background: #fafbfe;
+}
+
+.demo-chart {
+  min-height: 280px;
+}
+
+@media (max-width: 900px) {
+  .demo-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .summary-cards {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
