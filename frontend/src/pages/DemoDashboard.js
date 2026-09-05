@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Navigate } from 'react-router-dom';
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Legend } from 'recharts';
 import api from '../api';
 
@@ -28,14 +29,57 @@ export default function DemoDashboard() {
   const [data, setData] = useState(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
+  const [redirectTo, setRedirectTo] = useState(null);
 
   useEffect(() => {
+    let cancelled = false;
+
     api
-      .get('/demo/dashboard')
-      .then((res) => setData(res.data))
-      .catch((err) => setError(err.response?.data?.detail || 'Не удалось загрузить примерные данные'))
-      .finally(() => setLoading(false));
+      .get('/families/my')
+      .then((res) => {
+        const families = res.data || [];
+        const checks = families.map((family) =>
+          api
+            .get(`/families/${family.id}/summary`)
+            .then((summaryRes) => ({ family, summary: summaryRes.data }))
+            .catch(() => null)
+        );
+        return Promise.all(checks);
+      })
+      .then((results) => {
+        if (cancelled) return;
+        const found = results.find(
+          (item) =>
+            item && (item.summary?.total_amount > 0 ||
+              (item.summary?.by_category || []).length > 0 ||
+              (item.summary?.uploaded_files || []).length > 0)
+        );
+        if (found) {
+          setRedirectTo(`/family/${found.family.id}/dashboard`);
+          return;
+        }
+        return api
+          .get('/demo/dashboard')
+          .then((res) => setData(res.data))
+          .catch((err) =>
+            setError(err.response?.data?.detail || 'Не удалось загрузить примерные данные')
+          );
+      })
+      .catch((err) =>
+        setError(err.response?.data?.detail || 'Не удалось загрузить данные дашборда')
+      )
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
+
+  if (redirectTo) {
+    return <Navigate to={redirectTo} replace />;
+  }
 
   if (loading) {
     return <p className="muted">Загрузка...</p>;
