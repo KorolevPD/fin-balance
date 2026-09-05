@@ -10,6 +10,7 @@ export default function Layout({ children }) {
         <h1>FinBalance</h1>
         <nav className="dashboard-nav">
           <Link to="/family">Моя семья</Link>
+          <Link to="/upload">Загрузить файл</Link>
         </nav>
         <div className="user-info">
           <span>{user.email}</span>
