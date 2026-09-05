@@ -240,7 +240,7 @@ def summary_for_bot(telegram_id: str, db: Session = Depends(get_db)):
             detail="Вы не состоите ни в одной семье",
         )
 
-    summary = get_family_summary(db, membership.family_id)
+    summary = get_family_summary(db, membership.family_id, user.id)
     return BotSummaryOut(
         family_id=membership.family_id,
         total_amount=summary["total_amount"],

@@ -146,7 +146,7 @@ def family_summary(
     current_user: User = Depends(get_current_user),
 ):
     _require_membership(db, family_id, current_user.id)
-    return get_family_summary(db, family_id)
+    return get_family_summary(db, family_id, current_user.id)
 
 
 @router.patch(

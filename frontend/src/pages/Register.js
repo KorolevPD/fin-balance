@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 export default function Register() {
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -28,7 +29,7 @@ export default function Register() {
     setLoading(true);
 
     try {
-      await register(email, password);
+      await register(email, password, name);
       navigate('/upload');
     } catch (err) {
       setError(err.response?.data?.detail || 'Ошибка регистрации');
@@ -41,6 +42,17 @@ export default function Register() {
     <div className="auth-form">
       <h1>Регистрация</h1>
       <form onSubmit={handleSubmit}>
+        <div className="form-group">
+          <label htmlFor="name">Имя</label>
+          <input
+            id="name"
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            maxLength={255}
+            autoComplete="name"
+          />
+        </div>
         <div className="form-group">
           <label htmlFor="email">Email</label>
           <input

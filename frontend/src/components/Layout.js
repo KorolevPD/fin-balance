@@ -16,7 +16,7 @@ export default function Layout({ children }) {
           <Link to="/dashboard">Дашборд</Link>
         </nav>
         <div className="user-info">
-          <span>{user.email}</span>
+          <span>{user.name || user.email}</span>
           <button onClick={logout} className="logout-btn">
             Выйти
           </button>
