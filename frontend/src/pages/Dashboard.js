@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useParams, Link } from 'react-router-dom';
 import {
   ResponsiveContainer,
@@ -48,6 +48,11 @@ function formatDate(iso) {
   return date.toLocaleDateString('ru-RU');
 }
 
+function sortIndicator(key, sortBy, sortDir) {
+  if (sortBy === key) return sortDir === 'asc' ? '▲' : '▼';
+  return '▼';
+}
+
 export default function Dashboard() {
   const { id } = useParams();
   const location = useLocation();
@@ -57,6 +62,35 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [editing, setEditing] = useState(null);
+  const [sortBy, setSortBy] = useState('date');
+  const [sortDir, setSortDir] = useState('desc');
+
+  const handleSort = (key) => {
+    if (sortBy === key) {
+      setSortDir(sortDir === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortBy(key);
+      setSortDir(key === 'category' ? 'asc' : 'desc');
+    }
+  };
+
+  const sortedTransactions = useMemo(() => {
+    if (transactions.length === 0) return transactions;
+    const sorted = [...transactions].sort((a, b) => {
+      let cmp = 0;
+      if (sortBy === 'date') {
+        const da = a.date ? new Date(a.date).getTime() : 0;
+        const db = b.date ? new Date(b.date).getTime() : 0;
+        cmp = da - db;
+      } else if (sortBy === 'category') {
+        const ca = (a.category || 'Прочее').toLowerCase();
+        const cb = (b.category || 'Прочее').toLowerCase();
+        cmp = ca.localeCompare(cb, 'ru');
+      }
+      return sortDir === 'asc' ? cmp : -cmp;
+    });
+    return sorted;
+  }, [transactions, sortBy, sortDir]);
 
   const loadData = useCallback(() => {
     setLoading(true);
@@ -303,15 +337,53 @@ export default function Dashboard() {
                     <table className="data-table">
                       <thead>
                         <tr>
-                          <th>Дата</th>
+                          <th
+                            aria-sort={
+                              sortBy === 'date'
+                                ? sortDir === 'asc'
+                                  ? 'ascending'
+                                  : 'descending'
+                                : 'none'
+                            }
+                          >
+                            <button
+                              type="button"
+                              className="sort-btn"
+                              onClick={() => handleSort('date')}
+                            >
+                              Дата{' '}
+                              <span className={`sort-indicator${sortBy === 'date' ? ' active' : ''}`}>
+                                {sortIndicator('date', sortBy, sortDir)}
+                              </span>
+                            </button>
+                          </th>
                           <th>Название</th>
-                          <th>Категория</th>
+                          <th
+                            aria-sort={
+                              sortBy === 'category'
+                                ? sortDir === 'asc'
+                                  ? 'ascending'
+                                  : 'descending'
+                                : 'none'
+                            }
+                          >
+                            <button
+                              type="button"
+                              className="sort-btn"
+                              onClick={() => handleSort('category')}
+                            >
+                              Категория{' '}
+                              <span className={`sort-indicator${sortBy === 'category' ? ' active' : ''}`}>
+                                {sortIndicator('category', sortBy, sortDir)}
+                              </span>
+                            </button>
+                          </th>
                           <th className="num">Сумма</th>
                           <th></th>
                         </tr>
                       </thead>
                       <tbody>
-                        {transactions.map((txn) => (
+                        {sortedTransactions.map((txn) => (
                           <tr key={txn.id}>
                             <td className="nowrap">{formatDate(txn.date)}</td>
                             <td>{txn.cleaned_description || txn.original_description || '—'}</td>
