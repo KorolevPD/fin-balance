@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import Landing from './pages/Landing';
 import Families from './pages/Families';
 import FamilyDetail from './pages/FamilyDetail';
 import Upload from './pages/Upload';
@@ -19,18 +20,9 @@ export default function App() {
 
   return (
     <Routes>
+      <Route path="/" element={<Landing />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
-      <Route
-        path="/"
-        element={
-          <PrivateRoute>
-            <Layout>
-              <p>Добро пожаловать!</p>
-            </Layout>
-          </PrivateRoute>
-        }
-      />
       <Route
         path="/family"
         element={

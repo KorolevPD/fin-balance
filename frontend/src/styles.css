@@ -716,3 +716,96 @@ button[type="submit"]:disabled {
 .modal-actions .btn {
   width: auto;
 }
+
+.landing {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  background: linear-gradient(135deg, #2f6b4f 0%, #5b5bea 100%);
+  background-size: cover;
+  background-position: center;
+}
+
+.landing-window {
+  width: min(900px, 100%);
+  background: white;
+  border-radius: 24px;
+  box-shadow: 0 24px 64px rgb(20 33 61 / 25%);
+  padding: 40px 48px;
+  display: flex;
+  flex-direction: column;
+}
+
+.landing-content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+  align-items: center;
+}
+
+.landing-logo {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.landing-logo img {
+  max-width: 100%;
+  height: auto;
+}
+
+.landing-title {
+  margin: 0 0 16px;
+  font-size: 2.2rem;
+  line-height: 1.15;
+  color: #1f9d55;
+}
+
+.landing-description {
+  margin: 0 0 16px;
+  font-size: 1.05rem;
+  line-height: 1.5;
+  color: #14213d;
+}
+
+.landing-note {
+  margin: 0;
+  font-size: 1rem;
+  font-style: italic;
+  color: #4a5568;
+}
+
+.landing-btn {
+  display: inline-block;
+  align-self: center;
+  margin-top: 28px;
+  padding: 14px 32px;
+  background: #5b5bea;
+  color: white;
+  border: none;
+  border-radius: 999px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.landing-btn:hover {
+  background: #4a4ad4;
+}
+
+@media (max-width: 720px) {
+  .landing-content {
+    grid-template-columns: 1fr;
+  }
+
+  .landing-title {
+    font-size: 1.7rem;
+  }
+
+  .landing-window {
+    padding: 28px 24px;
+  }
+}
