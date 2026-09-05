@@ -90,7 +90,9 @@ export default function Dashboard() {
     loadData();
   };
 
+  const members = summary?.family_members || [];
   const categories = summary?.by_category || [];
+  const files = summary?.uploaded_files || [];
   const payees = summary?.top_payees || [];
   const monthly = summary?.monthly || [];
   const hasData = categories.length > 0 || transactions.length > 0;
@@ -106,26 +108,119 @@ export default function Dashboard() {
 
       {loading ? (
         <p className="muted">Загрузка...</p>
-      ) : !hasData ? (
-        <div className="card">
-          <h2>Пока нет данных</h2>
-          <p className="muted">Загрузите банковскую выписку, чтобы увидеть статистику расходов.</p>
-        </div>
       ) : (
         <>
-          <section className="summary-cards" aria-label="Сводка расходов">
-            <div className="stat-card">
-              <span className="stat-label">Общая сумма расходов</span>
-              <span className="stat-value">{summary ? formatAmount(summary.total_amount) : '—'}</span>
-            </div>
-          </section>
+          <div className="demo-grid">
+            <section className="card demo-block" aria-label="Члены семьи">
+              <h2>Члены семьи</h2>
+              {members.length === 0 ? (
+                <p className="muted">В семье пока нет участников.</p>
+              ) : (
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>Имя</th>
+                      <th className="num">Траты</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {members.map((member) => (
+                      <tr key={member.user_id || member.email}>
+                        <td>{member.name || member.email}</td>
+                        <td className="num">{formatAmount(member.total_expenses)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </section>
 
-          <section className="card" aria-label="Разбивка по категориям">
-            <h2>Расходы по категориям</h2>
-            {categories.length === 0 ? (
-              <p className="muted">Категорий пока нет.</p>
-            ) : (
-              <div className="category-layout">
+            <section className="card demo-block" aria-label="Траты по категориям">
+              <h2>Траты по категориям</h2>
+              {categories.length === 0 ? (
+                <p className="muted">Категорий пока нет.</p>
+              ) : (
+                <div className="chart-box demo-chart">
+                  <ResponsiveContainer width="100%" height={280}>
+                    <PieChart>
+                      <Pie
+                        data={categories}
+                        dataKey="amount"
+                        nameKey="category"
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={100}
+                        label={(entry) => entry.category}
+                      >
+                        {categories.map((entry, index) => (
+                          <Cell
+                            key={entry.category}
+                            fill={CATEGORY_COLORS[index % CATEGORY_COLORS.length]}
+                          />
+                        ))}
+                      </Pie>
+                      <Tooltip formatter={(value) => formatAmount(value)} />
+                      <Legend />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+            </section>
+
+            <section className="card demo-block demo-block-empty" aria-label="Пустой блок">
+              <h2>Резерв</h2>
+              <p className="muted">Здесь появится новый блок.</p>
+            </section>
+
+            <section className="card demo-block" aria-label="Загруженные файлы">
+              <h2>Загруженные файлы</h2>
+              {files.length === 0 ? (
+                <p className="muted">Файлы пока не загружались.</p>
+              ) : (
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>Файл</th>
+                      <th>Период</th>
+                      <th className="num">Операций</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {files.map((file) => (
+                      <tr key={file.filename}>
+                        <td>{file.filename}</td>
+                        <td className="nowrap">
+                          {formatDate(file.period_start)} — {formatDate(file.period_end)}
+                        </td>
+                        <td className="num">{file.operations_count}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </section>
+          </div>
+
+          {!hasData ? (
+            <div className="card">
+              <h2>Пока нет данных</h2>
+              <p className="muted">
+                Загрузите банковскую выписку, чтобы увидеть статистику расходов.
+              </p>
+            </div>
+          ) : (
+            <>
+              <section className="summary-cards" aria-label="Сводка расходов">
+                <div className="stat-card">
+                  <span className="stat-label">Общая сумма расходов</span>
+                  <span className="stat-value">
+                    {summary ? formatAmount(summary.total_amount) : '—'}
+                  </span>
+                </div>
+              </section>
+
+              <section className="card" aria-label="Разбивка по категориям">
+                <h2>Расходы по категориям</h2>
                 <table className="data-table">
                   <thead>
                     <tr>
@@ -146,7 +241,10 @@ export default function Dashboard() {
                           <td className="num">{item.count ?? 0}</td>
                           <td className="num">
                             <div className="bar-cell">
-                              <span className="percent-bar" style={{ width: `${Math.min(percent, 100)}%` }} />
+                              <span
+                                className="percent-bar"
+                                style={{ width: `${Math.min(percent, 100)}%` }}
+                              />
                               <span className="percent-value">{percent.toFixed(1)}%</span>
                             </div>
                           </td>
@@ -155,105 +253,83 @@ export default function Dashboard() {
                     })}
                   </tbody>
                 </table>
+              </section>
 
-                <div className="chart-box" aria-hidden="true">
-                  <ResponsiveContainer width="100%" height={260}>
-                    <PieChart>
-                      <Pie
-                        data={categories}
-                        dataKey="amount"
-                        nameKey="category"
-                        cx="50%"
-                        cy="50%"
-                        outerRadius={90}
-                        label={(entry) => entry.category}
-                      >
-                        {categories.map((entry, index) => (
-                          <Cell key={entry.category} fill={CATEGORY_COLORS[index % CATEGORY_COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip formatter={(value) => formatAmount(value)} />
-                      <Legend />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-            )}
-          </section>
+              {monthly.length > 0 && (
+                <section className="card" aria-label="Динамика по месяцам">
+                  <h2>Динамика расходов по месяцам</h2>
+                  <div className="chart-box" aria-hidden="true">
+                    <ResponsiveContainer width="100%" height={240}>
+                      <BarChart data={monthly}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="month" />
+                        <YAxis tickFormatter={(value) => Math.abs(Number(value)).toLocaleString('ru-RU')} />
+                        <Tooltip formatter={(value) => formatAmount(value)} />
+                        <Bar dataKey="amount" fill="#5b5bea" radius={[4, 4, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </section>
+              )}
 
-          {monthly.length > 0 && (
-            <section className="card" aria-label="Динамика по месяцам">
-              <h2>Динамика расходов по месяцам</h2>
-              <div className="chart-box" aria-hidden="true">
-                <ResponsiveContainer width="100%" height={240}>
-                  <BarChart data={monthly}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="month" />
-                    <YAxis tickFormatter={(value) => Math.abs(Number(value)).toLocaleString('ru-RU')} />
-                    <Tooltip formatter={(value) => formatAmount(value)} />
-                    <Bar dataKey="amount" fill="#5b5bea" radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </section>
-          )}
-
-          <section className="card" aria-label="Топ получателей">
-            <h2>Топ получателей платежей</h2>
-            {payees.length === 0 ? (
-              <p className="muted">Данных пока нет.</p>
-            ) : (
-              <ul className="payee-list">
-                {payees.slice(0, 5).map((item) => (
-                  <li key={item.payee}>
-                    <span className="payee-name">{item.payee}</span>
-                    <span className="payee-count muted">{item.count ?? ''}</span>
-                    <span className="payee-amount">{formatAmount(item.amount)}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
-
-          <section className="card" aria-label="Список операций">
-            <h2>Операции ({transactions.length})</h2>
-            {transactions.length === 0 ? (
-              <p className="muted">Операций пока нет.</p>
-            ) : (
-              <div className="table-scroll">
-                <table className="data-table">
-                  <thead>
-                    <tr>
-                      <th>Дата</th>
-                      <th>Название</th>
-                      <th>Категория</th>
-                      <th className="num">Сумма</th>
-                      <th></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {transactions.map((txn) => (
-                      <tr key={txn.id}>
-                        <td className="nowrap">{formatDate(txn.date)}</td>
-                        <td>{txn.cleaned_description || txn.original_description || '—'}</td>
-                        <td>{txn.category || 'Прочее'}</td>
-                        <td className="num">{formatAmount(txn.amount)}</td>
-                        <td className="actions-cell">
-                          <button
-                            type="button"
-                            className="btn btn-small"
-                            onClick={() => setEditing(txn)}
-                          >
-                            Изменить
-                          </button>
-                        </td>
-                      </tr>
+              <section className="card" aria-label="Топ получателей">
+                <h2>Топ получателей платежей</h2>
+                {payees.length === 0 ? (
+                  <p className="muted">Данных пока нет.</p>
+                ) : (
+                  <ul className="payee-list">
+                    {payees.slice(0, 5).map((item) => (
+                      <li key={item.payee}>
+                        <span className="payee-name">{item.payee}</span>
+                        <span className="payee-count muted">{item.count ?? ''}</span>
+                        <span className="payee-amount">{formatAmount(item.amount)}</span>
+                      </li>
                     ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </section>
+                  </ul>
+                )}
+              </section>
+
+              <section className="card" aria-label="Список операций">
+                <h2>Операции ({transactions.length})</h2>
+                {transactions.length === 0 ? (
+                  <p className="muted">Операций пока нет.</p>
+                ) : (
+                  <div className="table-scroll">
+                    <table className="data-table">
+                      <thead>
+                        <tr>
+                          <th>Дата</th>
+                          <th>Название</th>
+                          <th>Категория</th>
+                          <th className="num">Сумма</th>
+                          <th></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {transactions.map((txn) => (
+                          <tr key={txn.id}>
+                            <td className="nowrap">{formatDate(txn.date)}</td>
+                            <td>{txn.cleaned_description || txn.original_description || '—'}</td>
+                            <td>{txn.category || 'Прочее'}</td>
+                            <td className="num">{formatAmount(txn.amount)}</td>
+                            <td className="actions-cell">
+                              <button
+                                type="button"
+                                className="btn btn-small"
+                                onClick={() => setEditing(txn)}
+                              >
+                                Изменить
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </section>
+            </>
+          )}
         </>
       )}
 
