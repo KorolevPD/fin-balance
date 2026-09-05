@@ -1,0 +1,11 @@
+# Обязательные переводы строк LF для shell-скриптов.
+# Рабочие копии на Windows (core.autocrlf=true) иначе материализуют CRLF,
+# и Linux-обёртка docker не может выполнить shebang "#!/bin/sh\r"
+# (exec: "/app/entrypoint.sh: no such file or directory").
+# eol=lf гарантирует LF при checkout независимо от autocrlf.
+*.sh text eol=lf
+
+# Прочие текстовые файлы — нормализация к LF (без принудительного eol на checkout).
+*.py text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
