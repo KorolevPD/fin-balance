@@ -1,13 +1,18 @@
 import secrets
 from datetime import datetime, timedelta
+from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
+from app.categorization import categorize_transactions
 from app.database import get_db
-from app.models import BotLink, User
+from app.models import BotLink, FamilyMember, User
+from app.parsers import parse_csv_bytes
 from app.security import get_current_user
+from app.services import save_transactions
+from app.storage import ALLOWED_CONTENT_TYPES, validate_filename
 
 router = APIRouter(prefix="/bot", tags=["bot"])
 
@@ -130,3 +135,75 @@ def me(telegram_id: str, db: Session = Depends(get_db)):
     if user is None:
         return BotMeOut(telegram_id=telegram_id, email=None, linked=False)
     return BotMeOut(telegram_id=telegram_id, email=user.email, linked=True)
+
+
+class BotUploadResult(BaseModel):
+    family_id: UUID
+    parsed: int
+    created: int
+    duplicates_skipped: int
+
+
+@router.post(
+    "/upload",
+    response_model=BotUploadResult,
+    status_code=status.HTTP_201_CREATED,
+    summary="Импорт CSV-выписки из Telegram в семью пользователя",
+)
+def upload_from_bot(
+    file: UploadFile = File(...),
+    telegram_id: str = Form(...),
+    db: Session = Depends(get_db),
+):
+    user = db.query(User).filter(User.telegram_id == telegram_id).first()
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Telegram-аккаунт не привязан к веб-аккаунту",
+        )
+
+    membership = (
+        db.query(FamilyMember).filter(FamilyMember.user_id == user.id).first()
+    )
+    if membership is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Вы не состоите ни в одной семье. "
+            "Создайте или присоединитесь к семье в веб-приложении",
+        )
+
+    filename = file.filename or ""
+    if not validate_filename(filename):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Допускаются только CSV-файлы с расширением .csv",
+        )
+
+    content_type = (file.content_type or "").lower()
+    if content_type not in ALLOWED_CONTENT_TYPES:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Недопустимый MIME-тип файла: {content_type or 'не указан'}",
+        )
+
+    try:
+        parsed = categorize_transactions(parse_csv_bytes(file.file.read()))
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Не удалось разобрать файл: {exc}",
+        )
+
+    result = save_transactions(
+        db,
+        family_id=membership.family_id,
+        user_id=user.id,
+        transactions=parsed,
+        source_file=filename,
+    )
+    return BotUploadResult(
+        family_id=membership.family_id,
+        parsed=len(parsed),
+        created=result.created,
+        duplicates_skipped=result.duplicates_skipped,
+    )
