@@ -1,10 +1,10 @@
 # Журнал задач проекта
 
-Последнее обновление: 2026-09-05T15:30:00Z
+Последнее обновление: 2026-09-05T15:15:00Z
 
 ## Текущая задача
 
-T-034
+T-035
 
 ## Список задач
 
@@ -39,6 +39,7 @@ T-034
 | T-032 | Кликабельное имя пользователя в шапке | Frontend: из nav убран пункт «Профиль», имя пользователя в .user-info стало ссылкой на /profile (класс user-info-name), мобильное скрытие обновлено. Проверено: npm run check — Compiled successfully. | основной агент | DONE | 3/3 | docs/agent/tasks/T-032/20260905T125912Z_opencode_a01.md | Проверка diff, затем ветка + PR |
 | T-033 | Загрузка операций из PDF | Backend: парсер PDF-выписки Сбербанка (examples/sber.pdf) через pypdf + диспетч парсера по расширению в POST /families/{id}/transactions/import. Frontend: вкладка «Загрузить» принимает CSV и PDF, импорт в семью, отладочный список операций. Проверено: pytest 90 passed (5 новых), ruff clean, npm run check — Compiled successfully. | основной агент | DONE | 3/3 | docs/agent/tasks/T-033/20260905T142308Z_main_a01.md | Проверка diff, затем ветка + PR |
 | T-034 | Аналитика «доход/расход» и веб-импорт выписки | Backend: колонка Transaction.type (income/expense, default expense) + миграция 005, save_transactions пишет тип, TransactionOut отдаёт type, аналитика считает total_amount/by_category/top_payees/monthly/family_members только по расходам. Frontend: Upload.js выбирает семью (/families/my) и импортирует через POST /families/{id}/transactions/import, показывает parsed/created/duplicates. Проверено: pytest 89 passed (новые тесты: тип в сервисе/роутере/аналитике), ruff clean по затронутым файлам, npm run check — Compiled successfully. | основной агент | DONE | 4/4 | docs/agent/tasks/T-034/20260905T142902Z_opencode_a01.md | Проверка diff, затем ветка + PR |
+| T-035 | Реальный дашборд по ссылке «Дашборд» | Frontend: DemoDashboard.js при переходе на /dashboard проверяет /families/my и summary каждой семьи; если найдены операции (total_amount>0 или by_category/uploaded_files не пусты) — редирект на реальный дашборд /family/{id}/dashboard, иначе — «Примерный дашборд». Проверено: npm run check — Compiled successfully. | основной агент | DONE | 3/3 | docs/agent/tasks/T-035/20260905T150457Z_opencode_a01.md | Проверка diff, затем ветка + PR |
 
 Допустимые статусы: `TODO`, `IN_PROGRESS`, `BLOCKED`, `DONE`.
 
