@@ -14,9 +14,15 @@ function formatDate(iso) {
   return date.toLocaleDateString('ru-RU');
 }
 
-function formatAmount(value) {
+function formatAmount(value, type) {
   const num = Number(value || 0);
-  return `${num.toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₽`;
+  const isIncome = type === 'income';
+  const sign = isIncome ? '+' : '−';
+  return `${sign} ${Math.abs(num).toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₽`;
+}
+
+function amountClassName(type) {
+  return type === 'income' ? 'amount-income' : 'amount-expense';
 }
 
 export default function Upload() {
@@ -321,7 +327,7 @@ export default function Upload() {
                       <td className="nowrap">{formatDate(txn.date)}</td>
                       <td>{txn.cleaned_description || txn.original_description || '—'}</td>
                       <td>{txn.category || 'Прочее'}</td>
-                      <td className="num">{formatAmount(txn.amount)}</td>
+                      <td className={`num ${amountClassName(txn.type)}`}>{formatAmount(txn.amount, txn.type)}</td>
                     </tr>
                   ))}
                 </tbody>
