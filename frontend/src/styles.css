@@ -1097,6 +1097,23 @@ button[type="submit"]:disabled {
   background: #1a8a39;
 }
 
+.landing-auth-link {
+  margin: 16px 0 0;
+  text-align: center;
+  font-size: 0.95rem;
+  color: #14213d;
+}
+
+.landing-auth-link a {
+  color: #5b5bea;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.landing-auth-link a:hover {
+  text-decoration: underline;
+}
+
 @media (max-width: 720px) {
   .landing-content {
     grid-template-columns: 1fr;

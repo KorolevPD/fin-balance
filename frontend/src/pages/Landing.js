@@ -27,8 +27,11 @@ export default function Landing() {
           </div>
         </div>
         <Link to="/register" className="landing-btn">
-          Зарегистрироваться/войти
+          Зарегистрироваться
         </Link>
+        <p className="landing-auth-link">
+          Уже есть аккаунт? <Link to="/login">Войти</Link>
+        </p>
       </div>
     </div>
   );
