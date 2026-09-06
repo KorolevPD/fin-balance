@@ -11,6 +11,7 @@ from app.ai import (
     classify_descriptions,
     decrypt_key,
     encrypt_key,
+    generate_advice,
     is_supported,
     normalized_provider,
 )
@@ -164,6 +165,77 @@ def test_enrich_with_ai_fallback_при_ошибке(encryption_key, monkeypatch
     )
     result = enrich_with_ai(txns, provider="gemini", api_key_encrypted=key)
     assert result == txns
+
+
+def test_gemini_запрос_идет_на_актуальную_модель(monkeypatch):
+    class FakeAdviceResponse:
+        status_code = 200
+
+        @staticmethod
+        def json():
+            return {
+                "candidates": [
+                    {
+                        "content": {
+                            "parts": [
+                                {
+                                    "text": '{"advice": "Сократите траты на кафе."}'
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+
+    captured = {}
+
+    def fake_post(url, *args, **kwargs):
+        captured["url"] = url
+        return FakeAdviceResponse()
+
+    monkeypatch.setattr("app.ai.gemini.httpx.post", fake_post)
+    text = generate_advice(
+        {"by_category": {"Продукты": 500.0}},
+        api_key="fake",
+        provider="gemini",
+    )
+    assert text == "Сократите траты на кафе."
+    assert "gemini-3.6-flash" in captured["url"]
+    assert "gemini-2.0-flash" not in captured["url"]
+
+
+def test_gemini_404_отозванной_модели_бросает_aierror(monkeypatch):
+    class NotFoundResponse:
+        status_code = 404
+        text = (
+            '{"error": {"code": 404, "message": "This model '
+            'models/gemini-2.0-flash is no longer available", '
+            '"status": "NOT_FOUND"}}'
+        )
+
+        @staticmethod
+        def json():
+            return {
+                "error": {
+                    "code": 404,
+                    "message": "This model models/gemini-2.0-flash "
+                    "is no longer available. Please update your code "
+                    "to use models/gemini-3.6-flash",
+                    "status": "NOT_FOUND",
+                }
+            }
+
+    def fake_post(url, *args, **kwargs):
+        return NotFoundResponse()
+
+    monkeypatch.setattr("app.ai.gemini.httpx.post", fake_post)
+    with pytest.raises(AIError) as exc_info:
+        generate_advice(
+            {"by_category": {"Продукты": 500.0}},
+            api_key="fake",
+            provider="gemini",
+        )
+    assert "HTTP 404" in str(exc_info.value)
 
 
 class FakeGeminiResponse:
