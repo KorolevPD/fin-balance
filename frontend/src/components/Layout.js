@@ -32,13 +32,11 @@ export default function Layout({ children }) {
             aria-label="Мой профиль"
             title={user.name || user.email}
           >
-            {preview ? (
-              <img src={preview} alt="Фото профиля" className="header-avatar-img" />
-            ) : (
-              <span className="header-avatar-letter">
-                {(user.name || user.email || '?')[0].toUpperCase()}
-              </span>
-            )}
+            <img
+              src={preview || '/avatar.jpg'}
+              alt="Фото профиля"
+              className="header-avatar-img"
+            />
           </Link>
           <button onClick={logout} className="logout-btn">
             Выйти
