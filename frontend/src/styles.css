@@ -877,7 +877,7 @@ button[type="submit"]:disabled {
 }
 
 .actions-cell {
-  text-align: right;
+  text-align: center;
   white-space: nowrap;
 }
 
