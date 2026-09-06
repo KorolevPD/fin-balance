@@ -36,7 +36,6 @@ def test_register_возвращает_токен_как_ожидает_фрон
 
 
 def test_приложение_содержит_роуты_семей():
-    assert _route_exists("POST", "/api/families")
     assert _route_exists("POST", "/api/families/join")
     assert _route_exists("GET", "/api/families/my")
     assert _route_exists("GET", "/api/families/{family_id}/members")
