@@ -131,9 +131,12 @@ button[type="submit"]:disabled {
   min-height: 100vh;
   background: linear-gradient(
     135deg,
-    #adddfd 0%,
-    #f4ffcf 50%,
-    #d8f7d8 100%
+    #93D6FC 0%,
+    #A2EBE7 20%,
+    #ADF3CC 40%,
+    #B8F7BD 70%,
+    #DFFAAA 85%,
+    #FEF990 100%
   );
 }
 
