@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useLocation, useParams, Link } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import {
   ResponsiveContainer,
   PieChart,
@@ -55,10 +55,8 @@ function sortIndicator(key, sortBy, sortDir) {
 
 export default function Dashboard() {
   const { id } = useParams();
-  const location = useLocation();
   const [summary, setSummary] = useState(null);
   const [transactions, setTransactions] = useState([]);
-  const [familyName, setFamilyName] = useState(location.state?.family?.name || '');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [editing, setEditing] = useState(null);
@@ -123,17 +121,8 @@ export default function Dashboard() {
   }, [id]);
 
   useEffect(() => {
-    if (!familyName) {
-      api
-        .get('/families/my')
-        .then((res) => {
-          const found = res.data.find((family) => family.id === id);
-          if (found) setFamilyName(found.name);
-        })
-        .catch(() => {});
-    }
     loadData();
-  }, [id, familyName, loadData]);
+  }, [id, loadData]);
 
   const handleSaved = () => {
     setEditing(null);
@@ -175,9 +164,9 @@ export default function Dashboard() {
   return (
     <div className="page dashboard-page">
       <p>
-        <Link to={`/family/${id}`}>← Назад к семье</Link>
+        <Link to="/profile">← Мой профиль</Link>
       </p>
-      <h1>{familyName ? `Дашборд: ${familyName}` : 'Дашборд расходов'}</h1>
+      <h1>Дашборд расходов</h1>
 
       {error && <div className="error">{error}</div>}
 
