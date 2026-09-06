@@ -138,17 +138,19 @@ button[type="submit"]:disabled {
   z-index: -1;
   pointer-events: none;
   background:
-    linear-gradient(
-      to right,
-      #6cb8f0 0%,
-      #9fd7f6 15%,
-      #ffffff 30%
+    radial-gradient(
+      ellipse 64% 205% at 0% 0%,
+      #0b6ad6 0%,
+      #008d8f 25%,
+      #2fb401 50%,
+      rgb(255 255 255 / 0%) 66%
     ),
-    linear-gradient(
-      to left,
-      #4fbf72 0%,
-      #b9d97e 15%,
-      #ffffff 30%
+    radial-gradient(
+      ellipse 64% 205% at 100% 0%,
+      #01f4b4 0%,
+      #c9f11e 25%,
+      #fbff00 50%,
+      rgb(255 255 255 / 0%) 66%
     ),
     #ffffff;
 }
@@ -156,17 +158,19 @@ button[type="submit"]:disabled {
 @media (max-width: 768px) {
   .dashboard::before {
     background:
-      linear-gradient(
-        to right,
-        rgb(108 184 240 / 60%) 0%,
-        rgb(159 215 246 / 28%) 15%,
-        rgb(255 255 255 / 0%) 30%
+      radial-gradient(
+        ellipse 64% 205% at 0% 0%,
+        rgb(11 106 214 / 55%) 0%,
+        rgb(0 141 143 / 40%) 25%,
+        rgb(47 180 1 / 35%) 50%,
+        rgb(255 255 255 / 0%) 66%
       ),
-      linear-gradient(
-        to left,
-        rgb(79 191 114 / 60%) 0%,
-        rgb(185 217 126 / 28%) 15%,
-        rgb(255 255 255 / 0%) 30%
+      radial-gradient(
+        ellipse 64% 205% at 100% 0%,
+        rgb(1 244 180 / 55%) 0%,
+        rgb(201 241 30 / 40%) 25%,
+        rgb(251 255 0 / 35%) 50%,
+        rgb(255 255 255 / 0%) 66%
       ),
       #ffffff;
   }
