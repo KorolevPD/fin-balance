@@ -1,7 +1,7 @@
 """AI-провайдер Google Gemini (REST generateContent).
 
 Бесплатный ключ выдаётся в Google AI Studio (aistudio.google.com).
-Модель по умолчанию — ``gemini-2.0-flash`` (бесплатный тариф).
+Модель по умолчанию — ``gemini-3.6-flash`` (бесплатный тариф).
 """
 
 import httpx
@@ -9,7 +9,7 @@ import httpx
 from app.ai import _common
 from app.ai.client import AIError, ClassifyResult
 
-DEFAULT_MODEL = "gemini-2.0-flash"
+DEFAULT_MODEL = "gemini-3.6-flash"
 
 _GENERATE_URL = "https://generativelanguage.googleapis.com/v1beta/models/{}:generateContent"
 
