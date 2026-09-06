@@ -30,7 +30,7 @@ export default function Register() {
 
     try {
       await register(email, password, name);
-      navigate('/upload');
+      navigate('/dashboard');
     } catch (err) {
       setError(err.response?.data?.detail || 'Ошибка регистрации');
     } finally {

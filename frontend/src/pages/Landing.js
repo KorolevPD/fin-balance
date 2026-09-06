@@ -5,7 +5,7 @@ export default function Landing() {
   const { user } = useAuth();
 
   if (user) {
-    return <Navigate to="/upload" replace />;
+    return <Navigate to="/dashboard" replace />;
   }
 
   return (

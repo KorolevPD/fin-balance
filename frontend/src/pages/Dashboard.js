@@ -16,6 +16,7 @@ import {
 import api from '../api';
 import { CATEGORIES } from '../categories';
 import TransactionEditModal from '../components/TransactionEditModal';
+import UploadModal from '../components/UploadModal';
 
 const CATEGORY_COLORS = [
   '#5b5bea',
@@ -64,6 +65,7 @@ export default function Dashboard() {
   const [sortDir, setSortDir] = useState('desc');
   const [catSortBy, setCatSortBy] = useState('amount');
   const [catSortDir, setCatSortDir] = useState('desc');
+  const [uploadOpen, setUploadOpen] = useState(false);
 
   const handleSort = (key) => {
     if (sortBy === key) {
@@ -248,7 +250,16 @@ export default function Dashboard() {
             </section>
 
             <section className="card demo-block" aria-label="Загруженные файлы">
-              <h2>Загруженные файлы</h2>
+              <div className="card-header">
+                <h2>Загруженные файлы</h2>
+                <button
+                  type="button"
+                  className="btn btn-small"
+                  onClick={() => setUploadOpen(true)}
+                >
+                  Загрузить
+                </button>
+              </div>
               {files.length === 0 ? (
                 <p className="muted">Файлы пока не загружались.</p>
               ) : (
@@ -282,6 +293,13 @@ export default function Dashboard() {
               <p className="muted">
                 Загрузите банковскую выписку, чтобы увидеть статистику расходов.
               </p>
+              <button
+                type="button"
+                className="btn"
+                onClick={() => setUploadOpen(true)}
+              >
+                Загрузить выписку
+              </button>
             </div>
           ) : (
             <>
@@ -522,6 +540,14 @@ export default function Dashboard() {
           categories={CATEGORIES}
           onClose={() => setEditing(null)}
           onSaved={handleSaved}
+        />
+      )}
+
+      {uploadOpen && (
+        <UploadModal
+          familyId={id}
+          onClose={() => setUploadOpen(false)}
+          onUploaded={() => loadData()}
         />
       )}
     </div>
