@@ -625,6 +625,45 @@ button[type="submit"]:disabled {
   color: #14213d;
 }
 
+.stat-card-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.scope-toggle {
+  display: flex;
+  align-items: center;
+  border: 1px solid #dfe3ee;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.scope-toggle-btn {
+  padding: 10px 20px;
+  font-size: 1rem;
+  font-weight: 700;
+  background: transparent;
+  color: #14213d;
+  border: none;
+  border-right: 1px solid #dfe3ee;
+  cursor: pointer;
+}
+
+.scope-toggle-btn:last-child {
+  border-right: none;
+}
+
+.scope-toggle-btn:hover {
+  background: #f1f2f9;
+}
+
+.scope-toggle-btn.active {
+  background: #5b5bea;
+  color: white;
+}
+
 .category-layout {
   display: grid;
   grid-template-columns: 1fr 1fr;
