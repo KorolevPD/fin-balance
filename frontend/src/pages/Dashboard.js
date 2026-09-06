@@ -20,16 +20,49 @@ import UploadModal from '../components/UploadModal';
 
 const CATEGORY_COLORS = [
   '#5b5bea',
-  '#f59e0b',
-  '#10b981',
-  '#ef4444',
-  '#06b6d4',
-  '#8b5cf6',
-  '#ec4899',
-  '#84cc16',
-  '#f97316',
+  '#41dc6f',
+  '#8a1dd7',
+  '#d4c349',
+  '#26b3cf',
+  '#e43a96',
+  '#54c62f',
+  '#4841dc',
+  '#d75c1d',
+  '#49d4a0',
+  '#c126cf',
+  '#c0e43a',
+  '#2f7ac6',
+  '#dc4161',
+  '#1dd72d',
+  '#7e49d4',
+  '#cf9726',
+  '#3ae4dd',
+  '#c62fa0',
+  '#88dc41',
+  '#1d3cd7',
+  '#d45b49',
+  '#26cf6d',
+  '#b33ae4',
+];
+
+const FALLBACK_COLORS = [
+  '#94a3b8',
+  '#57534e',
+  '#a8a29e',
+  '#78716c',
+  '#cbd5e1',
   '#64748b',
 ];
+
+function getCategoryColor(category) {
+  const index = CATEGORIES.indexOf(category);
+  if (index !== -1) return CATEGORY_COLORS[index];
+  let hash = 0;
+  for (let i = 0; i < category.length; i += 1) {
+    hash = (hash * 31 + category.charCodeAt(i)) | 0;
+  }
+  return FALLBACK_COLORS[Math.abs(hash) % FALLBACK_COLORS.length];
+}
 
 function formatAmount(value, type) {
   const num = Number(value || 0);
@@ -246,10 +279,10 @@ export default function Dashboard() {
                         outerRadius={100}
                         label={(entry) => entry.category}
                       >
-                        {chartCategories.map((entry, index) => (
+                        {chartCategories.map((entry) => (
                           <Cell
                             key={entry.category}
-                            fill={CATEGORY_COLORS[index % CATEGORY_COLORS.length]}
+                            fill={getCategoryColor(entry.category)}
                           />
                         ))}
                       </Pie>
