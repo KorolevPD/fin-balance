@@ -9,7 +9,7 @@ function avatarUrl(avatar) {
 
 const READONLY_FIELDS = [
   { key: 'email', label: 'Email', type: 'text' },
-  { key: 'created_at', label: 'Дата регистрации', type: 'date' },
+  { key: 'created_at', label: 'Дата регистрации', type: 'text' },
 ];
 
 const EDITABLE_FIELDS = [
@@ -151,6 +151,27 @@ export default function Profile() {
     } catch (err) {
       setFamilyError(
         err.response?.data?.detail || 'Не удалось присоединиться к семье'
+      );
+    } finally {
+      setJoinLoading(false);
+    }
+  };
+
+  const handleLeave = async () => {
+    if (!family) return;
+    const confirmed = window.confirm(
+      'Выйти из этой семьи? Ваши операции будут перенесены в новую семью.'
+    );
+    if (!confirmed) return;
+    setFamilyError('');
+    setJoinLoading(true);
+    try {
+      await api.post(`/families/${family.id}/leave`);
+      setInviteCode('');
+      await loadFamily();
+    } catch (err) {
+      setFamilyError(
+        err.response?.data?.detail || 'Не удалось выйти из семьи'
       );
     } finally {
       setJoinLoading(false);
@@ -393,6 +414,16 @@ export default function Profile() {
                 {joinLoading ? 'Присоединение...' : 'Присоединиться к семье'}
               </button>
             </form>
+            <div className="profile-actions">
+              <button
+                type="button"
+                className="btn btn-danger"
+                onClick={handleLeave}
+                disabled={joinLoading}
+              >
+                {joinLoading ? 'Выход...' : 'Выйти из семьи'}
+              </button>
+            </div>
           </>
         )}
       </div>
@@ -405,7 +436,7 @@ export default function Profile() {
             <input
               id={`profile-${field.key}`}
               type={field.type}
-              value={field.type === 'date' ? formatDate(user?.[field.key]) : user?.[field.key]}
+              value={formatDate(user?.[field.key]) || user?.[field.key]}
               readOnly
               disabled
             />
