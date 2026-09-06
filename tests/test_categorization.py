@@ -65,6 +65,60 @@ class TestCategorize:
         assert DEFAULT_CATEGORY not in CATEGORY_RULES
 
 
+class TestStatementCategory:
+    def test_супермаркеты_из_выписки_дают_продукты(self):
+        assert (
+            categorize("FIXPRICE 3457. Операция по карте", "Супермаркеты")
+            == "Продукты"
+        )
+
+    def test_транспорт_из_выписки_определяется_по_названию_банка(self):
+        assert (
+            categorize("ISET TRANSPORT 1002. Операция по карте", "Транспорт")
+            == "Транспорт"
+        )
+
+    def test_рестораны_из_выписки_определяются_по_названию_банка(self):
+        assert (
+            categorize("BK BURGER RUS. Операция по карте", "Рестораны и кафе")
+            == "Рестораны и кафе"
+        )
+
+    def test_наличные_из_выписки_дают_категорию_наличные(self):
+        assert (
+            categorize("ATM 60002344. Операция по карте", "Внесение наличных")
+            == "Наличные"
+        )
+
+    def test_переводы_из_выписки_дают_категорию_переводы(self):
+        assert (
+            categorize("SBOL. Операция по карте", "Перевод на карту") == "Переводы"
+        )
+
+    def test_категория_из_выписки_имеет_приоритет_над_правилами(self):
+        assert (
+            categorize("Пятерочка 3250 Москва", "Рестораны и кафе")
+            == "Рестораны и кафе"
+        )
+
+    def test_прочие_операции_из_выписки_уступают_правилам(self):
+        assert (
+            categorize("SPOTIFY. Операция по карте", "Прочие операции")
+            == "Подписки и сервисы"
+        )
+
+    def test_прочие_операции_без_правил_дают_прочее(self):
+        assert (
+            categorize("Альфа Банк", "Прочие операции") == DEFAULT_CATEGORY
+        )
+
+    def test_без_категории_из_выписки_работают_правила(self):
+        assert categorize("Ozon", None) == "Маркетплейсы и покупки"
+
+    def test_маппинг_регистронезависим(self):
+        assert categorize("Ozon", "супермаркеты") == "Продукты"
+
+
 class TestCategorizeTransactions:
     def test_категоризация_присваивает_категорию_каждой_операции(self):
         transactions = [
