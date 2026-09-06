@@ -135,9 +135,35 @@ class TestImportTransactions:
 
         assert response.status_code == 201
         body = response.json()
-        assert body["parsed"] == 8
-        assert body["created"] == 8
+        assert body["parsed"] == 255
+        assert body["created"] == 255
         assert body["duplicates_skipped"] == 0
+
+    def test_импорт_pdf_сохраняет_категории_из_выписки(self, client_db):
+        client, session = client_db
+        user, family = _prepare(session)
+        token = _token(user)
+
+        pdf_bytes = SBER_PDF_PATH.read_bytes()
+        files = {
+            "file": ("sber.pdf", io.BytesIO(pdf_bytes), "application/pdf")
+        }
+        client.post(
+            f"/api/families/{family.id}/transactions/import",
+            files=files,
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+        response = client.get(
+            f"/api/families/{family.id}/transactions",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        body = response.json()
+        categories = {item["category"] for item in body}
+        assert "Продукты" in categories
+        assert "Транспорт" in categories
+        assert "Наличные" in categories
+        assert "Рестораны и кафе" in categories
 
 
 class TestListTransactions:
