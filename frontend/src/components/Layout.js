@@ -19,7 +19,6 @@ export default function Layout({ children }) {
           <img src="/logo2.png" alt="FinBalance" className="logo" />
         </Link>
         <nav className="dashboard-nav">
-          <Link to="/family">Создать семью</Link>
           <Link to="/upload">Загрузить</Link>
           <Link to="/dashboard">Дашборд</Link>
         </nav>

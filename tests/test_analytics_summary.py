@@ -14,7 +14,7 @@ def _prepare(session):
     session.add_all([user1, user2])
     session.flush()
 
-    family = Family(name="Семья", invite_code="SMOKE1")
+    family = Family(invite_code="SMOKE1")
     session.add(family)
     session.flush()
 

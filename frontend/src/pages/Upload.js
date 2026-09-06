@@ -27,15 +27,14 @@ function amountClassName(type) {
 
 export default function Upload() {
   const [file, setFile] = useState(null);
-  const [families, setFamilies] = useState([]);
   const [familyId, setFamilyId] = useState('');
+  const [familyLoading, setFamilyLoading] = useState(true);
   const [progress, setProgress] = useState(null);
   const [done, setDone] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
   const [dragOver, setDragOver] = useState(false);
-  const [loadingFamilies, setLoadingFamilies] = useState(true);
   const [transactions, setTransactions] = useState([]);
   const [transactionsLoading, setTransactionsLoading] = useState(false);
 
@@ -43,14 +42,12 @@ export default function Upload() {
     api
       .get('/families/my')
       .then((res) => {
-        setFamilies(res.data);
-        if (res.data.length === 1) setFamilyId(res.data[0].id);
+        const list = res.data || [];
+        if (list.length > 0) setFamilyId(list[0].id);
       })
-      .catch((err) => setError(err.response?.data?.detail || 'Не удалось загрузить семьи'))
-      .finally(() => setLoadingFamilies(false));
+      .catch((err) => setError(err.response?.data?.detail || 'Не удалось загрузить данные семьи'))
+      .finally(() => setFamilyLoading(false));
   }, []);
-
-  const selectedFamily = families.find((f) => f.id === familyId);
 
   const loadTransactions = (family) => {
     if (!family) return;
@@ -108,27 +105,17 @@ export default function Upload() {
     setProgress(0);
     setDone(false);
 
-    let activeFamilyId = familyId;
-
-    if (!activeFamilyId) {
-      try {
-        const familyRes = await api.post('/families', { name: 'Мои финансы' });
-        const newFamily = familyRes.data;
-        setFamilies([newFamily]);
-        setFamilyId(newFamily.id);
-        activeFamilyId = newFamily.id;
-      } catch {
-        setError('Не удалось создать семью');
-        setProgress(null);
-        return;
-      }
+    if (!familyId) {
+      setError('Семья не найдена. Перезайдите в аккаунт.');
+      setProgress(null);
+      return;
     }
 
     const formData = new FormData();
     formData.append('file', file);
 
     try {
-      const res = await api.post(`/families/${activeFamilyId}/transactions/import`, formData, {
+      const res = await api.post(`/families/${familyId}/transactions/import`, formData, {
         onUploadProgress: (event) => {
           if (!event.total) return;
           const percent = Math.round((event.loaded * 100) / event.total);
@@ -139,7 +126,7 @@ export default function Upload() {
       setDone(true);
       setResult(res.data);
       setInfo(`${res.data.parsed} операций разобрано, ${res.data.created} сохранено, ${res.data.duplicates_skipped} дублей`);
-      loadTransactions(activeFamilyId);
+      loadTransactions(familyId);
       const input = document.getElementById('csvFile');
       if (input) input.value = '';
     } catch (err) {
@@ -157,77 +144,8 @@ export default function Upload() {
     }
   };
 
-  if (loadingFamilies) {
+  if (familyLoading) {
     return <p className="muted">Загрузка...</p>;
-  }
-
-  if (families.length === 0) {
-    return (
-      <div className="page">
-        <h1>Загрузка выписки</h1>
-
-        {error && <div className="error">{error}</div>}
-
-        <form onSubmit={handleUpload}>
-          <p className="muted">
-            У вас пока нет семьи. При загрузке выписки будет создана личная
-            семья «Мои финансы». Позже вы сможете переименовать её или
-            пригласить участников.
-          </p>
-
-          <label
-            htmlFor="csvFile"
-            className={`upload-zone${dragOver ? ' drag-over' : ''}`}
-            onDragOver={(e) => {
-              e.preventDefault();
-              setDragOver(true);
-            }}
-            onDragLeave={() => setDragOver(false)}
-            onDrop={handleDrop}
-          >
-            <input
-              id="csvFile"
-              type="file"
-              accept=".csv,.pdf,application/pdf"
-              className="upload-input"
-              onChange={handleSelect}
-            />
-            <span className="upload-icon">&#8681;</span>
-            <span className="upload-title">
-              {file ? `Выбран файл: ${file.name}` : 'Перетащите файл выписки (CSV или PDF) сюда'}
-            </span>
-            <span className="upload-hint">или нажмите, чтобы выбрать файл</span>
-          </label>
-
-          {progress !== null && (
-            <div className={`upload-progress${done ? ' done' : ''}`} role="progressbar" aria-valuenow={progress}>
-              <div className="progress-bar" style={{ width: `${progress}%` }} />
-              <span className={`progress-label${done ? ' done' : ''}`}>
-                {done ? '\u2713 Готово' : `Загрузка... ${progress}%`}
-              </span>
-            </div>
-          )}
-
-          <div className="upload-actions">
-            <button
-              type="submit"
-              onClick={handleBtnClick}
-              disabled={!file || (progress !== null && !done)}
-              className="upload-btn"
-            >
-              {done ? 'Загрузите файл' : progress === null ? 'Загрузить' : 'Загружается...'}
-            </button>
-            {file && (
-              <button type="button" onClick={reset} className="upload-reset">
-                Сбросить
-              </button>
-            )}
-          </div>
-        </form>
-
-        {info && <div className="success">{info}</div>}
-      </div>
-    );
   }
 
   return (
@@ -236,28 +154,12 @@ export default function Upload() {
 
       {error && <div className="error">{error}</div>}
 
-      {selectedFamily && (
-        <p className="muted">Импорт выписки в семью: {selectedFamily.name}</p>
-      )}
+      <p className="muted">
+        Выписка импортируется в семейный бюджет. Семья создаётся автоматически
+        при регистрации, участники добавляются по коду приглашения в профиле.
+      </p>
 
       <form onSubmit={handleUpload}>
-        <div className="form-group">
-          <label htmlFor="familySelect">Семья</label>
-          <select
-            id="familySelect"
-            value={familyId}
-            onChange={(e) => setFamilyId(e.target.value)}
-            required
-          >
-            {!familyId && <option value="">Выберите семью</option>}
-            {families.map((family) => (
-              <option key={family.id} value={family.id}>
-                {family.name}
-              </option>
-            ))}
-          </select>
-        </div>
-
         <label
           htmlFor="csvFile"
           className={`upload-zone${dragOver ? ' drag-over' : ''}`}

@@ -3,8 +3,6 @@ import { useAuth } from './context/AuthContext';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Landing from './pages/Landing';
-import Families from './pages/Families';
-import FamilyDetail from './pages/FamilyDetail';
 import Upload from './pages/Upload';
 import Dashboard from './pages/Dashboard';
 import DemoDashboard from './pages/DemoDashboard';
@@ -24,26 +22,6 @@ export default function App() {
       <Route path="/" element={<Landing />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
-      <Route
-        path="/family"
-        element={
-          <PrivateRoute>
-            <Layout>
-              <Families />
-            </Layout>
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="/family/:id"
-        element={
-          <PrivateRoute>
-            <Layout>
-              <FamilyDetail />
-            </Layout>
-          </PrivateRoute>
-        }
-      />
       <Route
         path="/dashboard"
         element={

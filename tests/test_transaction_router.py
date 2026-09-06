@@ -34,7 +34,7 @@ def _user():
 
 
 def _family():
-    return Family(name="Моя семья", invite_code="TESTCODE1")
+    return Family(invite_code="TESTCODE1")
 
 
 def _prepare(session):
