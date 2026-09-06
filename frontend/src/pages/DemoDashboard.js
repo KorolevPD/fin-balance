@@ -1,35 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
-import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Legend, Curve } from 'recharts';
 import api from '../api';
 import UploadModal from '../components/UploadModal';
 
-const DEMO_COLORS = [
-  '#5b5bea',
-  '#f59e0b',
-  '#10b981',
-  '#ef4444',
-  '#06b6d4',
-  '#8b5cf6',
-  '#64748b',
-];
-
-function formatAmount(value, type) {
-  const num = Number(value || 0);
-  const isIncome = type === 'income';
-  const sign = isIncome ? '+' : '−';
-  return `${sign} ${Math.abs(num).toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₽`;
-}
-
-function formatDate(iso) {
-  if (!iso) return '';
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return iso;
-  return date.toLocaleDateString('ru-RU');
-}
-
 export default function DemoDashboard() {
-  const [data, setData] = useState(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
   const [redirectTo, setRedirectTo] = useState(null);
@@ -60,14 +34,7 @@ export default function DemoDashboard() {
         );
         if (found) {
           setRedirectTo(`/family/${found.family.id}/dashboard`);
-          return;
         }
-        return api
-          .get('/demo/dashboard')
-          .then((res) => setData(res.data))
-          .catch((err) =>
-            setError(err.response?.data?.detail || 'Не удалось загрузить примерные данные')
-          );
       })
       .catch((err) =>
         setError(err.response?.data?.detail || 'Не удалось загрузить данные дашборда')
@@ -89,122 +56,28 @@ export default function DemoDashboard() {
     return <p className="muted">Загрузка...</p>;
   }
 
-  if (error) {
-    return (
-      <div className="page dashboard-page">
-        <h1>Дашборд</h1>
-        <div className="error">{error}</div>
-      </div>
-    );
-  }
-
-  const members = data?.family_members || [];
-  const categories = data?.categories || [];
-  const files = data?.uploaded_files || [];
-
-  const chartTotal = categories.reduce((sum, item) => sum + Math.abs(Number(item.amount || 0)), 0);
-  const shareOf = (entry) => (chartTotal > 0 ? (Math.abs(Number(entry.amount || 0)) / chartTotal) * 100 : 0);
-  const shouldLabelCategory = (entry) => (shareOf(entry) >= 1 ? entry.category : null);
-  const shouldLabelLine = (props) =>
-    shareOf(props) >= 1 ? <Curve type="linear" {...props} className="recharts-pie-label-line" /> : null;
-
   return (
     <div className="page dashboard-page">
-      <h1>Примерный дашборд</h1>
-      <p className="muted">Демонстрационный макет без реальных данных.</p>
+      {error && <div className="error">{error}</div>}
 
-      <div className="demo-grid">
-        <section className="card demo-block" aria-label="Члены семьи">
-          <h2>Члены семьи</h2>
-          {members.length === 0 ? (
-            <p className="muted">Нет данных.</p>
-          ) : (
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Имя</th>
-                  <th className="num">Траты</th>
-                </tr>
-              </thead>
-              <tbody>
-                {members.map((member) => (
-                  <tr key={member.name}>
-                    <td>{member.name}</td>
-                    <td className="num">{formatAmount(member.total_expenses)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </section>
-
-        <section className="card demo-block" aria-label="Траты по категориям">
-          <h2>Траты по категориям</h2>
-          {categories.length === 0 ? (
-            <p className="muted">Нет данных.</p>
-          ) : (
-            <div className="chart-box demo-chart">
-              <ResponsiveContainer width="100%" height={280}>
-                <PieChart>
-                  <Pie
-                    data={categories}
-                    dataKey="amount"
-                    nameKey="category"
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={100}
-                    label={shouldLabelCategory}
-                    labelLine={shouldLabelLine}
-                  >
-                    {categories.map((entry, index) => (
-                      <Cell key={entry.category} fill={DEMO_COLORS[index % DEMO_COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip formatter={(value) => formatAmount(value)} />
-                  <Legend />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-          )}
-        </section>
-
-        <section className="card demo-block demo-block-empty" aria-label="Пустой блок">
-          <h2>Резерв</h2>
-          <p className="muted">Здесь появится новый блок.</p>
-        </section>
-
-        <section className="card demo-block" aria-label="Банковские выписки">
-          <div className="card-header">
-            <h2>Банковские выписки</h2>
-            <button type="button" className="btn btn-small" onClick={() => setUploadOpen(true)}>
-              Загрузить
-            </button>
-          </div>
-          {files.length === 0 ? (
-            <p className="muted">Выписки пока не загружались.</p>
-          ) : (
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Файл</th>
-                  <th>Период</th>
-                  <th className="num">Операций</th>
-                </tr>
-              </thead>
-              <tbody>
-                {files.map((file) => (
-                  <tr key={file.filename}>
-                    <td>{file.filename}</td>
-                    <td className="nowrap">
-                      {formatDate(file.period_start)} — {formatDate(file.period_end)}
-                    </td>
-                    <td className="num">{file.operations_count}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </section>
+      <div className="card upload-welcome">
+        <h1>Добро пожаловать!</h1>
+        <p className="upload-welcome-text">
+          Чтобы начать работать с нашим сервисом, загрузите вашу банковскую выписку.
+        </p>
+        <p className="muted">
+          Мы принимаем файлы в формате CSV или PDF и автоматически разберём операции,
+          распределим их по категориям и покажем наглядную статистику расходов.
+        </p>
+        <div className="upload-welcome-actions">
+          <button
+            type="button"
+            className="btn"
+            onClick={() => setUploadOpen(true)}
+          >
+            Загрузить выписку
+          </button>
+        </div>
       </div>
 
       {uploadOpen && (
