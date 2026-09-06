@@ -1140,6 +1140,10 @@ button[type="submit"]:disabled {
   flex-wrap: wrap;
 }
 
+.family-actions {
+  margin-top: 16px;
+}
+
 .advice-text {
   line-height: 1.55;
   white-space: pre-wrap;
