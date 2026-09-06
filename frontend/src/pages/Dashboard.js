@@ -212,6 +212,20 @@ export default function Dashboard() {
     }
   };
 
+  const handleDisband = async () => {
+    const confirmed = window.confirm(
+      'Распустить семью? Все участники кроме вас покинут группу, а их операции будут удалены.'
+    );
+    if (!confirmed) return;
+    setError('');
+    try {
+      await api.post(`/families/${id}/disband`);
+      loadData();
+    } catch (err) {
+      setError(err.response?.data?.detail || 'Не удалось распустить семью');
+    }
+  };
+
   const generateAdvice = useCallback(async (keepExisting = false) => {
     setAdviceGenerating(true);
     setAdviceError('');
@@ -259,6 +273,12 @@ export default function Dashboard() {
 
   const members = summary?.family_members || [];
   const files = summary?.uploaded_files || [];
+  const currentUserId = String(user?.id);
+  const currentIsOwner = members.some(
+    (member) =>
+      String(member.user_id) === currentUserId && member.role === 'owner'
+  );
+  const canDisband = members.length >= 2 && currentIsOwner;
   const total = Math.abs(summary?.total_amount || 0);
   const categoryList = useMemo(() => {
     const source = summary?.by_category || [];
@@ -339,6 +359,17 @@ export default function Dashboard() {
                     ))}
                   </tbody>
                 </table>
+              )}
+              {canDisband && (
+                <div className="members-footer">
+                  <button
+                    type="button"
+                    className="btn btn-small btn-danger"
+                    onClick={handleDisband}
+                  >
+                    Распустить семью
+                  </button>
+                </div>
               )}
             </section>
 

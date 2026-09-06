@@ -118,6 +118,7 @@ def get_family_summary(
             "user_id": str(member.user_id),
             "name": member.user.name or member.user.email,
             "email": member.user.email,
+            "role": member.role,
             "total_expenses": round(by_member_total.get(member.user_id, 0.0), 2),
         }
         for member in members

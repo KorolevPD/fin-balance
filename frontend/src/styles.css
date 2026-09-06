@@ -810,6 +810,12 @@ button[type="submit"]:disabled {
   white-space: nowrap;
 }
 
+.members-footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16px;
+}
+
 .card-header-actions {
   display: flex;
   align-items: center;

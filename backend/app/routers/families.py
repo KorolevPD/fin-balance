@@ -8,7 +8,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.models import Family, FamilyMember, Transaction, User
+from app.models import Family, FamilyMember, Transaction, User, UserCorrection
 from app.security import get_current_user
 
 router = APIRouter(prefix="/families", tags=["families"])
@@ -61,6 +61,82 @@ class MemberOut(BaseModel):
     name: str | None = None
     role: str
     joined_at: datetime
+
+
+class DisbandResult(BaseModel):
+    removed: int
+    remaining: int
+
+
+@router.post(
+    "/{family_id}/disband",
+    response_model=DisbandResult,
+    summary="Распустить семью: удалить всех участников кроме владельца",
+)
+def disband_family(
+    family_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    family = db.query(Family).filter(Family.id == family_id).first()
+    if family is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Семья не найдена",
+        )
+    membership = (
+        db.query(FamilyMember)
+        .filter(
+            FamilyMember.family_id == family_id,
+            FamilyMember.user_id == current_user.id,
+        )
+        .first()
+    )
+    if membership is None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Нет доступа к этой семье",
+        )
+    if membership.role != "owner":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Распустить семью может только владелец",
+        )
+
+    leavers = (
+        db.query(FamilyMember)
+        .filter(
+            FamilyMember.family_id == family_id,
+            FamilyMember.role != "owner",
+        )
+        .all()
+    )
+    if not leavers:
+        return DisbandResult(removed=0, remaining=1)
+
+    leaver_ids = [member.user_id for member in leavers]
+    transaction_ids = [
+        transaction.id
+        for transaction in db.query(Transaction)
+        .filter(
+            Transaction.family_id == family_id,
+            Transaction.user_id.in_(leaver_ids),
+        )
+        .all()
+    ]
+    if transaction_ids:
+        db.query(UserCorrection).filter(
+            UserCorrection.transaction_id.in_(transaction_ids)
+        ).delete(synchronize_session=False)
+        db.query(Transaction).filter(
+            Transaction.id.in_(transaction_ids)
+        ).delete(synchronize_session=False)
+    db.query(FamilyMember).filter(
+        FamilyMember.family_id == family_id,
+        FamilyMember.user_id.in_(leaver_ids),
+    ).delete(synchronize_session=False)
+    db.commit()
+    return DisbandResult(removed=len(leaver_ids), remaining=1)
 
 
 @router.post(

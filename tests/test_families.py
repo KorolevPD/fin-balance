@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from datetime import datetime
+from uuid import uuid4
 
 import pytest
 from fastapi.testclient import TestClient
@@ -299,3 +300,157 @@ class TestFamilySizeLimit:
         assert response.status_code == 409
         # семья B не удалена, операция отклонена
         assert session.query(Family).filter(Family.id == family_b.id).count() == 1
+
+
+class TestDisbandFamily:
+    def test_распуск_оставляет_только_владельца_и_удаляет_операции_вышедших(
+        self, client_db
+    ):
+        client, session = client_db
+        owner, family = _prepare_user_with_family(
+            session, "owner@example.com", "OWNER01", role="owner"
+        )
+        member_ids = []
+        for idx in range(2):
+            member = User(
+                email=f"m{idx}@example.com",
+                password_hash=hash_password("secret1"),
+            )
+            session.add(member)
+            session.flush()
+            session.add(
+                FamilyMember(
+                    user_id=member.id, family_id=family.id, role="member"
+                )
+            )
+            member_ids.append(member.id)
+            session.add(
+                Transaction(
+                    family_id=family.id,
+                    user_id=member.id,
+                    date=datetime(2026, 9, 1),
+                    amount=50.0,
+                    original_description=f"Покупка {idx}",
+                )
+            )
+        session.add(
+            Transaction(
+                family_id=family.id,
+                user_id=owner.id,
+                date=datetime(2026, 9, 1),
+                amount=10.0,
+                original_description="Владелец",
+            )
+        )
+        session.commit()
+
+        response = client.post(
+            f"/api/families/{family.id}/disband",
+            headers=_auth(_token(owner)),
+        )
+
+        assert response.status_code == 200
+        assert response.json() == {"removed": 2, "remaining": 1}
+        remaining = (
+            session.query(FamilyMember)
+            .filter(FamilyMember.family_id == family.id)
+            .all()
+        )
+        assert len(remaining) == 1
+        assert remaining[0].user_id == owner.id
+        assert remaining[0].role == "owner"
+        transactions = (
+            session.query(Transaction)
+            .filter(Transaction.family_id == family.id)
+            .all()
+        )
+        assert len(transactions) == 1
+        assert transactions[0].user_id == owner.id
+        assert (
+            session.query(Transaction)
+            .filter(Transaction.user_id.in_(member_ids))
+            .count()
+            == 0
+        )
+
+    def test_не_владелец_не_может_распустить(self, client_db):
+        client, session = client_db
+        owner, family = _prepare_user_with_family(
+            session, "owner@example.com", "OWNER02", role="owner"
+        )
+        member = User(
+            email="member@example.com", password_hash=hash_password("secret1")
+        )
+        session.add(member)
+        session.flush()
+        session.add(
+            FamilyMember(
+                user_id=member.id, family_id=family.id, role="member"
+            )
+        )
+        session.commit()
+
+        response = client.post(
+            f"/api/families/{family.id}/disband",
+            headers=_auth(_token(member)),
+        )
+
+        assert response.status_code == 403
+        # никто не удалён
+        assert (
+            session.query(FamilyMember)
+            .filter(FamilyMember.family_id == family.id)
+            .count()
+            == 2
+        )
+
+    def test_посторонний_пользователь_получает_403(self, client_db):
+        client, session = client_db
+        owner, family = _prepare_user_with_family(
+            session, "owner@example.com", "OWNER03", role="owner"
+        )
+        stranger = User(
+            email="stranger@example.com", password_hash=hash_password("secret1")
+        )
+        session.add(stranger)
+        session.commit()
+
+        response = client.post(
+            f"/api/families/{family.id}/disband",
+            headers=_auth(_token(stranger)),
+        )
+
+        assert response.status_code == 403
+
+    def test_несуществующая_семья_возвращает_404(self, client_db):
+        client, session = client_db
+        owner, _ = _prepare_user_with_family(
+            session, "owner@example.com", "OWNER04", role="owner"
+        )
+
+        response = client.post(
+            f"/api/families/{uuid4()}/disband",
+            headers=_auth(_token(owner)),
+        )
+
+        assert response.status_code == 404
+
+    def test_распуск_при_одном_владельце_ничего_не_удаляет(self, client_db):
+        client, session = client_db
+        owner, family = _prepare_user_with_family(
+            session, "owner@example.com", "OWNER05", role="owner"
+        )
+
+        response = client.post(
+            f"/api/families/{family.id}/disband",
+            headers=_auth(_token(owner)),
+        )
+
+        assert response.status_code == 200
+        assert response.json() == {"removed": 0, "remaining": 1}
+        assert (
+            session.query(FamilyMember)
+            .filter(FamilyMember.family_id == family.id)
+            .count()
+            == 1
+        )

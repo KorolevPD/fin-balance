@@ -98,6 +98,17 @@ class TestFamilyMembersAggregations:
         assert by_name["Мария"] == 0.0
         assert len(summary["family_members"]) == 3
 
+    def test_роли_участников_включены_в_сводку(self, db):
+        user1, user2, family = _prepare(db)
+
+        summary = get_family_summary(db, family.id, user_id=user1.id)
+
+        roles = {
+            str(m["user_id"]): m["role"] for m in summary["family_members"]
+        }
+        assert roles[str(user1.id)] == "owner"
+        assert roles[str(user2.id)] == "member"
+
 
 class TestIncomeExcluded:
     def test_доходы_не_входят_в_расходы_и_категории(self, db):
