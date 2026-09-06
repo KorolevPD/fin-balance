@@ -31,6 +31,23 @@ const CATEGORY_COLORS = [
   '#64748b',
 ];
 
+const DYNAMICS_PERIODS = {
+  year: { source: 'yearly', dataKey: 'year', label: 'По годам' },
+  month: { source: 'monthly', dataKey: 'month', label: 'По месяцам' },
+  day: { source: 'daily', dataKey: 'day', label: 'По дням' },
+};
+
+function formatDynamicsTick(value, period) {
+  const parts = String(value || '').split('-');
+  if (period === 'day' && parts.length === 3) {
+    return `${parts[2]}.${parts[1]}`;
+  }
+  if (period === 'month' && parts.length === 2) {
+    return `${parts[1]}.${parts[0]}`;
+  }
+  return String(value || '');
+}
+
 function formatAmount(value, type) {
   const num = Number(value || 0);
   const isIncome = type === 'income';
@@ -67,6 +84,7 @@ export default function Dashboard() {
   const [catSortDir, setCatSortDir] = useState('desc');
   const [hideIncomes, setHideIncomes] = useState(false);
   const [uploadOpen, setUploadOpen] = useState(false);
+  const [dynamicsPeriod, setDynamicsPeriod] = useState('month');
 
   const handleSort = (key) => {
     if (sortBy === key) {
@@ -182,7 +200,8 @@ export default function Dashboard() {
   }, [summary, catSortBy, catSortDir, total]);
   const chartCategories = categories.filter((item) => Math.abs(Number(item.amount || 0)) > 0);
   const payees = summary?.top_payees || [];
-  const monthly = summary?.monthly || [];
+  const dynamics = DYNAMICS_PERIODS[dynamicsPeriod];
+  const dynamicsData = summary?.[dynamics.source] || [];
   const hasData = categories.length > 0 || transactions.length > 0;
 
   return (
@@ -444,16 +463,41 @@ export default function Dashboard() {
                 </table>
               </section>
 
-              {monthly.length > 0 && (
-                <section className="card" aria-label="Динамика по месяцам">
-                  <h2>Динамика расходов по месяцам</h2>
+              {dynamicsData.length > 0 && (
+                <section className="card" aria-label="Динамика расходов">
+                  <div className="card-header">
+                    <h2>Динамика расходов</h2>
+                    <div
+                      className="period-toggle"
+                      role="group"
+                      aria-label="Период динамики расходов"
+                    >
+                      {Object.entries(DYNAMICS_PERIODS).map(([key, config]) => (
+                        <button
+                          key={key}
+                          type="button"
+                          className={`period-toggle-btn${dynamicsPeriod === key ? ' active' : ''}`}
+                          aria-pressed={dynamicsPeriod === key}
+                          onClick={() => setDynamicsPeriod(key)}
+                        >
+                          {config.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                   <div className="chart-box" aria-hidden="true">
                     <ResponsiveContainer width="100%" height={240}>
-                      <BarChart data={monthly}>
+                      <BarChart data={dynamicsData}>
                         <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="month" />
+                        <XAxis
+                          dataKey={dynamics.dataKey}
+                          tickFormatter={(value) => formatDynamicsTick(value, dynamicsPeriod)}
+                        />
                         <YAxis tickFormatter={(value) => Math.abs(Number(value)).toLocaleString('ru-RU')} />
-                        <Tooltip formatter={(value) => formatAmount(value)} />
+                        <Tooltip
+                          formatter={(value) => formatAmount(value)}
+                          labelFormatter={(label) => formatDynamicsTick(label, dynamicsPeriod)}
+                        />
                         <Bar dataKey="amount" fill="#5b5bea" radius={[4, 4, 0, 0]} />
                       </BarChart>
                     </ResponsiveContainer>
