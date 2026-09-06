@@ -77,6 +77,7 @@ def list_advices(
 )
 def create_advice(
     family_id: UUID,
+    replace: bool = False,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -113,6 +114,11 @@ def create_advice(
             status_code=status.HTTP_502_BAD_GATEWAY,
             detail=str(exc),
         ) from exc
+
+    if replace:
+        db.query(AiAdvice).filter(AiAdvice.family_id == family_id).delete(
+            synchronize_session=False
+        )
 
     advice = AiAdvice(
         family_id=family_id,
