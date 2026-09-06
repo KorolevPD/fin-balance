@@ -1,4 +1,5 @@
 from app.models.models import (
+    AiAdvice,
     Base,
     BotLink,
     Category,
@@ -10,6 +11,7 @@ from app.models.models import (
 )
 
 __all__ = [
+    "AiAdvice",
     "Base",
     "BotLink",
     "Category",

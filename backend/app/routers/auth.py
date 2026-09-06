@@ -7,6 +7,7 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy.orm import Session
 
+from app.ai import encrypt_key, normalized_provider
 from app.database import get_db
 from app.models import User
 from app.routers.families import create_default_family
@@ -47,11 +48,30 @@ class UserOut(BaseModel):
     name: str | None = None
     avatar: str | None = None
     telegram_id: str | None = None
+    ai_provider: str | None = None
+    has_ai_key: bool = False
     created_at: datetime
+
+    @classmethod
+    def from_orm_safe(cls, user: User) -> "UserOut":
+        """Собрать объект, не раскрывая зашифрованный AI-ключ."""
+        return cls(
+            id=user.id,
+            email=user.email,
+            name=user.name,
+            avatar=user.avatar,
+            telegram_id=user.telegram_id,
+            ai_provider=user.ai_provider,
+            has_ai_key=bool(user.ai_api_key_encrypted),
+            created_at=user.created_at,
+        )
 
 
 class UserUpdate(BaseModel):
     name: str | None = Field(default=None, max_length=255)
+    ai_provider: str | None = Field(default=None, max_length=50)
+    ai_api_key: str | None = Field(default=None, max_length=2000)
+    ai_base_url: str | None = Field(default=None, max_length=255)
 
 
 class TokenOut(BaseModel):
@@ -109,7 +129,7 @@ def login(payload: UserLogin, db: Session = Depends(get_db)):
     summary="Текущий пользователь",
 )
 def me(current_user: User = Depends(get_current_user)):
-    return current_user
+    return UserOut.from_orm_safe(current_user)
 
 
 @router.patch(
@@ -124,9 +144,36 @@ def update_me(
 ):
     if payload.name is not None:
         current_user.name = payload.name.strip() or None
+
+    fields = payload.model_fields_set
+    if "ai_api_key" in fields:
+        raw_key = (payload.ai_api_key or "").strip()
+        if raw_key:
+            try:
+                current_user.ai_api_key_encrypted = encrypt_key(raw_key)
+            except ValueError as exc:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Не удалось зашифровать ключ: {exc}",
+                ) from exc
+        else:
+            current_user.ai_api_key_encrypted = None
+
+    if "ai_provider" in fields:
+        provider = normalized_provider(payload.ai_provider)
+        if payload.ai_provider and provider is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Неподдерживаемый AI-провайдер: {payload.ai_provider}",
+            )
+        current_user.ai_provider = provider
+
+    if "ai_base_url" in fields:
+        current_user.ai_base_url = (payload.ai_base_url or "").strip() or None
+
     db.commit()
     db.refresh(current_user)
-    return current_user
+    return UserOut.from_orm_safe(current_user)
 
 
 @router.post(
@@ -170,7 +217,7 @@ async def upload_avatar(
     if previous_avatar:
         delete_avatar(previous_avatar)
 
-    return current_user
+    return UserOut.from_orm_safe(current_user)
 
 
 @router.get(

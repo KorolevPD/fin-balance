@@ -1065,6 +1065,26 @@ button[type="submit"]:disabled {
   gap: 8px;
 }
 
+.profile-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.advice-text {
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+
+.advice-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
 .avatar-upload-label {
   display: inline-block;
   cursor: pointer;

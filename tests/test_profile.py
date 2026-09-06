@@ -182,3 +182,85 @@ class TestUploadAvatar:
         )
 
         assert response.status_code == 401
+
+
+AI_KEEP_RAW = "test-encryption-key-00000000000000000000000000"
+
+
+@pytest.fixture(autouse=True)
+def ai_encryption_env(monkeypatch):
+    monkeypatch.setenv("AI_KEY_ENCRYPTION_KEY", AI_KEEP_RAW)
+
+
+class TestAiKey:
+    def test_patch_me_сохраняет_ключ_зашифрованным(self, client_db):
+        client, session = client_db
+        user = _prepare(session)
+        token = _token(user)
+
+        response = client.patch(
+            "/api/auth/me",
+            json={"ai_provider": "gemini", "ai_api_key": "super-secret-key"},
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+        assert response.status_code == 200
+        body = response.json()
+        assert body["ai_provider"] == "gemini"
+        assert body["has_ai_key"] is True
+        session.refresh(user)
+        assert user.ai_api_key_encrypted
+        assert "super-secret-key" not in user.ai_api_key_encrypted
+
+    def test_patch_me_не_возвращает_сам_ключ(self, client_db):
+        client, session = client_db
+        user = _prepare(session)
+        user.ai_provider = "gemini"
+        user.ai_api_key_encrypted = "encrypted-blob"
+        session.commit()
+        token = _token(user)
+
+        response = client.get(
+            "/api/auth/me",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+        body = response.json()
+        assert body["has_ai_key"] is True
+        assert "ai_api_key" not in body
+        assert "ai_api_key_encrypted" not in body
+
+    def test_patch_me_пустой_ключ_удаляет(self, client_db):
+        client, session = client_db
+        user = _prepare(session)
+        user.ai_provider = "gemini"
+        user.ai_api_key_encrypted = "encrypted-blob"
+        session.commit()
+        token = _token(user)
+
+        response = client.patch(
+            "/api/auth/me",
+            json={"ai_api_key": ""},
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+        assert response.status_code == 200
+        body = response.json()
+        assert body["has_ai_key"] is False
+
+    def test_patch_me_отклоняет_неизвестный_провайдер(self, client_db):
+        client, session = client_db
+        user = _prepare(session)
+        token = _token(user)
+
+        response = client.patch(
+            "/api/auth/me",
+            json={"ai_provider": "myspace"},
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+        assert response.status_code == 400
+
+    def test_поле_ai_поля_есть_в_модели(self):
+        assert "ai_provider" in User.__table__.columns
+        assert "ai_api_key_encrypted" in User.__table__.columns

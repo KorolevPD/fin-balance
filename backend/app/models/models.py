@@ -26,11 +26,15 @@ class User(Base):
     avatar = Column(String(255), nullable=True)
     telegram_id = Column(String(255), unique=True, nullable=True, index=True)
     password_hash = Column(String(255), nullable=False)
+    ai_provider = Column(String(50), nullable=True)
+    ai_api_key_encrypted = Column(Text, nullable=True)
+    ai_base_url = Column(String(255), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     family_memberships = relationship("FamilyMember", back_populates="user")
     transactions = relationship("Transaction", back_populates="user")
     corrections = relationship("UserCorrection", back_populates="user")
+    advices = relationship("AiAdvice", back_populates="user")
 
 
 class Family(Base):
@@ -42,6 +46,7 @@ class Family(Base):
 
     members = relationship("FamilyMember", back_populates="family")
     transactions = relationship("Transaction", back_populates="family")
+    advices = relationship("AiAdvice", back_populates="family")
 
 
 class FamilyMember(Base):
@@ -116,3 +121,17 @@ class UserCorrection(Base):
 
     user = relationship("User", back_populates="corrections")
     transaction = relationship("Transaction", back_populates="corrections")
+
+
+class AiAdvice(Base):
+    __tablename__ = "ai_advices"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    family_id = Column(UUID(as_uuid=True), ForeignKey("families.id"), nullable=False)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    text = Column(Text, nullable=False)
+    provider = Column(String(50), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    family = relationship("Family", back_populates="advices")
+    user = relationship("User", back_populates="advices")
