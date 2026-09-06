@@ -2,7 +2,16 @@ from datetime import datetime
 from typing import List
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
+from fastapi import (
+    APIRouter,
+    BackgroundTasks,
+    Depends,
+    File,
+    HTTPException,
+    Query,
+    UploadFile,
+    status,
+)
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy.orm import Session
 
@@ -13,7 +22,7 @@ from app.parsers import parse_csv_bytes, parse_pdf_bytes
 from app.security import get_current_user
 from app.services import save_transactions
 from app.services.analytics import get_family_summary
-from app.services.ai_transactions import enrich_with_ai
+from app.services.ai_transactions import run_enrich_in_background
 from app.services.transactions import _resolve_or_create_category
 
 router = APIRouter(prefix="/families", tags=["transactions"])
@@ -75,6 +84,7 @@ def _require_membership(
 def import_transactions(
     family_id: UUID,
     file: UploadFile = File(...),
+    background_tasks: BackgroundTasks = BackgroundTasks(),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -90,20 +100,22 @@ def import_transactions(
             detail=f"Не удалось разобрать файл: {exc}",
         )
 
-    enriched = enrich_with_ai(
-        parsed,
-        provider=current_user.ai_provider,
-        api_key_encrypted=current_user.ai_api_key_encrypted,
-        base_url=current_user.ai_base_url,
-    )
-
     result = save_transactions(
         db,
         family_id=family_id,
         user_id=current_user.id,
-        transactions=enriched,
+        transactions=parsed,
         source_file=file.filename,
     )
+
+    if file.filename:
+        background_tasks.add_task(
+            run_enrich_in_background,
+            family_id=family_id,
+            user_id=current_user.id,
+            source_file=file.filename,
+        )
+
     return ImportResult(
         family_id=family_id,
         user_id=current_user.id,
