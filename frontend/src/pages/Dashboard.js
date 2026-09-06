@@ -18,6 +18,7 @@ import api from '../api';
 import { CATEGORIES } from '../categories';
 import TransactionEditModal from '../components/TransactionEditModal';
 import UploadModal from '../components/UploadModal';
+import { useAuth } from '../context/AuthContext';
 
 const CATEGORY_COLORS = [
   '#5b5bea',
@@ -107,6 +108,7 @@ function sortIndicator(key, sortBy, sortDir) {
 
 export default function Dashboard() {
   const { id } = useParams();
+  const { user } = useAuth();
   const [summary, setSummary] = useState(null);
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -119,6 +121,11 @@ export default function Dashboard() {
   const [hideIncomes, setHideIncomes] = useState(false);
   const [uploadOpen, setUploadOpen] = useState(false);
   const [dynamicsPeriod, setDynamicsPeriod] = useState('month');
+  const [advices, setAdvices] = useState([]);
+  const [adviceIndex, setAdviceIndex] = useState(0);
+  const [advicesLoading, setAdvicesLoading] = useState(true);
+  const [adviceGenerating, setAdviceGenerating] = useState(false);
+  const [adviceError, setAdviceError] = useState('');
 
   const handleSort = (key) => {
     if (sortBy === key) {
@@ -205,9 +212,53 @@ export default function Dashboard() {
     }
   };
 
+  const generateAdvice = useCallback(async (keepExisting = false) => {
+    setAdviceGenerating(true);
+    setAdviceError('');
+    try {
+      const res = await api.post(`/families/${id}/advices`);
+      const advice = res.data?.advice;
+      if (advice) {
+        setAdvices((prev) => {
+          const next = keepExisting ? [...prev, advice] : [advice];
+          setAdviceIndex(next.length - 1);
+          return next;
+        });
+      }
+    } catch (err) {
+      setAdviceError(err.response?.data?.detail || 'Не удалось получить новый совет');
+      throw err;
+    } finally {
+      setAdviceGenerating(false);
+    }
+  }, [id]);
+
+  const loadAdvices = useCallback(async () => {
+    setAdvicesLoading(true);
+    setAdviceError('');
+    try {
+      const res = await api.get(`/families/${id}/advices`);
+      const list = res.data || [];
+      setAdvices(list);
+      setAdviceIndex(0);
+      if (list.length === 0 && user?.has_ai_key) {
+        await generateAdvice(true);
+      }
+    } catch (err) {
+      setAdviceError(err.response?.data?.detail || 'Не удалось загрузить советы');
+    } finally {
+      setAdvicesLoading(false);
+    }
+  }, [id, user?.has_ai_key, generateAdvice]);
+
+  useEffect(() => {
+    loadAdvices();
+  }, [id, user?.has_ai_key, loadAdvices]);
+
+  const currentAdvice = advices.length > 0 ? advices[adviceIndex] : null;
+
   const members = summary?.family_members || [];
   const files = summary?.uploaded_files || [];
-
   const total = Math.abs(summary?.total_amount || 0);
   const categoryList = useMemo(() => {
     const source = summary?.by_category || [];
@@ -324,9 +375,82 @@ export default function Dashboard() {
               )}
             </section>
 
-            <section className="card demo-block demo-block-empty" aria-label="Пустой блок">
-              <h2>Резерв</h2>
-              <p className="muted">Здесь появится новый блок.</p>
+            <section className="card demo-block" aria-label="AI-совет">
+              <div className="card-header">
+                <h2>Резерв</h2>
+                {currentAdvice && (
+                  <span className="muted">
+                    Совет {adviceIndex + 1} из {advices.length}
+                  </span>
+                )}
+              </div>
+              {!user?.has_ai_key ? (
+                <p className="muted">
+                  Добавьте бесплатный AI-ключ в профиле, чтобы получать советы
+                  по расходам.{' '}
+                  <Link to="/profile" className="card-header-link">
+                    Настроить →
+                  </Link>
+                </p>
+              ) : advicesLoading ? (
+                <p className="muted">Загрузка советов...</p>
+              ) : adviceError ? (
+                <>
+                  <p className="muted">{adviceError}</p>
+                  <button
+                    type="button"
+                    className="btn btn-small"
+                    onClick={() => generateAdvice(true)}
+                    disabled={adviceGenerating}
+                  >
+                    {adviceGenerating ? 'Генерация...' : 'Получить совет'}
+                  </button>
+                </>
+              ) : currentAdvice ? (
+                <>
+                  <p className="advice-text">{currentAdvice.text}</p>
+                  <div className="advice-controls">
+                    <button
+                      type="button"
+                      className="btn btn-small"
+                      disabled={adviceIndex === 0 || adviceGenerating}
+                      onClick={() => setAdviceIndex((i) => Math.max(0, i - 1))}
+                    >
+                      ◀
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-small"
+                      onClick={() => generateAdvice(true)}
+                      disabled={adviceGenerating}
+                    >
+                      {adviceGenerating ? 'Генерация...' : 'Новый совет'}
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-small"
+                      disabled={adviceIndex >= advices.length - 1 || adviceGenerating}
+                      onClick={() =>
+                        setAdviceIndex((i) => Math.min(advices.length - 1, i + 1))
+                      }
+                    >
+                      ▶
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <p className="muted">Совет ещё не сгенерирован.</p>
+                  <button
+                    type="button"
+                    className="btn btn-small"
+                    onClick={() => generateAdvice(true)}
+                    disabled={adviceGenerating}
+                  >
+                    {adviceGenerating ? 'Генерация...' : 'Получить совет'}
+                  </button>
+                </>
+              )}
             </section>
 
             <section className="card demo-block" aria-label="Банковские выписки">

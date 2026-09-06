@@ -20,6 +20,7 @@ class CategorizedTransaction(ParsedTransaction):
     """Операция из выписки с присвоенной категорией."""
 
     category: str = DEFAULT_CATEGORY
+    cleaned_description: str | None = None
 
 
 def _normalize(text: str) -> str:

@@ -13,6 +13,7 @@ from app.parsers import parse_csv_bytes, parse_pdf_bytes
 from app.security import get_current_user
 from app.services import save_transactions
 from app.services.analytics import get_family_summary
+from app.services.ai_transactions import enrich_with_ai
 from app.services.transactions import _resolve_or_create_category
 
 router = APIRouter(prefix="/families", tags=["transactions"])
@@ -89,11 +90,18 @@ def import_transactions(
             detail=f"Не удалось разобрать файл: {exc}",
         )
 
+    enriched = enrich_with_ai(
+        parsed,
+        provider=current_user.ai_provider,
+        api_key_encrypted=current_user.ai_api_key_encrypted,
+        base_url=current_user.ai_base_url,
+    )
+
     result = save_transactions(
         db,
         family_id=family_id,
         user_id=current_user.id,
-        transactions=parsed,
+        transactions=enriched,
         source_file=file.filename,
     )
     return ImportResult(

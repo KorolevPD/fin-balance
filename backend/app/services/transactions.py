@@ -103,7 +103,7 @@ def save_transactions(
                 amount=round(item.amount, 2),
                 type=item.type if item.type in ("income", "expense") else "expense",
                 original_description=item.description,
-                cleaned_description=None,
+                cleaned_description=item.cleaned_description,
                 source_file=source_file,
             )
         )
