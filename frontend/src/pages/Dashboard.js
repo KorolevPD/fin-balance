@@ -118,7 +118,7 @@ export default function Dashboard() {
   const [sortDir, setSortDir] = useState('desc');
   const [catSortBy, setCatSortBy] = useState('amount');
   const [catSortDir, setCatSortDir] = useState('desc');
-  const [hideIncomes, setHideIncomes] = useState(false);
+  const [hideIncomes, setHideIncomes] = useState(true);
   const [uploadOpen, setUploadOpen] = useState(false);
   const [dynamicsPeriod, setDynamicsPeriod] = useState('month');
   const [advices, setAdvices] = useState([]);
