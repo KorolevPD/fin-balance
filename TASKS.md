@@ -1,10 +1,10 @@
 # Журнал задач проекта
 
-Последнее обновление: 2026-09-06T12:10:00Z
+Последнее обновление: 2026-09-06T15:18:39Z
 
 ## Текущая задача
 
-T-061
+T-064
 
 ## Список задач
 
@@ -52,6 +52,7 @@ T-061
 | T-058 | Кнопка «Удалить» в «Банковских выписках» отцентрована | Frontend: кнопка «Удалить» в таблице выписок (Dashboard.js) перенесена из ячейки `actions-cell` (выравнивание вправо) в `.files-remove-cell` (`text-align: center`) — кнопка находится по центру пространства между колонкой «Операций» и правым краем окна. Другие таблицы (`actions-cell` в Операциях/списке операций) не затронуты. Пересобрано: npm run check — Compiled successfully (main.64ef5db7.css). | основной агент | IN_PROGRESS | 1/1 | docs/agent/tasks/T-058/20260906T092602Z_opencode_a01.md | Проверка diff, затем коммит, push, PR |
 | T-060 | AI-анализ расходов через ключ пользователя | Backend: поля User.ai_provider/ai_api_key_encrypted/ai_base_url + миграция 007, таблица AiAdvice, AES-GCM-шифрование (AI_KEY_ENCRYPTION_KEY), модуль app/ai (client с реестром провайдеров + фолбэк на правила, gemini.py, openai_compat.py), AI-импорт (enrich_with_ai в transactions.py, save_transactions пишет cleaned_description), роутер ai.py (GET/POST /families/{id}/advices), auth.py: PATCH /auth/me принимает ai_*, GET /me отдаёт has_ai_key без ключа. Frontend: карточка «AI-ассистент» в профиле (Profile.js), блок «Резерв» на дашборде (авто-генерация при открытии, «N из M», ◀ ▶, «Новый совет»), зависимости cryptography+httpx. Проверено: pytest 153 passed (28 новых), ruff чист по изменённым файлам, npm run check — Compiled successfully. | основной агент | DONE | 11/11 | docs/agent/tasks/T-060/20260906T103514Z_opencode_a01.md | PR #69 влит в main |
 | T-061 | Фикс: устаревшая модель Gemini gemini-2.0-flash | Backend: Google отозвал `gemini-2.0-flash` (HTTP 404 при генерации советов/классификации). Замена `DEFAULT_MODEL = "gemini-3.6-flash"` в `backend/app/ai/gemini.py` (+ docstring). Добавлены тесты: проверка, что URL запроса содержит актуальную модель, и воспроизведение 404 как `AIError`. Проверено: pytest 155 passed (2 новых), ruff чист. | основной агент | IN_PROGRESS | 5/6 | docs/agent/tasks/T-061/20260906T120000Z_opencode_a01.md | Проверка diff, затем коммиты, push, PR |
+| T-064 | Кнопка «Выйти из семьи» в профиле | Backend: эндпоинт `POST /families/{family_id}/leave` — проверка членства (403 для чужой), автосоздание новой семьи, перенос своих транзакций в новую семью, удаление членства; при нуле оставшихся участников — удаление старой семьи и её советов. Frontend: кнопка «Выйти из семьи» (btn-danger) в карточке «Семья» профиля, подтверждение через confirm, после выхода — перезагрузка данных семьи. Проверено: pytest 159 passed (3 новых), ruff чист, npm run check — Compiled successfully. | основной агент | IN_PROGRESS | 3/4 | docs/agent/tasks/T-064/20260906T151839Z_opencode_a01.md | Проверка diff, затем коммиты, push, PR |
 
 Допустимые статусы: `TODO`, `IN_PROGRESS`, `BLOCKED`, `DONE`.
 

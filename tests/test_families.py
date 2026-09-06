@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 
 from datetime import datetime
+from uuid import UUID
 
 import pytest
 from fastapi.testclient import TestClient
-
 from app.database import get_db
 from app.models import Family, FamilyMember, Transaction, User
 from app.security import create_access_token, hash_password
@@ -299,3 +299,124 @@ class TestFamilySizeLimit:
         assert response.status_code == 409
         # семья B не удалена, операция отклонена
         assert session.query(Family).filter(Family.id == family_b.id).count() == 1
+
+
+class TestLeaveFamily:
+    def test_выход_создаёт_новую_семью_и_переносит_транзакции(self, client_db):
+        client, session = client_db
+        user_a, family_a = _prepare_user_with_family(
+            session, "a@example.com", "AAABBB1", role="owner"
+        )
+        user_b, family_b = _prepare_user_with_family(
+            session, "b@example.com", "BBBDDD2", role="owner"
+        )
+        client.post(
+            "/api/families/join",
+            json={"invite_code": "AAABBB1"},
+            headers=_auth(_token(user_b)),
+        )
+        family_b_id = family_b.id
+        session.add(
+            Transaction(
+                family_id=family_a.id,
+                user_id=user_b.id,
+                date=datetime(2026, 9, 1),
+                amount=100.0,
+                original_description="Лента",
+            )
+        )
+        session.add(
+            Transaction(
+                family_id=family_a.id,
+                user_id=user_a.id,
+                date=datetime(2026, 9, 1),
+                amount=200.0,
+                original_description="Продукты",
+            )
+        )
+        session.commit()
+
+        response = client.post(
+            f"/api/families/{family_a.id}/leave",
+            headers=_auth(_token(user_b)),
+        )
+
+        assert response.status_code == 200
+        body = response.json()
+        assert body["id"] != str(family_a.id)
+
+        # транзакции B перенесены в новую семью, A остались в старой
+        new_family_id = UUID(body["id"])
+        b_tx = (
+            session.query(Transaction)
+            .filter(
+                Transaction.family_id == new_family_id,
+                Transaction.user_id == user_b.id,
+            )
+            .all()
+        )
+        a_tx = (
+            session.query(Transaction)
+            .filter(
+                Transaction.family_id == family_a.id,
+                Transaction.user_id == user_a.id,
+            )
+            .all()
+        )
+        assert len(b_tx) == 1
+        assert b_tx[0].original_description == "Лента"
+        assert len(a_tx) == 1
+        # старая семья B (объединённая при вступлении) удалена ранее
+        assert session.query(Family).filter(Family.id == family_b_id).count() == 0
+
+    def test_выход_последнего_участника_удаляет_семью(self, client_db):
+        client, session = client_db
+        user, family = _prepare_user_with_family(
+            session, "only@example.com", "ONLY001", role="owner"
+        )
+        session.add(
+            Transaction(
+                family_id=family.id,
+                user_id=user.id,
+                date=datetime(2026, 9, 1),
+                amount=50.0,
+                original_description="Кофе",
+            )
+        )
+        session.commit()
+
+        response = client.post(
+            f"/api/families/{family.id}/leave",
+            headers=_auth(_token(user)),
+        )
+
+        assert response.status_code == 200
+        assert session.query(Family).filter(Family.id == family.id).count() == 0
+        memberships = (
+            session.query(FamilyMember).filter(FamilyMember.user_id == user.id).all()
+        )
+        assert len(memberships) == 1
+        # транзакция перенесена в новую семью пользователя
+        moved = (
+            session.query(Transaction)
+            .filter(Transaction.user_id == user.id)
+            .all()
+        )
+        assert len(moved) == 1
+        assert moved[0].family_id == memberships[0].family_id
+
+    def test_выход_из_незнакомой_семьи_возвращает_403(self, client_db):
+        client, session = client_db
+        user_a, family_a = _prepare_user_with_family(
+            session, "a@example.com", "AAABBB1", role="owner"
+        )
+        user_b, _ = _prepare_user_with_family(
+            session, "b@example.com", "BBBDDD2", role="owner"
+        )
+
+        response = client.post(
+            f"/api/families/{family_a.id}/leave",
+            headers=_auth(_token(user_b)),
+        )
+
+        assert response.status_code == 403
