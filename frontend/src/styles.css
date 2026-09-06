@@ -797,6 +797,11 @@ button[type="submit"]:disabled {
   white-space: nowrap;
 }
 
+.files-remove-cell {
+  text-align: center;
+  white-space: nowrap;
+}
+
 .card-header-actions {
   display: flex;
   align-items: center;
