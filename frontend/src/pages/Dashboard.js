@@ -451,7 +451,19 @@ export default function Dashboard() {
               </section>
 
               <section className="card" aria-label="Список операций">
-                <h2>Операции ({sortedTransactions.length})</h2>
+                <div className="ops-header">
+                  <h2>Операции ({sortedTransactions.length})</h2>
+                  {transactions.length > 0 && (
+                    <button
+                      type="button"
+                      className="btn btn-secondary btn-small"
+                      aria-pressed={hideIncomes}
+                      onClick={() => setHideIncomes((value) => !value)}
+                    >
+                      {hideIncomes ? 'Показать пополнения' : 'Убрать пополнения'}
+                    </button>
+                  )}
+                </div>
                 {transactions.length === 0 ? (
                   <p className="muted">Операций пока нет.</p>
                 ) : (
@@ -527,19 +539,7 @@ export default function Dashboard() {
                   </div>
                 )}
                 {transactions.length > 0 && sortedTransactions.length === 0 && (
-                  <p className="muted">Все пополнения скрыты кнопкой ниже.</p>
-                )}
-                {transactions.length > 0 && (
-                  <div className="ops-filter-actions">
-                    <button
-                      type="button"
-                      className="btn btn-secondary btn-small"
-                      aria-pressed={hideIncomes}
-                      onClick={() => setHideIncomes((value) => !value)}
-                    >
-                      {hideIncomes ? 'Показать пополнения' : 'Убрать пополнения'}
-                    </button>
-                  </div>
+                  <p className="muted">Все пополнения скрыты кнопкой выше.</p>
                 )}
               </section>
             </>

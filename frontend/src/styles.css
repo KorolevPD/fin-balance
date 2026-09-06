@@ -758,10 +758,16 @@ button[type="submit"]:disabled {
   white-space: nowrap;
 }
 
-.ops-filter-actions {
+.ops-header {
   display: flex;
-  justify-content: flex-start;
-  margin-top: 16px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.ops-header h2 {
+  margin: 0;
 }
 
 .amount-income {
