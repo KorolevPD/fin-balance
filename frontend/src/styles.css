@@ -750,6 +750,17 @@ button[type="submit"]:disabled {
   background: #f1f2f9;
 }
 
+.btn-danger {
+  background: transparent;
+  color: #dc2626;
+  border: 1px solid #dc2626;
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: #dc2626;
+  color: white;
+}
+
 .actions-cell {
   text-align: right;
   white-space: nowrap;

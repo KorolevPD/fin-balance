@@ -131,6 +131,22 @@ export default function Dashboard() {
     loadData();
   };
 
+  const handleDeleteFile = async (filename) => {
+    const confirmed = window.confirm(
+      `Удалить выписку «${filename}»? Все её операции будут удалены безвозвратно.`
+    );
+    if (!confirmed) return;
+    setError('');
+    try {
+      await api.delete(`/families/${id}/transactions`, {
+        params: { source_file: filename },
+      });
+      loadData();
+    } catch (err) {
+      setError(err.response?.data?.detail || 'Не удалось удалить выписку');
+    }
+  };
+
   const members = summary?.family_members || [];
   const files = summary?.uploaded_files || [];
 
@@ -165,11 +181,6 @@ export default function Dashboard() {
 
   return (
     <div className="page dashboard-page">
-      <p>
-        <Link to="/profile">← Мой профиль</Link>
-      </p>
-      <h1>Дашборд расходов</h1>
-
       {error && <div className="error">{error}</div>}
 
       {loading ? (
@@ -249,9 +260,9 @@ export default function Dashboard() {
               <p className="muted">Здесь появится новый блок.</p>
             </section>
 
-            <section className="card demo-block" aria-label="Загруженные файлы">
+            <section className="card demo-block" aria-label="Банковские выписки">
               <div className="card-header">
-                <h2>Загруженные файлы</h2>
+                <h2>Банковские выписки</h2>
                 <button
                   type="button"
                   className="btn btn-small"
@@ -261,7 +272,7 @@ export default function Dashboard() {
                 </button>
               </div>
               {files.length === 0 ? (
-                <p className="muted">Файлы пока не загружались.</p>
+                <p className="muted">Выписки пока не загружались.</p>
               ) : (
                 <table className="data-table">
                   <thead>
@@ -269,6 +280,7 @@ export default function Dashboard() {
                       <th>Файл</th>
                       <th>Период</th>
                       <th className="num">Операций</th>
+                      <th></th>
                     </tr>
                   </thead>
                   <tbody>
@@ -279,6 +291,15 @@ export default function Dashboard() {
                           {formatDate(file.period_start)} — {formatDate(file.period_end)}
                         </td>
                         <td className="num">{file.operations_count}</td>
+                        <td className="actions-cell">
+                          <button
+                            type="button"
+                            className="btn btn-small btn-danger"
+                            onClick={() => handleDeleteFile(file.filename)}
+                          >
+                            Удалить
+                          </button>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
