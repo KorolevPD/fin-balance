@@ -353,7 +353,7 @@ export default function Dashboard() {
                           {formatDate(file.period_start)} — {formatDate(file.period_end)}
                         </td>
                         <td className="num">{file.operations_count}</td>
-                        <td className="actions-cell">
+                        <td className="files-remove-cell">
                           <button
                             type="button"
                             className="btn btn-small btn-danger"
