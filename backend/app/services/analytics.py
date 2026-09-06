@@ -20,9 +20,10 @@ def get_family_summary(
 
     Возвращает словарь с ключами ``total_amount``, ``by_category``,
     ``top_payees``, ``yearly``, ``monthly``, ``daily``, ``family_members``
-    (члены семьи с суммарными тратами, отсортированы по убыванию) и
+    (члены семьи с суммарными тратами, отсортированы по убыванию),
     ``uploaded_files`` (файлы текущего пользователя с периодом
-    первой/последней операции).
+    первой/последней операции) и ``other_members_have_statements`` (есть ли у
+    членов семьи, кроме запрашивающего, загруженные выписки).
     Финансовые агрегаты учитывают только расходы (``type == "expense"``);
     ``uploaded_files`` — все операции независимо от типа.
     Суммы округляются до двух знаков.
@@ -76,6 +77,20 @@ def get_family_summary(
                 by_day[day] = by_day.get(day, 0.0) + amount
 
             by_member_total[row.user_id] += amount
+
+    other_members_have_statements = False
+    if user_id is not None:
+        other_stmt = (
+            db.query(Transaction.id)
+            .filter(
+                Transaction.family_id == family_id,
+                Transaction.user_id != user_id,
+                Transaction.source_file.is_not(None),
+            )
+            .limit(1)
+            .first()
+        )
+        other_members_have_statements = other_stmt is not None
 
     files: dict[str, dict[str, Any]] = {}
     if user_id is not None:
@@ -159,4 +174,5 @@ def get_family_summary(
         "daily": daily_list,
         "family_members": family_members_list,
         "uploaded_files": uploaded_files_list,
+        "other_members_have_statements": other_members_have_statements,
     }

@@ -120,13 +120,19 @@ export default function Dashboard() {
   const [catSortDir, setCatSortDir] = useState('desc');
   const [hideIncomes, setHideIncomes] = useState(true);
   const [uploadOpen, setUploadOpen] = useState(false);
-  const [viewScope, setViewScope] = useState('family');
+  const [viewScope, setViewScope] = useState('personal');
   const [dynamicsPeriod, setDynamicsPeriod] = useState('month');
   const [advices, setAdvices] = useState([]);
   const [adviceIndex, setAdviceIndex] = useState(0);
   const [advicesLoading, setAdvicesLoading] = useState(true);
   const [adviceGenerating, setAdviceGenerating] = useState(false);
   const [adviceError, setAdviceError] = useState('');
+
+  const members = summary?.family_members || [];
+  const userIsAlone = members.length <= 1;
+  const otherMembersHaveStatements = !!summary?.other_members_have_statements;
+  const personalOnly = userIsAlone || !otherMembersHaveStatements;
+  const effectiveScope = personalOnly ? 'personal' : viewScope;
 
   const handleSort = (key) => {
     if (sortBy === key) {
@@ -172,7 +178,7 @@ export default function Dashboard() {
   const loadData = useCallback(() => {
     setLoading(true);
     setError('');
-    const params = viewScope === 'personal' && user?.id ? { user_id: user.id } : undefined;
+    const params = effectiveScope === 'personal' && user?.id ? { user_id: user.id } : undefined;
     api
       .get(`/families/${id}/summary`, { params })
       .then((res) => setSummary(res.data))
@@ -187,11 +193,11 @@ export default function Dashboard() {
         setError(err.response?.data?.detail || 'Не удалось загрузить операции');
       })
       .finally(() => setLoading(false));
-  }, [id, user?.id, viewScope]);
+  }, [id, user?.id, effectiveScope]);
 
   useEffect(() => {
     loadData();
-  }, [id, loadData, viewScope]);
+  }, [id, loadData, effectiveScope]);
 
   const handleSaved = () => {
     setEditing(null);
@@ -265,7 +271,6 @@ export default function Dashboard() {
 
   const currentAdvice = advices.length > 0 ? advices[adviceIndex] : null;
 
-  const members = summary?.family_members || [];
   const files = summary?.uploaded_files || [];
   const total = Math.abs(summary?.total_amount || 0);
   const categoryList = useMemo(() => {
@@ -314,7 +319,7 @@ export default function Dashboard() {
         <p className="muted">Загрузка...</p>
       ) : (
         <>
-          {(hasData || viewScope === 'personal') && (
+          {(hasData || effectiveScope === 'personal') && (
             <section className="summary-cards" aria-label="Сводка расходов">
               <div className="stat-card">
                 <span className="stat-label">Общая сумма расходов</span>
@@ -322,28 +327,30 @@ export default function Dashboard() {
                   <span className="stat-value">
                     {summary ? formatAmount(summary.total_amount) : '—'}
                   </span>
-                  <div
-                    className="scope-toggle"
-                    role="group"
-                    aria-label="Область расходов"
-                  >
-                    <button
-                      type="button"
-                      className={`scope-toggle-btn${viewScope === 'family' ? ' active' : ''}`}
-                      aria-pressed={viewScope === 'family'}
-                      onClick={() => setViewScope('family')}
+                  {!personalOnly && (
+                    <div
+                      className="scope-toggle"
+                      role="group"
+                      aria-label="Область расходов"
                     >
-                      В семье
-                    </button>
-                    <button
-                      type="button"
-                      className={`scope-toggle-btn${viewScope === 'personal' ? ' active' : ''}`}
-                      aria-pressed={viewScope === 'personal'}
-                      onClick={() => setViewScope('personal')}
-                    >
-                      Личные
-                    </button>
-                  </div>
+                      <button
+                        type="button"
+                        className={`scope-toggle-btn${viewScope === 'family' ? ' active' : ''}`}
+                        aria-pressed={viewScope === 'family'}
+                        onClick={() => setViewScope('family')}
+                      >
+                        В семье
+                      </button>
+                      <button
+                        type="button"
+                        className={`scope-toggle-btn${viewScope === 'personal' ? ' active' : ''}`}
+                        aria-pressed={viewScope === 'personal'}
+                        onClick={() => setViewScope('personal')}
+                      >
+                        Личные
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             </section>
