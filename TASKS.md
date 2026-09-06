@@ -1,10 +1,10 @@
 # Журнал задач проекта
 
-Последнее обновление: 2026-09-06T10:50:00Z
+Последнее обновление: 2026-09-06T11:35:00Z
 
 ## Текущая задача
 
-T-060
+T-061
 
 ## Список задач
 
@@ -51,6 +51,7 @@ T-060
 | T-045 | Отступ между рядами блоков на дашборде | Frontend: `margin-bottom: 24px` для `.demo-grid` (styles.css) — отступ между рядом «Резерв» + «Банковские выписки» и блоком «Расходы по категориям» равен `gap` сетки (24px) как между другими рядами. Пересобрано: npm run check — Compiled successfully (main.29952c2c.css). | основной агент | IN_PROGRESS | 1/1 | docs/agent/tasks/T-045/20260906T053620Z_opencode_a01.md | Проверка diff, затем коммит, ветка + PR |
 | T-058 | Кнопка «Удалить» в «Банковских выписках» отцентрована | Frontend: кнопка «Удалить» в таблице выписок (Dashboard.js) перенесена из ячейки `actions-cell` (выравнивание вправо) в `.files-remove-cell` (`text-align: center`) — кнопка находится по центру пространства между колонкой «Операций» и правым краем окна. Другие таблицы (`actions-cell` в Операциях/списке операций) не затронуты. Пересобрано: npm run check — Compiled successfully (main.64ef5db7.css). | основной агент | IN_PROGRESS | 1/1 | docs/agent/tasks/T-058/20260906T092602Z_opencode_a01.md | Проверка diff, затем коммит, push, PR |
 | T-060 | AI-анализ расходов через ключ пользователя | Backend: поля User.ai_provider/ai_api_key_encrypted/ai_base_url + миграция 007, таблица AiAdvice, AES-GCM-шифрование (AI_KEY_ENCRYPTION_KEY), модуль app/ai (client с реестром провайдеров + фолбэк на правила, gemini.py, openai_compat.py), AI-импорт (enrich_with_ai в transactions.py, save_transactions пишет cleaned_description), роутер ai.py (GET/POST /families/{id}/advices), auth.py: PATCH /auth/me принимает ai_*, GET /me отдаёт has_ai_key без ключа. Frontend: карточка «AI-ассистент» в профиле (Profile.js), блок «Резерв» на дашборде (авто-генерация при открытии, «N из M», ◀ ▶, «Новый совет»), зависимости cryptography+httpx. Проверено: pytest 153 passed (28 новых), ruff чист по изменённым файлам, npm run check — Compiled successfully. | основной агент | IN_PROGRESS | 9/11 | docs/agent/tasks/T-060/20260906T103514Z_opencode_a01.md | Проверка diff, затем коммит, ветка + PR |
+| T-061 | Переключатель «В семье / Личные» на дашборде | Backend: query-параметр `user_id` в GET /families/{id}/transactions и GET /families/{id}/summary — фильтр агрегатов и списка по пользователю (личный режим), запрос чужого user_id запрещён (403); у get_family_summary новый параметр filter_user_id, uploaded_files всегда по запрашивающему пользователю (вынесен из основного цикла). Frontend: на «Общая сумма расходов» справа от суммы два больших переключателя «В семье»/«Личные» (scope-toggle), при «Личные» в summary/transactions передаётся user_id, переключатель остаётся видимым даже при пустых личных данных. Проверено: pytest 160 passed (7 новых), ruff чист по затронутым файлам, npm run check — Compiled successfully. | основной агент | IN_PROGRESS | 3/3 | docs/agent/tasks/T-061/20260906T112907Z_opencode_a01.md | Проверка diff, затем коммит, ветка + PR |
 
 Допустимые статусы: `TODO`, `IN_PROGRESS`, `BLOCKED`, `DONE`.
 

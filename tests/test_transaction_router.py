@@ -189,6 +189,119 @@ class TestListTransactions:
         # положительные суммы в универсальном формате считаются доходами
         assert {item["type"] for item in body} == {"income"}
 
+    def test_фильтр_по_своему_пользователю_возвращает_только_его(self, client_db):
+        client, session = client_db
+        owner, family = _prepare(session)
+        owner_token = _token(owner)
+        _upload(client, family.id, owner_token, _csv_bytes())
+
+        other = User(
+            email="other@example.com",
+            password_hash=hash_password("secret1"),
+        )
+        session.add(other)
+        session.flush()
+        session.add(FamilyMember(user_id=other.id, family_id=family.id, role="member"))
+        session.commit()
+        other_token = _token(other)
+
+        owner_scope = client.get(
+            f"/api/families/{family.id}/transactions",
+            params={"user_id": str(owner.id)},
+            headers={"Authorization": f"Bearer {owner_token}"},
+        )
+        assert owner_scope.status_code == 200
+        assert len(owner_scope.json()) == 2
+
+        other_scope = client.get(
+            f"/api/families/{family.id}/transactions",
+            params={"user_id": str(other.id)},
+            headers={"Authorization": f"Bearer {other_token}"},
+        )
+        assert other_scope.status_code == 200
+        assert other_scope.json() == []
+
+    def test_фильтр_по_чужому_пользователю_запрещён(self, client_db):
+        client, session = client_db
+        owner, family = _prepare(session)
+        owner_token = _token(owner)
+        _upload(client, family.id, owner_token, _csv_bytes())
+
+        other = User(
+            email="other@example.com",
+            password_hash=hash_password("secret1"),
+        )
+        session.add(other)
+        session.flush()
+        session.add(FamilyMember(user_id=other.id, family_id=family.id, role="member"))
+        session.commit()
+
+        response = client.get(
+            f"/api/families/{family.id}/transactions",
+            params={"user_id": str(other.id)},
+            headers={"Authorization": f"Bearer {owner_token}"},
+        )
+
+        assert response.status_code == 403
+
+    def test_сводка_фильтр_по_пользователю_считает_личные_траты(self, client_db):
+        client, session = client_db
+        owner, family = _prepare(session)
+        owner_token = _token(owner)
+        _upload(client, family.id, owner_token, _csv_bytes())
+
+        other = User(
+            email="other@example.com",
+            password_hash=hash_password("secret1"),
+        )
+        session.add(other)
+        session.flush()
+        session.add(FamilyMember(user_id=other.id, family_id=family.id, role="member"))
+        session.commit()
+        other_token = _token(other)
+
+        other_summary = client.get(
+            f"/api/families/{family.id}/summary",
+            params={"user_id": str(other.id)},
+            headers={"Authorization": f"Bearer {other_token}"},
+        )
+        assert other_summary.status_code == 200
+        body = other_summary.json()
+        assert body["total_amount"] == 0
+        assert body["by_category"] == []
+        assert body["uploaded_files"] == []
+
+        owner_summary = client.get(
+            f"/api/families/{family.id}/summary",
+            params={"user_id": str(owner.id)},
+            headers={"Authorization": f"Bearer {owner_token}"},
+        )
+        owner_body = owner_summary.json()
+        files = [item["filename"] for item in owner_body["uploaded_files"]]
+        assert files == ["statement.csv"]
+
+    def test_сводка_фильтр_по_чужому_пользователю_запрещён(self, client_db):
+        client, session = client_db
+        owner, family = _prepare(session)
+        owner_token = _token(owner)
+
+        other = User(
+            email="other@example.com",
+            password_hash=hash_password("secret1"),
+        )
+        session.add(other)
+        session.flush()
+        session.add(FamilyMember(user_id=other.id, family_id=family.id, role="member"))
+        session.commit()
+
+        response = client.get(
+            f"/api/families/{family.id}/summary",
+            params={"user_id": str(other.id)},
+            headers={"Authorization": f"Bearer {owner_token}"},
+        )
+
+        assert response.status_code == 403
+
 
 class TestDeleteTransactionsByFile:
     def test_удаление_выписки_очищает_её_операции(self, client_db):

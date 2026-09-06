@@ -113,6 +113,15 @@ def import_transactions(
     )
 
 
+def _require_own_filter(user_id: UUID | None, current_user: User) -> None:
+    """Разрешить фильтрацию «Личные» только по собственному аккаунту."""
+    if user_id is not None and user_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Можно фильтровать только свои операции",
+        )
+
+
 @router.get(
     "/{family_id}/transactions",
     response_model=List[TransactionOut],
@@ -120,16 +129,16 @@ def import_transactions(
 )
 def list_transactions(
     family_id: UUID,
+    user_id: UUID | None = Query(default=None),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     _require_membership(db, family_id, current_user.id)
-    transactions = (
-        db.query(Transaction)
-        .filter(Transaction.family_id == family_id)
-        .order_by(Transaction.date)
-        .all()
-    )
+    _require_own_filter(user_id, current_user)
+    query = db.query(Transaction).filter(Transaction.family_id == family_id)
+    if user_id is not None:
+        query = query.filter(Transaction.user_id == user_id)
+    transactions = query.order_by(Transaction.date).all()
     return [
         TransactionOut(
             id=t.id,
@@ -207,11 +216,13 @@ def delete_transactions_by_file(
 )
 def family_summary(
     family_id: UUID,
+    user_id: UUID | None = Query(default=None),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     _require_membership(db, family_id, current_user.id)
-    return get_family_summary(db, family_id, current_user.id)
+    _require_own_filter(user_id, current_user)
+    return get_family_summary(db, family_id, current_user.id, user_id)
 
 
 @router.patch(

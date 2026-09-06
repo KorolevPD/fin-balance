@@ -14,6 +14,7 @@ def get_family_summary(
     db: Session,
     family_id: UUID,
     user_id: UUID | None = None,
+    filter_user_id: UUID | None = None,
 ) -> dict[str, Any]:
     """Сводка расходов семьи для дашборда фронтенда (T-014).
 
@@ -25,8 +26,15 @@ def get_family_summary(
     Финансовые агрегаты учитывают только расходы (``type == "expense"``);
     ``uploaded_files`` — все операции независимо от типа.
     Суммы округляются до двух знаков.
+    ``user_id`` — запрашивающий пользователь: используется всегда для блока
+    ``uploaded_files``. Если задан ``filter_user_id``, финансовые агрегаты
+    считаются только по операциям этого пользователя (режим «Личные» на
+    дашборде); иначе — по всей семье.
     """
-    rows = db.query(Transaction).filter(Transaction.family_id == family_id).all()
+    query = db.query(Transaction).filter(Transaction.family_id == family_id)
+    if filter_user_id is not None:
+        query = query.filter(Transaction.user_id == filter_user_id)
+    rows = query.all()
 
     total_amount = 0.0
     by_category: dict[str, dict[str, Any]] = {}
@@ -35,7 +43,6 @@ def get_family_summary(
     by_month: dict[str, float] = {}
     by_day: dict[str, float] = {}
     by_member_total: dict[UUID, float] = defaultdict(float)
-    files: dict[str, dict[str, Any]] = {}
 
     for row in rows:
         amount = float(row.amount or 0.0)
@@ -70,14 +77,23 @@ def get_family_summary(
 
             by_member_total[row.user_id] += amount
 
-        if row.user_id == user_id and row.source_file:
+    files: dict[str, dict[str, Any]] = {}
+    if user_id is not None:
+        file_rows = (
+            db.query(Transaction)
+            .filter(
+                Transaction.family_id == family_id,
+                Transaction.user_id == user_id,
+                Transaction.source_file.is_not(None),
+            )
+            .all()
+        )
+        for row in file_rows:
             file_item = files.setdefault(
                 row.source_file,
                 {"period_start": row.date, "period_end": row.date, "count": 0},
             )
-            file_item["period_start"] = min(
-                row.date, file_item["period_start"]
-            )
+            file_item["period_start"] = min(row.date, file_item["period_start"])
             file_item["period_end"] = max(row.date, file_item["period_end"])
             file_item["count"] += 1
 
