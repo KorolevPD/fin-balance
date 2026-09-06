@@ -767,6 +767,14 @@ button[type="submit"]:disabled {
   white-space: nowrap;
 }
 
+.card-header-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
 .amount-income {
   color: #16a34a;
 }

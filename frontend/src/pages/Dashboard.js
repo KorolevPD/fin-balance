@@ -65,6 +65,7 @@ export default function Dashboard() {
   const [sortDir, setSortDir] = useState('desc');
   const [catSortBy, setCatSortBy] = useState('amount');
   const [catSortDir, setCatSortDir] = useState('desc');
+  const [hideIncomes, setHideIncomes] = useState(false);
   const [uploadOpen, setUploadOpen] = useState(false);
 
   const handleSort = (key) => {
@@ -85,9 +86,14 @@ export default function Dashboard() {
     }
   };
 
+  const visibleTransactions = useMemo(() => {
+    if (!hideIncomes) return transactions;
+    return transactions.filter((txn) => txn.type !== 'income');
+  }, [transactions, hideIncomes]);
+
   const sortedTransactions = useMemo(() => {
-    if (transactions.length === 0) return transactions;
-    const sorted = [...transactions].sort((a, b) => {
+    if (visibleTransactions.length === 0) return visibleTransactions;
+    const sorted = [...visibleTransactions].sort((a, b) => {
       let cmp = 0;
       if (sortBy === 'date') {
         const da = a.date ? new Date(a.date).getTime() : 0;
@@ -101,7 +107,7 @@ export default function Dashboard() {
       return sortDir === 'asc' ? cmp : -cmp;
     });
     return sorted;
-  }, [transactions, sortBy, sortDir]);
+  }, [visibleTransactions, sortBy, sortDir]);
 
   const loadData = useCallback(() => {
     setLoading(true);
@@ -474,10 +480,22 @@ export default function Dashboard() {
 
               <section className="card" aria-label="Список операций">
                 <div className="card-header">
-                  <h2>Операции ({transactions.length})</h2>
-                  <Link to={`/family/${id}/operations`} className="card-header-link">
-                    Все операции →
-                  </Link>
+                  <h2>Операции ({sortedTransactions.length})</h2>
+                  <div className="card-header-actions">
+                    <Link to={`/family/${id}/operations`} className="card-header-link">
+                      Все операции →
+                    </Link>
+                    {transactions.length > 0 && (
+                      <button
+                        type="button"
+                        className="btn btn-secondary btn-small"
+                        aria-pressed={hideIncomes}
+                        onClick={() => setHideIncomes((value) => !value)}
+                      >
+                        {hideIncomes ? 'Показать пополнения' : 'Убрать пополнения'}
+                      </button>
+                    )}
+                  </div>
                 </div>
                 {transactions.length === 0 ? (
                   <p className="muted">Операций пока нет.</p>
@@ -552,6 +570,9 @@ export default function Dashboard() {
                       </tbody>
                     </table>
                   </div>
+                )}
+                {transactions.length > 0 && sortedTransactions.length === 0 && (
+                  <p className="muted">Все пополнения скрыты кнопкой выше.</p>
                 )}
               </section>
             </>
