@@ -244,6 +244,53 @@ class TestListTransactions:
 
         assert response.status_code == 403
 
+    def test_одинаковый_csv_двух_участников_не_засчитывается_за_одного(self, client_db):
+        client, session = client_db
+        owner, family = _prepare(session)
+        owner_token = _token(owner)
+        _upload(client, family.id, owner_token, _csv_bytes())
+
+        other = User(
+            email="other@example.com",
+            password_hash=hash_password("secret1"),
+        )
+        session.add(other)
+        session.flush()
+        session.add(FamilyMember(user_id=other.id, family_id=family.id, role="member"))
+        session.commit()
+        other_token = _token(other)
+
+        other_upload = _upload(client, family.id, other_token, _csv_bytes())
+        assert other_upload.status_code == 201
+        assert other_upload.json()["created"] == 2
+        assert other_upload.json()["duplicates_skipped"] == 0
+
+        owner_scope = client.get(
+            f"/api/families/{family.id}/transactions",
+            params={"user_id": str(owner.id)},
+            headers={"Authorization": f"Bearer {owner_token}"},
+        )
+        other_scope = client.get(
+            f"/api/families/{family.id}/transactions",
+            params={"user_id": str(other.id)},
+            headers={"Authorization": f"Bearer {other_token}"},
+        )
+        assert len(owner_scope.json()) == 2
+        assert len(other_scope.json()) == 2
+
+        owner_summary = client.get(
+            f"/api/families/{family.id}/summary",
+            params={"user_id": str(owner.id)},
+            headers={"Authorization": f"Bearer {owner_token}"},
+        )
+        other_summary = client.get(
+            f"/api/families/{family.id}/summary",
+            params={"user_id": str(other.id)},
+            headers={"Authorization": f"Bearer {other_token}"},
+        )
+        assert len(owner_summary.json()["uploaded_files"]) == 1
+        assert len(other_summary.json()["uploaded_files"]) == 1
+
     def test_сводка_фильтр_по_пользователю_считает_личные_траты(self, client_db):
         client, session = client_db
         owner, family = _prepare(session)
