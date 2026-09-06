@@ -3,7 +3,7 @@
 from datetime import datetime
 
 from app.categorization.rules import DEFAULT_CATEGORY
-from app.models import Base, Category, Family, FamilyMember, Transaction, User
+from app.models import Category, Family, FamilyMember, Transaction, User
 from app.security import hash_password
 from app.services.analytics import get_family_summary
 
@@ -84,7 +84,9 @@ class TestFamilyMembersAggregations:
 
     def test_член_без_транзакций_попадает_с_нулевыми_тратами(self, db):
         user1, _, family = _prepare(db)
-        user3 = User(email="c@test.ru", name="Мария", password_hash=hash_password("secret1"))
+        user3 = User(
+            email="c@test.ru", name="Мария", password_hash=hash_password("secret1")
+        )
         db.add(user3)
         db.flush()
         db.add(FamilyMember(user_id=user3.id, family_id=family.id, role="member"))
@@ -147,6 +149,59 @@ class TestIncomeExcluded:
 
         assert file_info["period_end"] == "2026-01-30"
         assert file_info["operations_count"] == 3
+
+
+class TestDynamicsPeriods:
+    def test_годовая_агрегация_расходов(self, db):
+        user1, _, family = _prepare(db)
+
+        summary = get_family_summary(db, family.id, user_id=user1.id)
+
+        assert summary["yearly"] == [{"year": "2026", "amount": 350.0}]
+
+    def test_месячная_агрегация_расходов(self, db):
+        user1, _, family = _prepare(db)
+
+        summary = get_family_summary(db, family.id, user_id=user1.id)
+
+        assert summary["monthly"] == [
+            {"month": "2026-01", "amount": 150.0},
+            {"month": "2026-02", "amount": 200.0},
+        ]
+
+    def test_дневная_агрегация_расходов(self, db):
+        user1, _, family = _prepare(db)
+
+        summary = get_family_summary(db, family.id, user_id=user1.id)
+
+        assert summary["daily"] == [
+            {"day": "2026-01-05", "amount": 100.0},
+            {"day": "2026-01-25", "amount": 50.0},
+            {"day": "2026-02-10", "amount": 200.0},
+        ]
+
+    def test_доходы_не_входят_в_годовую_и_дневную_динамику(self, db):
+        user1, _, family = _prepare(db)
+        category = db.query(Category).one()
+        db.add(
+            Transaction(
+                family_id=family.id,
+                user_id=user1.id,
+                category_id=category.id,
+                date=datetime(2026, 1, 10),
+                amount=1000.0,
+                type="income",
+                original_description="Зарплата",
+                source_file="january.csv",
+            )
+        )
+        db.commit()
+
+        summary = get_family_summary(db, family.id, user_id=user1.id)
+
+        assert summary["yearly"] == [{"year": "2026", "amount": 350.0}]
+        assert all(item["amount"] <= 200.0 for item in summary["daily"])
+        assert all(item["day"] != "2026-01-10" for item in summary["daily"])
 
 
 class TestUploadedFilesAggregations:

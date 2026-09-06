@@ -18,9 +18,10 @@ def get_family_summary(
     """Сводка расходов семьи для дашборда фронтенда (T-014).
 
     Возвращает словарь с ключами ``total_amount``, ``by_category``,
-    ``top_payees``, ``monthly``, ``family_members`` (члены семьи с
-    суммарными тратами, отсортированы по убыванию) и ``uploaded_files``
-    (файлы текущего пользователя с периодом первой/последней операции).
+    ``top_payees``, ``yearly``, ``monthly``, ``daily``, ``family_members``
+    (члены семьи с суммарными тратами, отсортированы по убыванию) и
+    ``uploaded_files`` (файлы текущего пользователя с периодом
+    первой/последней операции).
     Финансовые агрегаты учитывают только расходы (``type == "expense"``);
     ``uploaded_files`` — все операции независимо от типа.
     Суммы округляются до двух знаков.
@@ -30,7 +31,9 @@ def get_family_summary(
     total_amount = 0.0
     by_category: dict[str, dict[str, Any]] = {}
     by_payee: dict[str, dict[str, Any]] = {}
+    by_year: dict[str, float] = {}
     by_month: dict[str, float] = {}
+    by_day: dict[str, float] = {}
     by_member_total: dict[UUID, float] = defaultdict(float)
     files: dict[str, dict[str, Any]] = {}
 
@@ -56,8 +59,14 @@ def get_family_summary(
             payee_item["count"] += 1
 
             if row.date is not None:
+                year = row.date.strftime("%Y")
+                by_year[year] = by_year.get(year, 0.0) + amount
+
                 month = row.date.strftime("%Y-%m")
                 by_month[month] = by_month.get(month, 0.0) + amount
+
+                day = row.date.strftime("%Y-%m-%d")
+                by_day[day] = by_day.get(day, 0.0) + amount
 
             by_member_total[row.user_id] += amount
 
@@ -90,6 +99,14 @@ def get_family_summary(
         {"month": month, "amount": round(amount, 2)}
         for month, amount in sorted(by_month.items())
     ]
+    yearly_list = [
+        {"year": year, "amount": round(amount, 2)}
+        for year, amount in sorted(by_year.items())
+    ]
+    daily_list = [
+        {"day": day, "amount": round(amount, 2)}
+        for day, amount in sorted(by_day.items())
+    ]
 
     members = (
         db.query(FamilyMember)
@@ -121,7 +138,9 @@ def get_family_summary(
         "total_amount": round(total_amount, 2),
         "by_category": by_category_list,
         "top_payees": by_payee_list,
+        "yearly": yearly_list,
         "monthly": monthly_list,
+        "daily": daily_list,
         "family_members": family_members_list,
         "uploaded_files": uploaded_files_list,
     }
