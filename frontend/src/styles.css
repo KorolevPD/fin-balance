@@ -331,33 +331,6 @@ button[type="submit"]:disabled {
   background: #4a4ad4;
 }
 
-.member-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.member-list li {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 0;
-  border-bottom: 1px solid #dfe3ee;
-}
-
-.member-list li:last-child {
-  border-bottom: none;
-}
-
-.member-email {
-  font-weight: 500;
-}
-
-.member-role {
-  font-size: 0.85rem;
-  color: #666;
-}
-
 .upload-zone {
   display: flex;
   flex-direction: column;
@@ -623,6 +596,10 @@ button[type="submit"]:disabled {
   font-size: 1.6rem;
   font-weight: 700;
   color: #14213d;
+}
+
+.stat-card .btn-small {
+  align-self: flex-start;
 }
 
 .category-layout {
@@ -909,6 +886,38 @@ button[type="submit"]:disabled {
 
 .modal-actions .btn {
   width: auto;
+}
+
+.modal-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid #dfe3ee;
+}
+
+.modal-tab {
+  padding: 10px 16px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #666;
+  cursor: pointer;
+  margin-bottom: -1px;
+}
+
+.modal-tab:hover {
+  color: #14213d;
+}
+
+.modal-tab.active {
+  color: #5b5bea;
+  border-bottom-color: #5b5bea;
+}
+
+.family-create-tab .invite-row {
+  margin-top: 12px;
 }
 
 .landing {

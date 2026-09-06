@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
   ResponsiveContainer,
   PieChart,
@@ -18,6 +18,7 @@ import api from '../api';
 import { CATEGORIES } from '../categories';
 import TransactionEditModal from '../components/TransactionEditModal';
 import UploadModal from '../components/UploadModal';
+import FamilyModal from '../components/FamilyModal';
 
 const CATEGORY_COLORS = [
   '#5b5bea',
@@ -107,6 +108,7 @@ function sortIndicator(key, sortBy, sortDir) {
 
 export default function Dashboard() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [summary, setSummary] = useState(null);
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -118,6 +120,7 @@ export default function Dashboard() {
   const [catSortDir, setCatSortDir] = useState('desc');
   const [hideIncomes, setHideIncomes] = useState(true);
   const [uploadOpen, setUploadOpen] = useState(false);
+  const [familyOpen, setFamilyOpen] = useState(false);
   const [dynamicsPeriod, setDynamicsPeriod] = useState('month');
 
   const handleSort = (key) => {
@@ -262,6 +265,13 @@ export default function Dashboard() {
                 <span className="stat-value">
                   {summary ? formatAmount(summary.total_amount) : '—'}
                 </span>
+                <button
+                  type="button"
+                  className="btn btn-small"
+                  onClick={() => setFamilyOpen(true)}
+                >
+                  Войти в/Создать семью
+                </button>
               </div>
             </section>
           )}
@@ -694,6 +704,15 @@ export default function Dashboard() {
           familyId={id}
           onClose={() => setUploadOpen(false)}
           onUploaded={() => loadData()}
+        />
+      )}
+
+      {familyOpen && (
+        <FamilyModal
+          onClose={() => setFamilyOpen(false)}
+          onJoined={(nextFamily) =>
+            navigate(`/family/${nextFamily.id}/dashboard`)
+          }
         />
       )}
     </div>
