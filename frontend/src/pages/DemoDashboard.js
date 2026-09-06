@@ -102,6 +102,12 @@ export default function DemoDashboard() {
   const categories = data?.categories || [];
   const files = data?.uploaded_files || [];
 
+  const chartTotal = categories.reduce((sum, item) => sum + Math.abs(Number(item.amount || 0)), 0);
+  const shouldLabelCategory = (entry) => {
+    const share = chartTotal > 0 ? (Math.abs(Number(entry.amount || 0)) / chartTotal) * 100 : 0;
+    return share >= 1 ? entry.category : null;
+  };
+
   return (
     <div className="page dashboard-page">
       <h1>Примерный дашборд</h1>
@@ -147,7 +153,7 @@ export default function DemoDashboard() {
                     cx="50%"
                     cy="50%"
                     outerRadius={100}
-                    label={(entry) => entry.category}
+                    label={shouldLabelCategory}
                   >
                     {categories.map((entry, index) => (
                       <Cell key={entry.category} fill={DEMO_COLORS[index % DEMO_COLORS.length]} />
