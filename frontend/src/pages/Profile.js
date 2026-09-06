@@ -414,7 +414,7 @@ export default function Profile() {
                 {joinLoading ? 'Присоединение...' : 'Присоединиться к семье'}
               </button>
             </form>
-            <div className="profile-actions">
+            <div className="profile-actions family-actions">
               <button
                 type="button"
                 className="btn btn-danger"
