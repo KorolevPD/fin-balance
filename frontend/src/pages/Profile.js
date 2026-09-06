@@ -9,7 +9,7 @@ function avatarUrl(avatar) {
 
 const READONLY_FIELDS = [
   { key: 'email', label: 'Email', type: 'text' },
-  { key: 'created_at', label: 'Дата регистрации', type: 'date' },
+  { key: 'created_at', label: 'Дата регистрации', type: 'text' },
 ];
 
 const EDITABLE_FIELDS = [
@@ -438,7 +438,7 @@ export default function Profile() {
             <input
               id={`profile-${field.key}`}
               type={field.type}
-              value={field.type === 'date' ? formatDate(user?.[field.key]) : user?.[field.key]}
+              value={formatDate(user?.[field.key]) || user?.[field.key]}
               readOnly
               disabled
             />
