@@ -131,7 +131,7 @@ button[type="submit"]:disabled {
 
 .dashboard-header {
   display: grid;
-  grid-template-columns: 1fr auto 1fr;
+  grid-template-columns: 1fr auto;
   align-items: center;
   gap: 16px;
   padding: 12px 24px;
@@ -150,24 +150,6 @@ button[type="submit"]:disabled {
   height: 40px;
   width: auto;
   display: block;
-}
-
-.dashboard-nav {
-  display: flex;
-  gap: 20px;
-  justify-self: center;
-}
-
-.dashboard-nav a {
-  color: #14213d;
-  text-decoration: none;
-  font-weight: 600;
-  font-size: 0.95rem;
-  white-space: nowrap;
-}
-
-.dashboard-nav a:hover {
-  color: #5b5bea;
 }
 
 .user-info {
@@ -227,8 +209,7 @@ button[type="submit"]:disabled {
   .dashboard-header {
     grid-template-columns: 1fr auto;
     grid-template-areas:
-      "logo user"
-      "nav nav";
+      "logo user";
     gap: 8px 16px;
   }
 
@@ -238,14 +219,6 @@ button[type="submit"]:disabled {
 
   .user-info {
     grid-area: user;
-  }
-
-  .dashboard-nav {
-    grid-area: nav;
-    justify-self: stretch;
-    flex-wrap: wrap;
-    gap: 8px;
-    justify-content: space-between;
   }
 
   .user-info-name {
@@ -526,6 +499,10 @@ button[type="submit"]:disabled {
 }
 
 .card-header h1 {
+  margin: 0;
+}
+
+.card-header h2 {
   margin: 0;
 }
 

@@ -3,7 +3,6 @@ import { useAuth } from './context/AuthContext';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Landing from './pages/Landing';
-import Upload from './pages/Upload';
 import Dashboard from './pages/Dashboard';
 import DemoDashboard from './pages/DemoDashboard';
 import Profile from './pages/Profile';
@@ -28,16 +27,6 @@ export default function App() {
           <PrivateRoute>
             <Layout>
               <DemoDashboard />
-            </Layout>
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="/upload"
-        element={
-          <PrivateRoute>
-            <Layout>
-              <Upload />
             </Layout>
           </PrivateRoute>
         }
