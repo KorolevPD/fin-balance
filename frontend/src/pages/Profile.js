@@ -223,13 +223,11 @@ export default function Profile() {
         <h2>Фото профиля</h2>
         <div className="profile-row">
           <div className="avatar-box">
-            {preview ? (
-              <img src={preview} alt="Фото профиля" className="avatar-img" />
-            ) : (
-              <div className="avatar-placeholder">
-                {(user?.name || user?.email || '?')[0].toUpperCase()}
-              </div>
-            )}
+            <img
+              src={preview || '/avatar.jpg'}
+              alt="Фото профиля"
+              className="avatar-img"
+            />
           </div>
           <div className="avatar-actions">
             <label className="btn btn-secondary avatar-upload-label">
