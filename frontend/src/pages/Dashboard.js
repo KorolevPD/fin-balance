@@ -383,7 +383,7 @@ export default function Dashboard() {
 
             <section className="card demo-block" aria-label="AI-совет">
               <div className="card-header">
-                <h2>Резерв</h2>
+                <h2>Совет от AI</h2>
                 {currentAdvice && (
                   <span className="muted">
                     Совет {adviceIndex + 1} из {advices.length}
