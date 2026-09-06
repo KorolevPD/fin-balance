@@ -8,7 +8,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.models import Family, FamilyMember, Transaction, User
+from app.models import AiAdvice, Family, FamilyMember, Transaction, User
 from app.security import get_current_user
 
 router = APIRouter(prefix="/families", tags=["families"])
@@ -216,3 +216,57 @@ def list_members(
         )
         for member in members
     ]
+
+
+@router.post(
+    "/{family_id}/leave",
+    response_model=FamilyOut,
+    summary="Выйти из семьи (свои транзакции переносятся в новую семью)",
+)
+def leave_family(
+    family_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    family = db.query(Family).filter(Family.id == family_id).first()
+    if family is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Семья не найдена",
+        )
+    membership = (
+        db.query(FamilyMember)
+        .filter(
+            FamilyMember.family_id == family_id,
+            FamilyMember.user_id == current_user.id,
+        )
+        .first()
+    )
+    if membership is None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Нет доступа к этой семье",
+        )
+
+    new_family = create_default_family(db, current_user)
+    db.query(Transaction).filter(
+        Transaction.family_id == family_id,
+        Transaction.user_id == current_user.id,
+    ).update(
+        {Transaction.family_id: new_family.id}, synchronize_session=False
+    )
+    db.delete(membership)
+    db.flush()
+
+    remaining_members = (
+        db.query(FamilyMember).filter(FamilyMember.family_id == family_id).count()
+    )
+    if remaining_members == 0:
+        db.query(AiAdvice).filter(AiAdvice.family_id == family_id).delete(
+            synchronize_session=False
+        )
+        db.delete(family)
+
+    db.commit()
+    db.refresh(new_family)
+    return new_family
