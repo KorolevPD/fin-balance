@@ -208,14 +208,18 @@ export default function Dashboard() {
   const files = summary?.uploaded_files || [];
 
   const total = Math.abs(summary?.total_amount || 0);
-  const categories = useMemo(() => {
+  const categoryList = useMemo(() => {
     const source = summary?.by_category || [];
     if (source.length === 0) return source;
     let list = source;
     if (!source.some((entry) => entry.category === 'Прочее')) {
       list = [...source, { category: 'Прочее', amount: 0, count: 0 }];
     }
-    return [...list].sort((a, b) => {
+    return list;
+  }, [summary]);
+  const categories = useMemo(() => {
+    if (categoryList.length === 0) return categoryList;
+    return [...categoryList].sort((a, b) => {
       let cmp = 0;
       if (catSortBy === 'category') {
         cmp = (a.category || '').localeCompare(b.category || '', 'ru');
@@ -230,8 +234,8 @@ export default function Dashboard() {
       }
       return catSortDir === 'asc' ? cmp : -cmp;
     });
-  }, [summary, catSortBy, catSortDir, total]);
-  const chartCategories = categories.filter((item) => Math.abs(Number(item.amount || 0)) > 0);
+  }, [categoryList, catSortBy, catSortDir, total]);
+  const chartCategories = categoryList.filter((item) => Math.abs(Number(item.amount || 0)) > 0);
   const payees = summary?.top_payees || [];
   const dynamics = DYNAMICS_PERIODS[dynamicsPeriod];
   const dynamicsData = summary?.[dynamics.source] || [];
