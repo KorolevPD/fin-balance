@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
-import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Legend } from 'recharts';
+import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Legend, Curve } from 'recharts';
 import api from '../api';
 import UploadModal from '../components/UploadModal';
 
@@ -103,10 +103,10 @@ export default function DemoDashboard() {
   const files = data?.uploaded_files || [];
 
   const chartTotal = categories.reduce((sum, item) => sum + Math.abs(Number(item.amount || 0)), 0);
-  const shouldLabelCategory = (entry) => {
-    const share = chartTotal > 0 ? (Math.abs(Number(entry.amount || 0)) / chartTotal) * 100 : 0;
-    return share >= 1 ? entry.category : null;
-  };
+  const shareOf = (entry) => (chartTotal > 0 ? (Math.abs(Number(entry.amount || 0)) / chartTotal) * 100 : 0);
+  const shouldLabelCategory = (entry) => (shareOf(entry) >= 1 ? entry.category : null);
+  const shouldLabelLine = (props) =>
+    shareOf(props) >= 1 ? <Curve type="linear" {...props} className="recharts-pie-label-line" /> : null;
 
   return (
     <div className="page dashboard-page">
@@ -154,6 +154,7 @@ export default function DemoDashboard() {
                     cy="50%"
                     outerRadius={100}
                     label={shouldLabelCategory}
+                    labelLine={shouldLabelLine}
                   >
                     {categories.map((entry, index) => (
                       <Cell key={entry.category} fill={DEMO_COLORS[index % DEMO_COLORS.length]} />
