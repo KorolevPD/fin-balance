@@ -271,3 +271,53 @@ class TestPersonalScopeFilter:
         assert summary["total_amount"] == 200.0
         files = [item["filename"] for item in summary["uploaded_files"]]
         assert files == ["january.csv"]
+
+
+class TestOtherMembersHaveStatements:
+    def test_есть_выписки_у_другого_члена(self, db):
+        user1, user2, family = _prepare(db)
+
+        assert get_family_summary(db, family.id, user_id=user1.id)[
+            "other_members_have_statements"
+        ] is True
+        assert get_family_summary(db, family.id, user_id=user2.id)[
+            "other_members_have_statements"
+        ] is True
+
+    def test_нет_выписок_у_других_членов(self, db):
+        user1, user2, family = _prepare(db)
+        db.query(Transaction).filter(Transaction.user_id == user2.id).delete(
+            synchronize_session=False
+        )
+        db.commit()
+
+        assert get_family_summary(db, family.id, user_id=user1.id)[
+            "other_members_have_statements"
+        ] is False
+
+    def test_один_член_в_семье_нет_других_выписок(self, db):
+        user1, user2, family = _prepare(db)
+        db.query(Transaction).filter(Transaction.user_id == user2.id).delete(
+            synchronize_session=False
+        )
+        db.delete(
+            db.query(FamilyMember)
+            .filter(
+                FamilyMember.family_id == family.id,
+                FamilyMember.user_id == user2.id,
+            )
+            .one()
+        )
+        db.commit()
+
+        summary = get_family_summary(db, family.id, user_id=user1.id)
+        assert summary["other_members_have_statements"] is False
+        assert len(summary["family_members"]) == 1
+
+    def test_флаг_не_зависит_от_личного_фильтра(self, db):
+        user1, user2, family = _prepare(db)
+
+        summary = get_family_summary(
+            db, family.id, user_id=user1.id, filter_user_id=user1.id
+        )
+        assert summary["other_members_have_statements"] is True
