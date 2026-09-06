@@ -27,7 +27,11 @@ def session_factory():
         poolclass=StaticPool,
     )
     Base.metadata.create_all(engine)
-    return sessionmaker(bind=engine, autoflush=False, autocommit=False)
+    factory = sessionmaker(bind=engine, autoflush=False, autocommit=False)
+    import app.database as database
+
+    database.SessionLocal = factory
+    return factory
 
 
 @pytest.fixture()
