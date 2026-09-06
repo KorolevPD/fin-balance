@@ -5,6 +5,7 @@ import Register from './pages/Register';
 import Landing from './pages/Landing';
 import Dashboard from './pages/Dashboard';
 import DemoDashboard from './pages/DemoDashboard';
+import Operations from './pages/Operations';
 import Profile from './pages/Profile';
 import PrivateRoute from './components/PrivateRoute';
 import Layout from './components/Layout';
@@ -47,6 +48,16 @@ export default function App() {
           <PrivateRoute>
             <Layout>
               <Dashboard />
+            </Layout>
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/family/:id/operations"
+        element={
+          <PrivateRoute>
+            <Layout>
+              <Operations />
             </Layout>
           </PrivateRoute>
         }

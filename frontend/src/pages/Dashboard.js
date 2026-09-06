@@ -452,7 +452,12 @@ export default function Dashboard() {
               </section>
 
               <section className="card" aria-label="Список операций">
-                <h2>Операции ({transactions.length})</h2>
+                <div className="card-header">
+                  <h2>Операции ({transactions.length})</h2>
+                  <Link to={`/family/${id}/operations`} className="card-header-link">
+                    Все операции →
+                  </Link>
+                </div>
                 {transactions.length === 0 ? (
                   <p className="muted">Операций пока нет.</p>
                 ) : (
@@ -506,7 +511,7 @@ export default function Dashboard() {
                         </tr>
                       </thead>
                       <tbody>
-                        {sortedTransactions.map((txn) => (
+                        {sortedTransactions.slice(0, 10).map((txn) => (
                           <tr key={txn.id}>
                             <td className="nowrap">{formatDate(txn.date)}</td>
                             <td>{txn.cleaned_description || txn.original_description || '—'}</td>
