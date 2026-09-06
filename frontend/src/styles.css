@@ -98,7 +98,7 @@ body {
 button[type="submit"] {
   width: 100%;
   padding: 12px;
-  background: #5b5bea;
+  background: #24a647;
   color: white;
   border: none;
   border-radius: 8px;
@@ -108,7 +108,7 @@ button[type="submit"] {
 }
 
 button[type="submit"]:hover {
-  background: #4a4ad4;
+  background: #1a8a39;
 }
 
 button[type="submit"]:disabled {
@@ -318,7 +318,7 @@ button[type="submit"]:disabled {
 
 .copy-btn {
   padding: 8px 16px;
-  background: #5b5bea;
+  background: #24a647;
   color: white;
   border: none;
   border-radius: 8px;
@@ -328,7 +328,7 @@ button[type="submit"]:disabled {
 }
 
 .copy-btn:hover {
-  background: #4a4ad4;
+  background: #1a8a39;
 }
 
 .member-list {
@@ -416,7 +416,7 @@ button[type="submit"]:disabled {
 
 .upload-btn {
   padding: 12px 24px;
-  background: #5b5bea;
+  background: #24a647;
   color: white;
   border: none;
   border-radius: 8px;
@@ -426,7 +426,7 @@ button[type="submit"]:disabled {
 }
 
 .upload-btn:hover:not(:disabled) {
-  background: #4a4ad4;
+  background: #1a8a39;
 }
 
 .upload-btn:disabled {
@@ -548,7 +548,7 @@ button[type="submit"]:disabled {
 .btn {
   display: inline-block;
   padding: 10px 20px;
-  background: #5b5bea;
+  background: #24a647;
   color: white;
   border: none;
   border-radius: 8px;
@@ -559,7 +559,7 @@ button[type="submit"]:disabled {
 }
 
 .btn:hover {
-  background: #4a4ad4;
+  background: #1a8a39;
 }
 
 .dashboard-page {
@@ -885,7 +885,7 @@ button[type="submit"]:disabled {
 }
 
 .period-toggle-btn.active {
-  background: #5b5bea;
+  background: #24a647;
   color: white;
 }
 
@@ -1023,7 +1023,7 @@ button[type="submit"]:disabled {
   align-self: center;
   margin-top: 28px;
   padding: 14px 32px;
-  background: #5b5bea;
+  background: #24a647;
   color: white;
   border: none;
   border-radius: 999px;
@@ -1034,7 +1034,7 @@ button[type="submit"]:disabled {
 }
 
 .landing-btn:hover {
-  background: #4a4ad4;
+  background: #1a8a39;
 }
 
 @media (max-width: 720px) {

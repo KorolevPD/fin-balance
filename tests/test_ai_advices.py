@@ -168,6 +168,43 @@ class TestCreateAdvice:
         texts = [item["text"] for item in response.json()]
         assert texts == ["Совет второй", "Совет первый"]
 
+    def test_советы_заменяются_при_replace(
+        self,
+        encryption_key,
+        client_db,
+        monkeypatch,
+    ):
+        client, session = client_db
+        user, family = _prepare(session, ai_key="fake-key")
+        token = _token(user)
+
+        monster_advice = iter(["Совет первый", "Совет второй"])
+
+        def fake_advice(*args, **kwargs):
+            return next(monster_advice)
+
+        monkeypatch.setattr("app.routers.ai.generate_advice", fake_advice)
+
+        client.post(
+            f"/api/families/{family.id}/advices",
+            params={"replace": True},
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        client.post(
+            f"/api/families/{family.id}/advices",
+            params={"replace": True},
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+        response = client.get(
+            f"/api/families/{family.id}/advices",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+        assert response.status_code == 200
+        texts = [item["text"] for item in response.json()]
+        assert texts == ["Совет второй"]
+
     def test_генерация_требует_авторизации(self, encryption_key, client_db):
         client, session = client_db
         _, family = _prepare(session, ai_key="fake-key")
