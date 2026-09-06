@@ -10,6 +10,7 @@ from app.services import save_transactions
 FAMILY_A = UUID("11111111-1111-1111-1111-111111111111")
 FAMILY_B = UUID("33333333-3333-3333-3333-333333333333")
 USER = UUID("22222222-2222-2222-2222-222222222222")
+USER_OTHER = UUID("44444444-4444-4444-4444-444444444444")
 
 
 def tx(date_value, amount, description, category="Прочее"):
@@ -183,4 +184,48 @@ class TestSaveTransactions:
         )
 
         assert result.created == 2
+        assert db.query(Transaction).count() == 2
+
+    def test_одинаковые_операции_двух_пользователей_не_дублируются(self, db):
+        operation = tx(date(2026, 9, 1), 100.0, "Лента")
+        first = save_transactions(
+            db,
+            family_id=FAMILY_A,
+            user_id=USER,
+            transactions=[operation],
+        )
+        second = save_transactions(
+            db,
+            family_id=FAMILY_A,
+            user_id=USER_OTHER,
+            transactions=[operation],
+        )
+
+        assert first.created == 1
+        assert second.created == 1
+        assert second.duplicates_skipped == 0
+        saved = db.query(Transaction).all()
+        assert len(saved) == 2
+        assert {t.user_id for t in saved} == {USER, USER_OTHER}
+
+    def test_повторный_импорт_только_своего_пользователя_пропускается(self, db):
+        operations = [
+            tx(date(2026, 9, 1), 100.0, "Лента"),
+            tx(date(2026, 9, 2), 50.5, "Яндекс Такси"),
+        ]
+        save_transactions(
+            db,
+            family_id=FAMILY_A,
+            user_id=USER,
+            transactions=operations,
+        )
+        result = save_transactions(
+            db,
+            family_id=FAMILY_A,
+            user_id=USER,
+            transactions=operations,
+        )
+
+        assert result.created == 0
+        assert result.duplicates_skipped == 2
         assert db.query(Transaction).count() == 2

@@ -120,6 +120,7 @@ export default function Dashboard() {
   const [catSortDir, setCatSortDir] = useState('desc');
   const [hideIncomes, setHideIncomes] = useState(true);
   const [uploadOpen, setUploadOpen] = useState(false);
+  const [viewScope, setViewScope] = useState('family');
   const [dynamicsPeriod, setDynamicsPeriod] = useState('month');
   const [advices, setAdvices] = useState([]);
   const [adviceIndex, setAdviceIndex] = useState(0);
@@ -171,25 +172,26 @@ export default function Dashboard() {
   const loadData = useCallback(() => {
     setLoading(true);
     setError('');
+    const params = viewScope === 'personal' && user?.id ? { user_id: user.id } : undefined;
     api
-      .get(`/families/${id}/summary`)
+      .get(`/families/${id}/summary`, { params })
       .then((res) => setSummary(res.data))
       .catch((err) => {
         setError(err.response?.data?.detail || 'Не удалось загрузить данные дашборда');
       });
 
     api
-      .get(`/families/${id}/transactions`)
+      .get(`/families/${id}/transactions`, { params })
       .then((res) => setTransactions(res.data))
       .catch((err) => {
         setError(err.response?.data?.detail || 'Не удалось загрузить операции');
       })
       .finally(() => setLoading(false));
-  }, [id]);
+  }, [id, user?.id, viewScope]);
 
   useEffect(() => {
     loadData();
-  }, [id, loadData]);
+  }, [id, loadData, viewScope]);
 
   const handleSaved = () => {
     setEditing(null);
@@ -312,13 +314,37 @@ export default function Dashboard() {
         <p className="muted">Загрузка...</p>
       ) : (
         <>
-          {hasData && (
+          {(hasData || viewScope === 'personal') && (
             <section className="summary-cards" aria-label="Сводка расходов">
               <div className="stat-card">
                 <span className="stat-label">Общая сумма расходов</span>
-                <span className="stat-value">
-                  {summary ? formatAmount(summary.total_amount) : '—'}
-                </span>
+                <div className="stat-card-row">
+                  <span className="stat-value">
+                    {summary ? formatAmount(summary.total_amount) : '—'}
+                  </span>
+                  <div
+                    className="scope-toggle"
+                    role="group"
+                    aria-label="Область расходов"
+                  >
+                    <button
+                      type="button"
+                      className={`scope-toggle-btn${viewScope === 'family' ? ' active' : ''}`}
+                      aria-pressed={viewScope === 'family'}
+                      onClick={() => setViewScope('family')}
+                    >
+                      В семье
+                    </button>
+                    <button
+                      type="button"
+                      className={`scope-toggle-btn${viewScope === 'personal' ? ' active' : ''}`}
+                      aria-pressed={viewScope === 'personal'}
+                      onClick={() => setViewScope('personal')}
+                    >
+                      Личные
+                    </button>
+                  </div>
+                </div>
               </div>
             </section>
           )}

@@ -1,9 +1,12 @@
 """Сохранение операций из выписки в БД с обработкой дублей.
 
 Дубликатом считается пара записей с одинаковыми датой, суммой и исходным
-описанием в пределах одной семьи. Обрабатываются два случая:
+описанием в пределах пары «семья + пользователь». Обрабатываются два случая:
 - повтор строк внутри одного импорта;
 - повторный импорт уже сохранённых операций (та же выписка, тот же файл).
+
+Операции разных пользователей одной семьи не считаются дублями: у каждого
+остаётся собственный набор личных выписок.
 """
 
 from dataclasses import dataclass
@@ -46,6 +49,7 @@ def _resolve_or_create_category(db: Session, name: str) -> Category:
 def _existing_keys(
     db: Session,
     family_id: UUID,
+    user_id: UUID,
     keys: Iterable[tuple],
 ) -> set[tuple]:
     dates = [key[0] for key in keys]
@@ -53,7 +57,11 @@ def _existing_keys(
         return set()
     rows = (
         db.query(Transaction.date, Transaction.amount, Transaction.original_description)
-        .filter(Transaction.family_id == family_id, Transaction.date.in_(dates))
+        .filter(
+            Transaction.family_id == family_id,
+            Transaction.user_id == user_id,
+            Transaction.date.in_(dates),
+        )
         .all()
     )
     return {
@@ -85,7 +93,7 @@ def save_transactions(
         else:
             unique[key] = item
 
-    existing = _existing_keys(db, family_id, unique.keys())
+    existing = _existing_keys(db, family_id, user_id, unique.keys())
 
     created = 0
     db_matches = 0

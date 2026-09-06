@@ -235,3 +235,39 @@ class TestUploadedFilesAggregations:
 
         assert summary["uploaded_files"] == []
         assert len(summary["family_members"]) == 2
+
+
+class TestPersonalScopeFilter:
+    def test_агрегаты_только_операций_пользователя(self, db):
+        user1, user2, family = _prepare(db)
+
+        summary = get_family_summary(
+            db, family.id, user_id=user1.id, filter_user_id=user1.id
+        )
+
+        assert summary["total_amount"] == 150.0
+        assert summary["monthly"] == [{"month": "2026-01", "amount": 150.0}]
+        assert summary["yearly"] == [{"year": "2026", "amount": 150.0}]
+        assert {p["payee"] for p in summary["top_payees"]} == {"Лента", "Такси"}
+
+    def test_личный_режим_считает_суммы_по_маппингу_членов(self, db):
+        user1, _, family = _prepare(db)
+
+        summary = get_family_summary(
+            db, family.id, user_id=user1.id, filter_user_id=user1.id
+        )
+
+        members = {m["name"]: m["total_expenses"] for m in summary["family_members"]}
+        assert members["Анна"] == 150.0
+        assert members["b@test.ru"] == 0.0
+
+    def test_личный_режим_сохраняет_файлы_запрашивающего(self, db):
+        user1, user2, family = _prepare(db)
+
+        summary = get_family_summary(
+            db, family.id, user_id=user1.id, filter_user_id=user2.id
+        )
+
+        assert summary["total_amount"] == 200.0
+        files = [item["filename"] for item in summary["uploaded_files"]]
+        assert files == ["january.csv"]
