@@ -129,118 +129,12 @@ button[type="submit"]:disabled {
   isolation: isolate;
   width: 100%;
   min-height: 100vh;
-  background: #ffffff;
-}
-
-.dashboard::before,
-.dashboard::after {
-  content: '';
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-}
-
-.dashboard::before {
-  background:
-    radial-gradient(
-      ellipse 30% 42% at 0% 20%,
-      rgb(11 106 214 / 62%) 0%,
-      rgb(11 106 214 / 50%) 25%,
-      rgb(11 106 214 / 20%) 55%,
-      rgb(11 106 214 / 0%) 85%
-    ),
-    radial-gradient(
-      ellipse 30% 42% at 0% 50%,
-      rgb(0 141 143 / 62%) 0%,
-      rgb(0 141 143 / 50%) 25%,
-      rgb(0 141 143 / 20%) 55%,
-      rgb(0 141 143 / 0%) 85%
-    ),
-    radial-gradient(
-      ellipse 30% 42% at 0% 80%,
-      rgb(47 180 1 / 62%) 0%,
-      rgb(47 180 1 / 50%) 25%,
-      rgb(47 180 1 / 20%) 55%,
-      rgb(47 180 1 / 0%) 85%
-    );
-}
-
-.dashboard::after {
-  background:
-    radial-gradient(
-      ellipse 30% 42% at 100% 20%,
-      rgb(1 244 180 / 62%) 0%,
-      rgb(1 244 180 / 50%) 25%,
-      rgb(1 244 180 / 20%) 55%,
-      rgb(1 244 180 / 0%) 85%
-    ),
-    radial-gradient(
-      ellipse 30% 42% at 100% 50%,
-      rgb(201 241 30 / 62%) 0%,
-      rgb(201 241 30 / 50%) 25%,
-      rgb(201 241 30 / 20%) 55%,
-      rgb(201 241 30 / 0%) 85%
-    ),
-    radial-gradient(
-      ellipse 30% 42% at 100% 80%,
-      rgb(251 255 0 / 62%) 0%,
-      rgb(251 255 0 / 50%) 25%,
-      rgb(251 255 0 / 20%) 55%,
-      rgb(251 255 0 / 0%) 85%
-    );
-}
-
-@media (max-width: 768px) {
-  .dashboard::before {
-    background:
-      radial-gradient(
-        ellipse 30% 42% at 0% 20%,
-        rgb(11 106 214 / 45%) 0%,
-        rgb(11 106 214 / 36%) 25%,
-        rgb(11 106 214 / 14%) 55%,
-        rgb(11 106 214 / 0%) 85%
-      ),
-      radial-gradient(
-        ellipse 30% 42% at 0% 50%,
-        rgb(0 141 143 / 45%) 0%,
-        rgb(0 141 143 / 36%) 25%,
-        rgb(0 141 143 / 14%) 55%,
-        rgb(0 141 143 / 0%) 85%
-      ),
-      radial-gradient(
-        ellipse 30% 42% at 0% 80%,
-        rgb(47 180 1 / 45%) 0%,
-        rgb(47 180 1 / 36%) 25%,
-        rgb(47 180 1 / 14%) 55%,
-        rgb(47 180 1 / 0%) 85%
-      );
-  }
-
-  .dashboard::after {
-    background:
-      radial-gradient(
-        ellipse 30% 42% at 100% 20%,
-        rgb(1 244 180 / 45%) 0%,
-        rgb(1 244 180 / 36%) 25%,
-        rgb(1 244 180 / 14%) 55%,
-        rgb(1 244 180 / 0%) 85%
-      ),
-      radial-gradient(
-        ellipse 30% 42% at 100% 50%,
-        rgb(201 241 30 / 45%) 0%,
-        rgb(201 241 30 / 36%) 25%,
-        rgb(201 241 30 / 14%) 55%,
-        rgb(201 241 30 / 0%) 85%
-      ),
-      radial-gradient(
-        ellipse 30% 42% at 100% 80%,
-        rgb(251 255 0 / 45%) 0%,
-        rgb(251 255 0 / 36%) 25%,
-        rgb(251 255 0 / 14%) 55%,
-        rgb(251 255 0 / 0%) 85%
-      );
-  }
+  background: linear-gradient(
+    135deg,
+    #adddfd 0%,
+    #f4ffcf 50%,
+    #d8f7d8 100%
+  );
 }
 
 .dashboard-header {
@@ -735,6 +629,25 @@ button[type="submit"]:disabled {
 
 .chart-box {
   min-width: 0;
+}
+
+.dynamics-tooltip {
+  background: white;
+  border: 1px solid #dfe3ee;
+  border-radius: 8px;
+  padding: 8px 12px;
+  box-shadow: 0 16px 48px rgb(20 33 61 / 10%);
+}
+
+.dynamics-tooltip-label {
+  font-size: 0.85rem;
+  color: #666;
+  margin-bottom: 4px;
+}
+
+.dynamics-tooltip-value {
+  font-weight: 600;
+  color: #14213d;
 }
 
 .data-table {
