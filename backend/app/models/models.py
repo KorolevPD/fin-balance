@@ -1,13 +1,11 @@
 import uuid
 from datetime import datetime
-from typing import Optional
 
 from sqlalchemy import (
     Column,
     DateTime,
     Float,
     ForeignKey,
-    Integer,
     String,
     Text,
 )
@@ -39,7 +37,6 @@ class Family(Base):
     __tablename__ = "families"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    name = Column(String(255), nullable=False)
     invite_code = Column(String(32), unique=True, nullable=False, index=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 

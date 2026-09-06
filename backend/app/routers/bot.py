@@ -169,8 +169,8 @@ def upload_from_bot(
     if membership is None:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Вы не состоите ни в одной семье. "
-            "Создайте или присоединитесь к семье в веб-приложении",
+            detail="У вас нет семьи. Семья создаётся автоматически "
+            "при регистрации аккаунта",
         )
 
     filename = file.filename or ""
@@ -237,7 +237,8 @@ def summary_for_bot(telegram_id: str, db: Session = Depends(get_db)):
     if membership is None:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Вы не состоите ни в одной семье",
+            detail="У вас нет семьи. Семья создаётся автоматически "
+            "при регистрации аккаунта",
         )
 
     summary = get_family_summary(db, membership.family_id, user.id)
