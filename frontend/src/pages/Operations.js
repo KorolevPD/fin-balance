@@ -31,7 +31,7 @@ export default function Operations() {
   const [error, setError] = useState('');
   const [page, setPage] = useState(1);
   const [editing, setEditing] = useState(null);
-  const [hideIncomes, setHideIncomes] = useState(false);
+  const [hideIncomes, setHideIncomes] = useState(true);
 
   const loadData = useCallback(() => {
     setLoading(true);
