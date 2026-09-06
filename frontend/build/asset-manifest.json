@@ -1,5 +1,6 @@
 {
   "files": {
+<<<<<<< HEAD
     "main.css": "/static/css/main.b5a95dd8.css",
     "main.js": "/static/js/main.b1ba8502.js",
     "index.html": "/index.html",
@@ -9,5 +10,16 @@
   "entrypoints": [
     "static/css/main.b5a95dd8.css",
     "static/js/main.b1ba8502.js"
+=======
+    "main.css": "/static/css/main.c63990a5.css",
+    "main.js": "/static/js/main.0f7754c4.js",
+    "index.html": "/index.html",
+    "main.c63990a5.css.map": "/static/css/main.c63990a5.css.map",
+    "main.0f7754c4.js.map": "/static/js/main.0f7754c4.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.c63990a5.css",
+    "static/js/main.0f7754c4.js"
+>>>>>>> 366a7fe (feat: равные колонны градиента 25%+25% на рабочих страницах)
   ]
 }
