@@ -597,6 +597,35 @@ button[type="submit"]:disabled {
   }
 }
 
+.upload-welcome {
+  text-align: center;
+  padding: 56px 32px;
+}
+
+.upload-welcome h1 {
+  margin: 0 0 12px;
+  font-size: 1.8rem;
+}
+
+.upload-welcome-text {
+  margin: 0 auto 12px;
+  max-width: 560px;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: #14213d;
+}
+
+.upload-welcome .muted {
+  margin: 0 auto 32px;
+  max-width: 560px;
+  line-height: 1.5;
+}
+
+.upload-welcome-actions {
+  display: flex;
+  justify-content: center;
+}
+
 .summary-cards {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
