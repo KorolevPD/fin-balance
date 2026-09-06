@@ -878,8 +878,29 @@ button[type="submit"]:disabled {
 }
 
 .files-remove-cell {
-  text-align: center;
+  text-align: right;
   white-space: nowrap;
+  width: 48px;
+}
+
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: #dc2626;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.icon-btn:hover {
+  background: #fee2e2;
+  border-color: #dc2626;
 }
 
 .card-header-actions {
@@ -888,6 +909,12 @@ button[type="submit"]:disabled {
   justify-content: flex-end;
   gap: 12px;
   flex-wrap: wrap;
+}
+
+.card-footer-link {
+  display: flex;
+  justify-content: center;
+  margin-top: 16px;
 }
 
 .period-toggle {

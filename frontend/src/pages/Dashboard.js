@@ -94,6 +94,10 @@ function amountClassName(type) {
   return type === 'income' ? 'amount-income' : 'amount-expense';
 }
 
+function formatAmountPlain(value) {
+  return `${Math.abs(Number(value || 0)).toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₽`;
+}
+
 function formatDate(iso) {
   if (!iso) return '';
   const date = new Date(iso);
@@ -325,7 +329,7 @@ export default function Dashboard() {
                 <span className="stat-label">Общая сумма расходов</span>
                 <div className="stat-card-row">
                   <span className="stat-value">
-                    {summary ? formatAmount(summary.total_amount) : '—'}
+                    {summary ? formatAmountPlain(summary.total_amount) : '—'}
                   </span>
                   {!personalOnly && (
                     <div
@@ -373,7 +377,7 @@ export default function Dashboard() {
                     {members.map((member) => (
                       <tr key={member.user_id || member.email}>
                         <td>{member.name || member.email}</td>
-                        <td className="num">{formatAmount(member.total_expenses)}</td>
+                        <td className="num">{formatAmountPlain(member.total_expenses)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -526,10 +530,25 @@ export default function Dashboard() {
                         <td className="files-remove-cell">
                           <button
                             type="button"
-                            className="btn btn-small btn-danger"
+                            className="icon-btn icon-btn-danger"
+                            aria-label={`Удалить выписку ${file.filename}`}
+                            title="Удалить"
                             onClick={() => handleDeleteFile(file.filename)}
                           >
-                            Удалить
+                            <svg
+                              viewBox="0 0 24 24"
+                              width="18"
+                              height="18"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              aria-hidden="true"
+                            >
+                              <line x1="18" y1="6" x2="6" y2="18" />
+                              <line x1="6" y1="6" x2="18" y2="18" />
+                            </svg>
                           </button>
                         </td>
                       </tr>
@@ -744,9 +763,6 @@ export default function Dashboard() {
                 <div className="card-header">
                   <h2>Операции ({sortedTransactions.length})</h2>
                   <div className="card-header-actions">
-                    <Link to={`/family/${id}/operations`} className="card-header-link">
-                      Все операции →
-                    </Link>
                     {transactions.length > 0 && (
                       <button
                         type="button"
@@ -831,6 +847,13 @@ export default function Dashboard() {
                         ))}
                       </tbody>
                     </table>
+                  </div>
+                )}
+                {sortedTransactions.length > 0 && (
+                  <div className="card-footer-link">
+                    <Link to={`/family/${id}/operations`} className="card-header-link">
+                      Все операции
+                    </Link>
                   </div>
                 )}
                 {transactions.length > 0 && sortedTransactions.length === 0 && (
