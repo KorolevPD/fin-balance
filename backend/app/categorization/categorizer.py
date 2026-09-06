@@ -1,8 +1,18 @@
-"""Автоматическая категоризация операций по правилам ключевых слов."""
+"""Автоматическая категоризация операций.
+
+Категория из выписки (колонка «КАТЕГОРИЯ», например в PDF Сбербанка) имеет
+приоритет над правилами ключевых слов. Если её нет или она не распознана —
+используются правила по описанию, при отсутствии совпадений —
+``DEFAULT_CATEGORY``.
+"""
 
 from typing import Sequence
 
-from app.categorization.rules import CATEGORY_RULES, DEFAULT_CATEGORY
+from app.categorization.rules import (
+    CATEGORY_RULES,
+    DEFAULT_CATEGORY,
+    SBERBANK_CATEGORY_MAP,
+)
 from app.parsers import ParsedTransaction, parse_csv
 
 
@@ -16,12 +26,24 @@ def _normalize(text: str) -> str:
     return " ".join(text.lower().split())
 
 
-def categorize(description: str) -> str:
-    """Вернуть имя категории для описания операции.
+def _map_statement_category(value: str | None) -> str | None:
+    """Вернуть категорию приложения по категории из выписки или ``None``."""
+    if not value:
+        return None
+    return SBERBANK_CATEGORY_MAP.get(_normalize(value))
 
-    Первое сработавшее ключевое слово определяет категорию.
-    Если совпадений нет — возвращает ``DEFAULT_CATEGORY``.
+
+def categorize(description: str, statement_category: str | None = None) -> str:
+    """Вернуть имя категории для операции.
+
+    Категория из выписки, распознанная по ``SBERBANK_CATEGORY_MAP``, имеет
+    приоритет. Иначе — первое сработавшее ключевое слово описания. Без
+    совпадений возвращается ``DEFAULT_CATEGORY``.
     """
+    mapped = _map_statement_category(statement_category)
+    if mapped is not None:
+        return mapped
+
     normalized = _normalize(description)
     for category, keywords in CATEGORY_RULES.items():
         for keyword in keywords:
@@ -40,7 +62,8 @@ def categorize_transactions(
             amount=item.amount,
             description=item.description,
             type=item.type,
-            category=categorize(item.description),
+            statement_category=item.statement_category,
+            category=categorize(item.description, item.statement_category),
         )
         for item in transactions
     ]

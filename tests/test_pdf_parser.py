@@ -18,10 +18,10 @@ def _sber_bytes() -> bytes:
 
 
 class TestSberPdfParser:
-    def test_разбирает_восемь_операций_из_примера(self):
+    def test_разбирает_все_операции_из_примера(self):
         transactions = parse_pdf_bytes(_sber_bytes())
 
-        assert len(transactions) == 8
+        assert len(transactions) == 255
 
     def test_извлекает_даты_суммы_и_типы(self):
         transactions = parse_pdf_bytes(_sber_bytes())
@@ -42,11 +42,9 @@ class TestSberPdfParser:
         assert income_2000.date.isoformat() == "2026-06-04"
 
         incomes = [item for item in transactions if item.type == "income"]
-        assert len(incomes) == 4
-        assert all(
-            item.date.isoformat()
-            in {"2026-06-04", "2026-05-30", "2026-02-27", "2026-01-28"}
-            for item in incomes
+        assert len(incomes) > 4
+        assert {"2026-06-04", "2026-05-30", "2026-02-27", "2026-01-28"}.issubset(
+            {item.date.isoformat() for item in incomes}
         )
 
         assert any(item.amount == 22682.22 for item in transactions)
@@ -63,3 +61,50 @@ class TestSberPdfParser:
     def test_битые_данные_вызывают_valueerror(self):
         with pytest.raises(ValueError):
             parse_pdf_bytes(b"this is not a pdf")
+
+    def test_извлекает_категорию_из_колонки_категория(self):
+        transactions = parse_pdf_bytes(_sber_bytes())
+
+        assert any(
+            item.statement_category == "Супермаркеты" for item in transactions
+        )
+        assert any(
+            item.statement_category == "Транспорт" for item in transactions
+        )
+        assert any(
+            item.statement_category == "Внесение наличных" for item in transactions
+        )
+
+    def test_супермаркеты_имеют_категорию_из_выписки(self):
+        from app.categorization import categorize_transactions
+
+        categorized = categorize_transactions(parse_pdf_bytes(_sber_bytes()))
+
+        supermarts = [
+            item
+            for item in categorized
+            if item.statement_category == "Супермаркеты"
+        ]
+        assert len(supermarts) > 40
+        assert all(item.category == "Продукты" for item in supermarts)
+
+    def test_транспорт_имеет_категорию_из_выписки(self):
+        from app.categorization import categorize_transactions
+
+        categorized = categorize_transactions(parse_pdf_bytes(_sber_bytes()))
+
+        transport = [
+            item
+            for item in categorized
+            if item.statement_category == "Транспорт"
+        ]
+        assert len(transport) > 40
+        assert all(item.category == "Транспорт" for item in transport)
+
+    def test_большинство_операций_получают_категорию(self):
+        from app.categorization import categorize_transactions
+
+        categorized = categorize_transactions(parse_pdf_bytes(_sber_bytes()))
+        other = sum(1 for item in categorized if item.category == "Прочее")
+
+        assert other / len(categorized) < 0.3

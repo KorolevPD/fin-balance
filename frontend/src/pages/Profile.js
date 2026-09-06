@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import api from '../api';
 import { useAuth } from '../context/AuthContext';
 
@@ -23,6 +23,10 @@ function formatDate(iso) {
   return date.toLocaleDateString('ru-RU');
 }
 
+function roleLabel(role) {
+  return role === 'owner' ? 'Владелец' : 'Участник';
+}
+
 export default function Profile() {
   const { user, updateUser } = useAuth();
   const [values, setValues] = useState(() => {
@@ -37,7 +41,41 @@ export default function Profile() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
+  const [family, setFamily] = useState(null);
+  const [members, setMembers] = useState([]);
+  const [familyLoading, setFamilyLoading] = useState(true);
+  const [familyError, setFamilyError] = useState('');
+  const [inviteCode, setInviteCode] = useState('');
+  const [joinLoading, setJoinLoading] = useState(false);
+  const [copied, setCopied] = useState(false);
+
   const preview = avatarUrl(user?.avatar);
+
+  const loadFamily = async () => {
+    setFamilyLoading(true);
+    setFamilyError('');
+    try {
+      const res = await api.get('/families/my');
+      const current = res.data?.[0] || null;
+      setFamily(current);
+      if (current) {
+        const membersRes = await api.get(`/families/${current.id}/members`);
+        setMembers(membersRes.data);
+      } else {
+        setMembers([]);
+      }
+    } catch (err) {
+      setFamilyError(
+        err.response?.data?.detail || 'Не удалось загрузить данные семьи'
+      );
+    } finally {
+      setFamilyLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadFamily();
+  }, []);
 
   const handleChange = (key) => (e) => {
     setValues((prev) => ({ ...prev, [key]: e.target.value }));
@@ -76,6 +114,34 @@ export default function Profile() {
     } finally {
       setUploading(false);
       e.target.value = '';
+    }
+  };
+
+  const handleCopy = async () => {
+    if (!family) return;
+    try {
+      await navigator.clipboard.writeText(family.invite_code);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      setFamilyError('Не удалось скопировать код');
+    }
+  };
+
+  const handleJoin = async (e) => {
+    e.preventDefault();
+    setFamilyError('');
+    setJoinLoading(true);
+    try {
+      await api.post('/families/join', { invite_code: inviteCode });
+      setInviteCode('');
+      await loadFamily();
+    } catch (err) {
+      setFamilyError(
+        err.response?.data?.detail || 'Не удалось присоединиться к семье'
+      );
+    } finally {
+      setJoinLoading(false);
     }
   };
 
@@ -132,6 +198,66 @@ export default function Profile() {
           {saving ? 'Сохранение...' : 'Сохранить'}
         </button>
       </form>
+
+      <div className="card">
+        <h2>Семья</h2>
+        {familyError && <div className="error">{familyError}</div>}
+        {familyLoading ? (
+          <p className="muted">Загрузка...</p>
+        ) : (
+          <>
+            <p className="muted">
+              Семья создаётся автоматически при регистрации. По коду
+              приглашения группы объединяются в общий семейный бюджет (до 5
+              участников).
+            </p>
+            <div className="invite-row">
+              <span className="family-code">
+                Код приглашения: {family ? family.invite_code : '—'}
+              </span>
+              {family && (
+                <button type="button" className="copy-btn" onClick={handleCopy}>
+                  {copied ? 'Скопировано' : 'Копировать'}
+                </button>
+              )}
+            </div>
+            <h3>Участники ({members.length})</h3>
+            {members.length === 0 ? (
+              <p className="muted">В семье пока нет участников.</p>
+            ) : (
+              <ul className="member-list">
+                {members.map((member) => (
+                  <li key={member.user_id}>
+                    <span className="member-email">
+                      {member.name || member.email}
+                    </span>
+                    <span className="member-role">
+                      {roleLabel(member.role)}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <form onSubmit={handleJoin}>
+              <div className="form-group">
+                <label htmlFor="familyInviteCode">Код приглашения</label>
+                <input
+                  id="familyInviteCode"
+                  type="text"
+                  value={inviteCode}
+                  onChange={(e) => setInviteCode(e.target.value)}
+                  placeholder="Например, ABC12345"
+                  maxLength={32}
+                  autoComplete="off"
+                />
+              </div>
+              <button type="submit" className="btn" disabled={joinLoading}>
+                {joinLoading ? 'Присоединение...' : 'Присоединиться к семье'}
+              </button>
+            </form>
+          </>
+        )}
+      </div>
 
       <div className="card">
         <h2>Данные аккаунта</h2>

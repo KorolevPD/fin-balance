@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useLocation, useParams, Link } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import {
   ResponsiveContainer,
   PieChart,
@@ -16,6 +16,7 @@ import {
 import api from '../api';
 import { CATEGORIES } from '../categories';
 import TransactionEditModal from '../components/TransactionEditModal';
+import UploadModal from '../components/UploadModal';
 
 const CATEGORY_COLORS = [
   '#5b5bea',
@@ -55,10 +56,8 @@ function sortIndicator(key, sortBy, sortDir) {
 
 export default function Dashboard() {
   const { id } = useParams();
-  const location = useLocation();
   const [summary, setSummary] = useState(null);
   const [transactions, setTransactions] = useState([]);
-  const [familyName, setFamilyName] = useState(location.state?.family?.name || '');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [editing, setEditing] = useState(null);
@@ -67,6 +66,7 @@ export default function Dashboard() {
   const [catSortBy, setCatSortBy] = useState('amount');
   const [catSortDir, setCatSortDir] = useState('desc');
   const [hideIncomes, setHideIncomes] = useState(false);
+  const [uploadOpen, setUploadOpen] = useState(false);
 
   const handleSort = (key) => {
     if (sortBy === key) {
@@ -129,21 +129,28 @@ export default function Dashboard() {
   }, [id]);
 
   useEffect(() => {
-    if (!familyName) {
-      api
-        .get('/families/my')
-        .then((res) => {
-          const found = res.data.find((family) => family.id === id);
-          if (found) setFamilyName(found.name);
-        })
-        .catch(() => {});
-    }
     loadData();
-  }, [id, familyName, loadData]);
+  }, [id, loadData]);
 
   const handleSaved = () => {
     setEditing(null);
     loadData();
+  };
+
+  const handleDeleteFile = async (filename) => {
+    const confirmed = window.confirm(
+      `Удалить выписку «${filename}»? Все её операции будут удалены безвозвратно.`
+    );
+    if (!confirmed) return;
+    setError('');
+    try {
+      await api.delete(`/families/${id}/transactions`, {
+        params: { source_file: filename },
+      });
+      loadData();
+    } catch (err) {
+      setError(err.response?.data?.detail || 'Не удалось удалить выписку');
+    }
   };
 
   const members = summary?.family_members || [];
@@ -180,11 +187,6 @@ export default function Dashboard() {
 
   return (
     <div className="page dashboard-page">
-      <p>
-        <Link to={`/family/${id}`}>← Назад к семье</Link>
-      </p>
-      <h1>{familyName ? `Дашборд: ${familyName}` : 'Дашборд расходов'}</h1>
-
       {error && <div className="error">{error}</div>}
 
       {loading ? (
@@ -264,10 +266,19 @@ export default function Dashboard() {
               <p className="muted">Здесь появится новый блок.</p>
             </section>
 
-            <section className="card demo-block" aria-label="Загруженные файлы">
-              <h2>Загруженные файлы</h2>
+            <section className="card demo-block" aria-label="Банковские выписки">
+              <div className="card-header">
+                <h2>Банковские выписки</h2>
+                <button
+                  type="button"
+                  className="btn btn-small"
+                  onClick={() => setUploadOpen(true)}
+                >
+                  Загрузить
+                </button>
+              </div>
               {files.length === 0 ? (
-                <p className="muted">Файлы пока не загружались.</p>
+                <p className="muted">Выписки пока не загружались.</p>
               ) : (
                 <table className="data-table">
                   <thead>
@@ -275,6 +286,7 @@ export default function Dashboard() {
                       <th>Файл</th>
                       <th>Период</th>
                       <th className="num">Операций</th>
+                      <th></th>
                     </tr>
                   </thead>
                   <tbody>
@@ -285,6 +297,15 @@ export default function Dashboard() {
                           {formatDate(file.period_start)} — {formatDate(file.period_end)}
                         </td>
                         <td className="num">{file.operations_count}</td>
+                        <td className="actions-cell">
+                          <button
+                            type="button"
+                            className="btn btn-small btn-danger"
+                            onClick={() => handleDeleteFile(file.filename)}
+                          >
+                            Удалить
+                          </button>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -299,6 +320,13 @@ export default function Dashboard() {
               <p className="muted">
                 Загрузите банковскую выписку, чтобы увидеть статистику расходов.
               </p>
+              <button
+                type="button"
+                className="btn"
+                onClick={() => setUploadOpen(true)}
+              >
+                Загрузить выписку
+              </button>
             </div>
           ) : (
             <>
@@ -451,18 +479,23 @@ export default function Dashboard() {
               </section>
 
               <section className="card" aria-label="Список операций">
-                <div className="ops-header">
+                <div className="card-header">
                   <h2>Операции ({sortedTransactions.length})</h2>
-                  {transactions.length > 0 && (
-                    <button
-                      type="button"
-                      className="btn btn-secondary btn-small"
-                      aria-pressed={hideIncomes}
-                      onClick={() => setHideIncomes((value) => !value)}
-                    >
-                      {hideIncomes ? 'Показать пополнения' : 'Убрать пополнения'}
-                    </button>
-                  )}
+                  <div className="card-header-actions">
+                    <Link to={`/family/${id}/operations`} className="card-header-link">
+                      Все операции →
+                    </Link>
+                    {transactions.length > 0 && (
+                      <button
+                        type="button"
+                        className="btn btn-secondary btn-small"
+                        aria-pressed={hideIncomes}
+                        onClick={() => setHideIncomes((value) => !value)}
+                      >
+                        {hideIncomes ? 'Показать пополнения' : 'Убрать пополнения'}
+                      </button>
+                    )}
+                  </div>
                 </div>
                 {transactions.length === 0 ? (
                   <p className="muted">Операций пока нет.</p>
@@ -517,7 +550,7 @@ export default function Dashboard() {
                         </tr>
                       </thead>
                       <tbody>
-                        {sortedTransactions.map((txn) => (
+                        {sortedTransactions.slice(0, 10).map((txn) => (
                           <tr key={txn.id}>
                             <td className="nowrap">{formatDate(txn.date)}</td>
                             <td>{txn.cleaned_description || txn.original_description || '—'}</td>
@@ -554,6 +587,14 @@ export default function Dashboard() {
           categories={CATEGORIES}
           onClose={() => setEditing(null)}
           onSaved={handleSaved}
+        />
+      )}
+
+      {uploadOpen && (
+        <UploadModal
+          familyId={id}
+          onClose={() => setUploadOpen(false)}
+          onUploaded={() => loadData()}
         />
       )}
     </div>

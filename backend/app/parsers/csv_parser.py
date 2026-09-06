@@ -25,6 +25,7 @@ class ParsedTransaction(BaseModel):
     amount: float
     description: str
     type: str  # "income" | "expense"
+    statement_category: str | None = None
 
 
 # Псевдонимы заголовков -> канонические поля выписки

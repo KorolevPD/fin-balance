@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models import User
+from app.routers.families import create_default_family
 from app.security import (
     create_access_token,
     get_current_user,
@@ -77,6 +78,8 @@ def register(payload: UserCreate, db: Session = Depends(get_db)):
         name=(payload.name or "").strip() or None,
     )
     db.add(user)
+    db.flush()
+    create_default_family(db, user)
     db.commit()
     db.refresh(user)
     token = create_access_token(subject=str(user.id))

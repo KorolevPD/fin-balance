@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import List
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy.orm import Session
 
@@ -145,6 +145,52 @@ class TransactionUpdate(BaseModel):
         default=None, min_length=1, max_length=255
     )
     category: str | None = Field(default=None, min_length=1, max_length=255)
+
+
+@router.delete(
+    "/{family_id}/transactions",
+    summary="Удалить все операции по выписке (source_file)",
+)
+def delete_transactions_by_file(
+    family_id: UUID,
+    source_file: str = Query(..., min_length=1, max_length=255),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    _require_membership(db, family_id, current_user.id)
+    transactions = (
+        db.query(Transaction)
+        .filter(
+            Transaction.family_id == family_id,
+            Transaction.user_id == current_user.id,
+            Transaction.source_file == source_file,
+        )
+        .all()
+    )
+    if not transactions:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Выписка не найдена",
+        )
+
+    transaction_ids = [transaction.id for transaction in transactions]
+    db.query(UserCorrection).filter(
+        UserCorrection.transaction_id.in_(transaction_ids)
+    ).delete(synchronize_session=False)
+    db.query(Transaction).filter(
+        Transaction.id.in_(transaction_ids)
+    ).delete(synchronize_session=False)
+    db.commit()
+    remaining = (
+        db.query(Transaction)
+        .filter(
+            Transaction.family_id == family_id,
+            Transaction.user_id == current_user.id,
+            Transaction.source_file == source_file,
+        )
+        .count()
+    )
+    return {"deleted": len(transaction_ids), "remaining": remaining}
 
 
 @router.get(

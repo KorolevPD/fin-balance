@@ -18,11 +18,6 @@ export default function Layout({ children }) {
         <Link to="/dashboard" className="logo-link" aria-label="FinBalance — дашборд">
           <img src="/logo2.png" alt="FinBalance" className="logo" />
         </Link>
-        <nav className="dashboard-nav">
-          <Link to="/family">Создать семью</Link>
-          <Link to="/upload">Загрузить</Link>
-          <Link to="/dashboard">Дашборд</Link>
-        </nav>
         <div className="user-info">
           <Link
             to="/profile"

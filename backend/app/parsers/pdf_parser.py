@@ -28,7 +28,7 @@ _TRANSACTION_RE = re.compile(
     r"([+\u2212]?[\d\s\u00a0]+,\d{2})\s+([\d\s\u00a0]+,\d{2})\s*$"
 )
 _DESCRIPTION_RE = re.compile(
-    r"^(\d{2}\.\d{2}\.\d{4})\s+(\d{4,6})\s+(.+)$"
+    r"^(\d{2}\.\d{2}\.\d{4})\s+(\d{1,6})\s+(.+)$"
 )
 _CARD_RE = re.compile(r"^\*{2,4}\d{4}$")
 _CODE_RE = re.compile(r"^\d{4,6}$")
@@ -100,9 +100,10 @@ def parse_pdf_bytes(data: bytes) -> list[ParsedTransaction]:
         amount_raw = match.group(4)
         type_value = "income" if amount_raw.lstrip().startswith("+") else "expense"
         amount_value = round(_parse_amount(amount_raw), 2)
+        statement_category = match.group(3).strip()
         description = _collect_description(lines, i)
         if not description:
-            description = match.group(3).strip()
+            description = statement_category
         description = _clean_description(description) or "Без названия"
 
         key = (date_value, amount_value, description)
@@ -115,6 +116,7 @@ def parse_pdf_bytes(data: bytes) -> list[ParsedTransaction]:
                 amount=amount_value,
                 description=description,
                 type=type_value,
+                statement_category=statement_category,
             )
         )
     return results

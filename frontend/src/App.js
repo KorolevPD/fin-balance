@@ -3,11 +3,9 @@ import { useAuth } from './context/AuthContext';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Landing from './pages/Landing';
-import Families from './pages/Families';
-import FamilyDetail from './pages/FamilyDetail';
-import Upload from './pages/Upload';
 import Dashboard from './pages/Dashboard';
 import DemoDashboard from './pages/DemoDashboard';
+import Operations from './pages/Operations';
 import Profile from './pages/Profile';
 import PrivateRoute from './components/PrivateRoute';
 import Layout from './components/Layout';
@@ -25,41 +23,11 @@ export default function App() {
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route
-        path="/family"
-        element={
-          <PrivateRoute>
-            <Layout>
-              <Families />
-            </Layout>
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="/family/:id"
-        element={
-          <PrivateRoute>
-            <Layout>
-              <FamilyDetail />
-            </Layout>
-          </PrivateRoute>
-        }
-      />
-      <Route
         path="/dashboard"
         element={
           <PrivateRoute>
             <Layout>
               <DemoDashboard />
-            </Layout>
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="/upload"
-        element={
-          <PrivateRoute>
-            <Layout>
-              <Upload />
             </Layout>
           </PrivateRoute>
         }
@@ -80,6 +48,16 @@ export default function App() {
           <PrivateRoute>
             <Layout>
               <Dashboard />
+            </Layout>
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/family/:id/operations"
+        element={
+          <PrivateRoute>
+            <Layout>
+              <Operations />
             </Layout>
           </PrivateRoute>
         }

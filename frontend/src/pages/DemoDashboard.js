@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Legend } from 'recharts';
 import api from '../api';
+import UploadModal from '../components/UploadModal';
 
 const DEMO_COLORS = [
   '#5b5bea',
@@ -32,6 +33,7 @@ export default function DemoDashboard() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
   const [redirectTo, setRedirectTo] = useState(null);
+  const [uploadOpen, setUploadOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -164,10 +166,15 @@ export default function DemoDashboard() {
           <p className="muted">Здесь появится новый блок.</p>
         </section>
 
-        <section className="card demo-block" aria-label="Загруженные файлы">
-          <h2>Загруженные файлы</h2>
+        <section className="card demo-block" aria-label="Банковские выписки">
+          <div className="card-header">
+            <h2>Банковские выписки</h2>
+            <button type="button" className="btn btn-small" onClick={() => setUploadOpen(true)}>
+              Загрузить
+            </button>
+          </div>
           {files.length === 0 ? (
-            <p className="muted">Файлы пока не загружались.</p>
+            <p className="muted">Выписки пока не загружались.</p>
           ) : (
             <table className="data-table">
               <thead>
@@ -192,6 +199,17 @@ export default function DemoDashboard() {
           )}
         </section>
       </div>
+
+      {uploadOpen && (
+        <UploadModal
+          onClose={() => setUploadOpen(false)}
+          onUploaded={(result) => {
+            if (result?.family_id) {
+              setRedirectTo(`/family/${result.family_id}/dashboard`);
+            }
+          }}
+        />
+      )}
     </div>
   );
 }

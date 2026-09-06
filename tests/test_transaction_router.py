@@ -34,7 +34,7 @@ def _user():
 
 
 def _family():
-    return Family(name="Моя семья", invite_code="TESTCODE1")
+    return Family(invite_code="TESTCODE1")
 
 
 def _prepare(session):
@@ -135,9 +135,35 @@ class TestImportTransactions:
 
         assert response.status_code == 201
         body = response.json()
-        assert body["parsed"] == 8
-        assert body["created"] == 8
+        assert body["parsed"] == 255
+        assert body["created"] == 255
         assert body["duplicates_skipped"] == 0
+
+    def test_импорт_pdf_сохраняет_категории_из_выписки(self, client_db):
+        client, session = client_db
+        user, family = _prepare(session)
+        token = _token(user)
+
+        pdf_bytes = SBER_PDF_PATH.read_bytes()
+        files = {
+            "file": ("sber.pdf", io.BytesIO(pdf_bytes), "application/pdf")
+        }
+        client.post(
+            f"/api/families/{family.id}/transactions/import",
+            files=files,
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+        response = client.get(
+            f"/api/families/{family.id}/transactions",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        body = response.json()
+        categories = {item["category"] for item in body}
+        assert "Продукты" in categories
+        assert "Транспорт" in categories
+        assert "Наличные" in categories
+        assert "Рестораны и кафе" in categories
 
 
 class TestListTransactions:
@@ -162,3 +188,104 @@ class TestListTransactions:
         }
         # положительные суммы в универсальном формате считаются доходами
         assert {item["type"] for item in body} == {"income"}
+
+
+class TestDeleteTransactionsByFile:
+    def test_удаление_выписки_очищает_её_операции(self, client_db):
+        client, session = client_db
+        user, family = _prepare(session)
+        token = _token(user)
+        _upload(client, family.id, token, _csv_bytes())
+
+        response = client.delete(
+            f"/api/families/{family.id}/transactions",
+            params={"source_file": "statement.csv"},
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+        assert response.status_code == 200
+        body = response.json()
+        assert body["deleted"] == 2
+        assert body["remaining"] == 0
+
+        remaining = client.get(
+            f"/api/families/{family.id}/transactions",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        assert remaining.json() == []
+
+    def test_сводка_пересчитывается_после_удаления(self, client_db):
+        client, session = client_db
+        user, family = _prepare(session)
+        token = _token(user)
+        _upload(client, family.id, token, _csv_bytes())
+
+        client.delete(
+            f"/api/families/{family.id}/transactions",
+            params={"source_file": "statement.csv"},
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+        summary = client.get(
+            f"/api/families/{family.id}/summary",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        body = summary.json()
+        assert body["total_amount"] == 0
+        assert body["uploaded_files"] == []
+
+    def test_удаление_несуществующей_выписки_возвращает_404(self, client_db):
+        client, session = client_db
+        user, family = _prepare(session)
+        token = _token(user)
+
+        response = client.delete(
+            f"/api/families/{family.id}/transactions",
+            params={"source_file": "missing.csv"},
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+        assert response.status_code == 404
+
+    def test_нельзя_удалить_файл_другого_пользователя(self, client_db):
+        client, session = client_db
+        owner, family = _prepare(session)
+        owner_token = _token(owner)
+        _upload(client, family.id, owner_token, _csv_bytes())
+
+        other = User(
+            email="other@example.com",
+            password_hash=hash_password("secret1"),
+        )
+        session.add(other)
+        session.flush()
+        session.add(
+            FamilyMember(user_id=other.id, family_id=family.id, role="member")
+        )
+        session.commit()
+        other_token = _token(other)
+
+        response = client.delete(
+            f"/api/families/{family.id}/transactions",
+            params={"source_file": "statement.csv"},
+            headers={"Authorization": f"Bearer {other_token}"},
+        )
+
+        assert response.status_code == 404
+        remaining = client.get(
+            f"/api/families/{family.id}/transactions",
+            headers={"Authorization": f"Bearer {owner_token}"},
+        )
+        assert len(remaining.json()) == 2
+
+    def test_удаление_требует_авторизации(self, client_db):
+        client, session = client_db
+        _, family = _prepare(session)
+
+        response = client.delete(
+            f"/api/families/{family.id}/transactions",
+            params={"source_file": "statement.csv"},
+            headers={},
+        )
+
+        assert response.status_code == 401
