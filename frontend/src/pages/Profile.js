@@ -407,7 +407,7 @@ export default function Profile() {
             <input
               id={`profile-${field.key}`}
               type={field.type}
-              value={field.type === 'date' ? formatDate(user?.[field.key]) : user?.[field.key]}
+              value={formatDate(user?.[field.key]) || user?.[field.key]}
               readOnly
               disabled
             />
