@@ -689,8 +689,12 @@ button[type="submit"]:disabled {
 }
 
 .scope-toggle-btn.active {
-  background: #5b5bea;
+  background: #24a647;
   color: white;
+}
+
+.scope-toggle-btn.active:hover {
+  background: #1a8a39;
 }
 
 .category-layout {
