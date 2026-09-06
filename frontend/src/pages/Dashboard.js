@@ -532,8 +532,19 @@ export default function Dashboard() {
                         />
                         <YAxis tickFormatter={(value) => Math.abs(Number(value)).toLocaleString('ru-RU')} />
                         <Tooltip
-                          formatter={(value) => formatAmount(value)}
-                          labelFormatter={(label) => formatDynamicsTick(label, dynamicsPeriod)}
+                          content={({ active, payload, label }) => {
+                            if (!active || !payload?.length) return null;
+                            return (
+                              <div className="dynamics-tooltip">
+                                <div className="dynamics-tooltip-label">
+                                  {formatDynamicsTick(label, dynamicsPeriod)}
+                                </div>
+                                <div className="dynamics-tooltip-value">
+                                  {formatAmount(payload[0].value)}
+                                </div>
+                              </div>
+                            );
+                          }}
                         />
                         <Bar dataKey="amount" fill="#5b5bea" radius={[4, 4, 0, 0]} />
                       </BarChart>

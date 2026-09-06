@@ -737,6 +737,25 @@ button[type="submit"]:disabled {
   min-width: 0;
 }
 
+.dynamics-tooltip {
+  background: white;
+  border: 1px solid #dfe3ee;
+  border-radius: 8px;
+  padding: 8px 12px;
+  box-shadow: 0 16px 48px rgb(20 33 61 / 10%);
+}
+
+.dynamics-tooltip-label {
+  font-size: 0.85rem;
+  color: #666;
+  margin-bottom: 4px;
+}
+
+.dynamics-tooltip-value {
+  font-weight: 600;
+  color: #14213d;
+}
+
 .data-table {
   width: 100%;
   border-collapse: collapse;
