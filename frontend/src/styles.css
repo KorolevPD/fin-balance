@@ -758,6 +758,12 @@ button[type="submit"]:disabled {
   white-space: nowrap;
 }
 
+.ops-filter-actions {
+  display: flex;
+  justify-content: flex-start;
+  margin-top: 16px;
+}
+
 .amount-income {
   color: #16a34a;
 }
