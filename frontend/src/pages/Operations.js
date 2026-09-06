@@ -31,6 +31,7 @@ export default function Operations() {
   const [error, setError] = useState('');
   const [page, setPage] = useState(1);
   const [editing, setEditing] = useState(null);
+  const [hideIncomes, setHideIncomes] = useState(false);
 
   const loadData = useCallback(() => {
     setLoading(true);
@@ -50,13 +51,18 @@ export default function Operations() {
     loadData();
   }, [id, loadData]);
 
+  const visibleTransactions = useMemo(() => {
+    if (!hideIncomes) return transactions;
+    return transactions.filter((txn) => txn.type !== 'income');
+  }, [transactions, hideIncomes]);
+
   const sorted = useMemo(() => {
-    return [...transactions].sort((a, b) => {
+    return [...visibleTransactions].sort((a, b) => {
       const da = a.date ? new Date(a.date).getTime() : 0;
       const db = b.date ? new Date(b.date).getTime() : 0;
       return db - da;
     });
-  }, [transactions]);
+  }, [visibleTransactions]);
 
   const totalPages = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
   const safePage = Math.min(page, totalPages);
@@ -80,9 +86,25 @@ export default function Operations() {
         <p className="muted">Загрузка...</p>
       ) : (
         <div className="card">
-          <h2>Операции ({transactions.length})</h2>
+          <div className="card-header">
+            <h2>Операции ({sorted.length})</h2>
+            {transactions.length > 0 && (
+              <div className="card-header-actions">
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-small"
+                  aria-pressed={hideIncomes}
+                  onClick={() => setHideIncomes((value) => !value)}
+                >
+                  {hideIncomes ? 'Показать пополнения' : 'Убрать пополнения'}
+                </button>
+              </div>
+            )}
+          </div>
           {pageItems.length === 0 ? (
-            <p className="muted">Операций пока нет.</p>
+            <p className="muted">
+              {transactions.length > 0 ? 'Все пополнения скрыты кнопкой выше.' : 'Операций пока нет.'}
+            </p>
           ) : (
             <div className="table-scroll">
               <table className="data-table">
