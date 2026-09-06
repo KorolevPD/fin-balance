@@ -9,7 +9,7 @@ function avatarUrl(avatar) {
 
 const READONLY_FIELDS = [
   { key: 'email', label: 'Email', type: 'text' },
-  { key: 'created_at', label: 'Дата регистрации', type: 'date' },
+  { key: 'created_at', label: 'Дата регистрации', type: 'text' },
 ];
 
 const EDITABLE_FIELDS = [
