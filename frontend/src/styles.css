@@ -125,8 +125,51 @@ button[type="submit"]:disabled {
 }
 
 .dashboard {
+  position: relative;
+  isolation: isolate;
   width: 100%;
   min-height: 100vh;
+}
+
+.dashboard::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    linear-gradient(
+      to right,
+      #6cb8f0 0%,
+      #9fd7f6 15%,
+      #ffffff 30%
+    ),
+    linear-gradient(
+      to left,
+      #4fbf72 0%,
+      #b9d97e 15%,
+      #ffffff 30%
+    ),
+    #ffffff;
+}
+
+@media (max-width: 768px) {
+  .dashboard::before {
+    background:
+      linear-gradient(
+        to right,
+        rgb(108 184 240 / 60%) 0%,
+        rgb(159 215 246 / 28%) 15%,
+        rgb(255 255 255 / 0%) 30%
+      ),
+      linear-gradient(
+        to left,
+        rgb(79 191 114 / 60%) 0%,
+        rgb(185 217 126 / 28%) 15%,
+        rgb(255 255 255 / 0%) 30%
+      ),
+      #ffffff;
+  }
 }
 
 .dashboard-header {
