@@ -212,18 +212,17 @@ export default function Dashboard() {
     }
   };
 
-  const generateAdvice = useCallback(async (keepExisting = false) => {
+  const generateAdvice = useCallback(async () => {
     setAdviceGenerating(true);
     setAdviceError('');
     try {
-      const res = await api.post(`/families/${id}/advices`);
+      const res = await api.post(`/families/${id}/advices`, null, {
+        params: { replace: true },
+      });
       const advice = res.data?.advice;
       if (advice) {
-        setAdvices((prev) => {
-          const next = keepExisting ? [...prev, advice] : [advice];
-          setAdviceIndex(next.length - 1);
-          return next;
-        });
+        setAdvices([advice]);
+        setAdviceIndex(0);
       }
     } catch (err) {
       setAdviceError(err.response?.data?.detail || 'Не удалось получить новый совет');
@@ -242,7 +241,7 @@ export default function Dashboard() {
       setAdvices(list);
       setAdviceIndex(0);
       if (list.length === 0 && user?.has_ai_key) {
-        await generateAdvice(true);
+        await generateAdvice();
       }
     } catch (err) {
       setAdviceError(err.response?.data?.detail || 'Не удалось загрузить советы');
@@ -254,6 +253,13 @@ export default function Dashboard() {
   useEffect(() => {
     loadAdvices();
   }, [id, user?.has_ai_key, loadAdvices]);
+
+  const handleUploaded = () => {
+    loadData();
+    if (user?.has_ai_key) {
+      generateAdvice().catch(() => {});
+    }
+  };
 
   const currentAdvice = advices.length > 0 ? advices[adviceIndex] : null;
 
@@ -400,7 +406,7 @@ export default function Dashboard() {
                   <button
                     type="button"
                     className="btn btn-small"
-                    onClick={() => generateAdvice(true)}
+                    onClick={() => generateAdvice()}
                     disabled={adviceGenerating}
                   >
                     {adviceGenerating ? 'Генерация...' : 'Получить совет'}
@@ -421,7 +427,7 @@ export default function Dashboard() {
                     <button
                       type="button"
                       className="btn btn-small"
-                      onClick={() => generateAdvice(true)}
+                      onClick={() => generateAdvice()}
                       disabled={adviceGenerating}
                     >
                       {adviceGenerating ? 'Генерация...' : 'Новый совет'}
@@ -444,7 +450,7 @@ export default function Dashboard() {
                   <button
                     type="button"
                     className="btn btn-small"
-                    onClick={() => generateAdvice(true)}
+                    onClick={() => generateAdvice()}
                     disabled={adviceGenerating}
                   >
                     {adviceGenerating ? 'Генерация...' : 'Получить совет'}
@@ -817,7 +823,7 @@ export default function Dashboard() {
         <UploadModal
           familyId={id}
           onClose={() => setUploadOpen(false)}
-          onUploaded={() => loadData()}
+          onUploaded={handleUploaded}
         />
       )}
     </div>
