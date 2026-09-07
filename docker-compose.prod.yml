@@ -19,3 +19,7 @@ services:
     volumes:
       - /etc/letsencrypt:/etc/letsencrypt:ro
       - /var/www/certbot:/var/www/certbot
+
+  backend:
+    volumes:
+      - /etc/ssl/gigachat-ca.pem:/etc/ssl/certs/gigachat-ca.pem:ro
