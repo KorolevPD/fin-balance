@@ -277,6 +277,20 @@ export default function Dashboard() {
 
   const files = summary?.uploaded_files || [];
   const total = Math.abs(summary?.total_amount || 0);
+  const totalLast30 = useMemo(() => {
+    const daily = summary?.daily || [];
+    if (daily.length === 0) return total;
+    const lastDay = daily.reduce((a, b) => (a.day > b.day ? a : b)).day;
+    const start = new Date(`${lastDay}T00:00:00`);
+    start.setDate(start.getDate() - 29);
+    const pad = (n) => String(n).padStart(2, '0');
+    const startIso = `${start.getFullYear()}-${pad(start.getMonth() + 1)}-${pad(
+      start.getDate()
+    )}`;
+    return daily
+      .filter((item) => item.day >= startIso)
+      .reduce((sum, item) => sum + Math.abs(Number(item.amount) || 0), 0);
+  }, [summary, total]);
   const categoryList = useMemo(() => {
     const source = summary?.by_category || [];
     if (source.length === 0) return source;
@@ -326,10 +340,10 @@ export default function Dashboard() {
           {(hasData || effectiveScope === 'personal') && (
             <section className="summary-cards" aria-label="Сводка расходов">
               <div className="stat-card">
-                <span className="stat-label">Общая сумма расходов</span>
+                <span className="stat-label">Общая сумма расходов за 30 дней</span>
                 <div className="stat-card-row">
                   <span className="stat-value">
-                    {summary ? formatAmountPlain(summary.total_amount) : '—'}
+                    {summary ? formatAmountPlain(totalLast30) : '—'}
                   </span>
                   {!personalOnly && (
                     <div
