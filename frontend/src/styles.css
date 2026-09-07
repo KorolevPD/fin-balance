@@ -579,6 +579,10 @@ button[type="submit"]:disabled {
   min-width: 0;
 }
 
+.demo-block-wide {
+  grid-column: 1 / -1;
+}
+
 .demo-block-empty {
   display: flex;
   flex-direction: column;

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import api from '../api';
 import { CATEGORIES } from '../categories';
 import TransactionEditModal from '../components/TransactionEditModal';
@@ -76,9 +76,6 @@ export default function Operations() {
 
   return (
     <div className="page">
-      <p>
-        <Link to={`/family/${id}/dashboard`}>← Назад к дашборду</Link>
-      </p>
       <h1>Все операции</h1>
 
       {error && <div className="error">{error}</div>}
