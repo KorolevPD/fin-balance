@@ -6,7 +6,7 @@ function isSupported(file) {
   return name.endsWith('.csv') || name.endsWith('.pdf');
 }
 
-export default function UploadModal({ familyId, onClose, onUploaded }) {
+export default function UploadModal({ familyId, adviceScope = 'personal', onClose, onUploaded }) {
   const [file, setFile] = useState(null);
   const [familyIdState, setFamilyIdState] = useState(familyId || '');
   const [familyLoading, setFamilyLoading] = useState(!familyId);
@@ -96,6 +96,7 @@ export default function UploadModal({ familyId, onClose, onUploaded }) {
         `/families/${familyIdState}/transactions/import`,
         formData,
         {
+          params: { advice_scope: adviceScope },
           onUploadProgress: (event) => {
             if (!event.total) return;
             const percent = Math.round((event.loaded * 100) / event.total);

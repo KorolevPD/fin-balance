@@ -5,7 +5,7 @@ function formatError(err) {
   return err.response?.data?.detail || 'Не удалось сохранить изменения';
 }
 
-export default function TransactionEditModal({ transaction, familyId, categories, onClose, onSaved }) {
+export default function TransactionEditModal({ transaction, familyId, adviceScope = 'personal', categories, onClose, onSaved }) {
   const [title, setTitle] = useState(transaction.cleaned_description || transaction.original_description || '');
   const [category, setCategory] = useState(transaction.category || categories[0] || 'Прочее');
   const [saving, setSaving] = useState(false);
@@ -38,6 +38,8 @@ export default function TransactionEditModal({ transaction, familyId, categories
       await api.patch(`/families/${familyId}/transactions/${transaction.id}`, {
         cleaned_description: trimmed,
         category,
+      }, {
+        params: { advice_scope: adviceScope },
       });
       onSaved();
     } catch (err) {
