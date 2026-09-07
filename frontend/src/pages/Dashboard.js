@@ -208,6 +208,7 @@ export default function Dashboard() {
   const handleSaved = () => {
     setEditing(null);
     loadData();
+    loadAdvices();
   };
 
   const handleDeleteFile = async (filename) => {
@@ -218,9 +219,10 @@ export default function Dashboard() {
     setError('');
     try {
       await api.delete(`/families/${id}/transactions`, {
-        params: { source_file: filename },
+        params: { source_file: filename, advice_scope: effectiveScope },
       });
       loadData();
+      loadAdvices();
     } catch (err) {
       setError(err.response?.data?.detail || 'Не удалось удалить выписку');
     }
@@ -230,7 +232,9 @@ export default function Dashboard() {
     setAdviceGenerating(true);
     setAdviceError('');
     try {
-      const res = await api.post(`/families/${id}/advices`);
+      const res = await api.post(`/families/${id}/advices`, null, {
+        params: { scope: effectiveScope },
+      });
       const advice = res.data?.advice;
       if (advice) {
         setAdvices((prev) => [advice, ...prev]);
@@ -242,35 +246,32 @@ export default function Dashboard() {
     } finally {
       setAdviceGenerating(false);
     }
-  }, [id]);
+  }, [id, effectiveScope]);
 
   const loadAdvices = useCallback(async () => {
     setAdvicesLoading(true);
     setAdviceError('');
     try {
-      const res = await api.get(`/families/${id}/advices`);
+      const res = await api.get(`/families/${id}/advices`, {
+        params: { scope: effectiveScope },
+      });
       const list = res.data || [];
       setAdvices(list);
       setAdviceIndex(0);
-      if (list.length === 0 && hasAiAccess) {
-        await generateAdvice();
-      }
     } catch (err) {
       setAdviceError(err.response?.data?.detail || 'Не удалось загрузить советы');
     } finally {
       setAdvicesLoading(false);
     }
-  }, [id, hasAiAccess, generateAdvice]);
+  }, [id, effectiveScope]);
 
   useEffect(() => {
     loadAdvices();
-  }, [id, hasAiAccess, loadAdvices]);
+  }, [id, effectiveScope, loadAdvices]);
 
   const handleUploaded = () => {
     loadData();
-    if (hasAiAccess) {
-      generateAdvice().catch(() => {});
-    }
+    loadAdvices();
   };
 
   const currentAdvice = advices.length > 0 ? advices[adviceIndex] : null;
@@ -925,6 +926,7 @@ export default function Dashboard() {
         <TransactionEditModal
           transaction={editing}
           familyId={id}
+          adviceScope={effectiveScope}
           categories={CATEGORIES}
           onClose={() => setEditing(null)}
           onSaved={handleSaved}
@@ -934,6 +936,7 @@ export default function Dashboard() {
       {uploadOpen && (
         <UploadModal
           familyId={id}
+          adviceScope={effectiveScope}
           onClose={() => setUploadOpen(false)}
           onUploaded={handleUploaded}
         />

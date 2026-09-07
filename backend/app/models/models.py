@@ -135,6 +135,9 @@ class AiAdvice(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     family_id = Column(UUID(as_uuid=True), ForeignKey("families.id"), nullable=False)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    scope = Column(
+        String(20), nullable=False, default="family", server_default="family"
+    )
     text = Column(Text, nullable=False)
     provider = Column(String(50), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
