@@ -15,12 +15,12 @@ from app.ai import AIError, classify_descriptions, decrypt_key, is_supported
 from app.ai.client import ClassifyResult
 from app.categorization import CategorizedTransaction
 from app.categorization.rules import CATEGORY_RULES, DEFAULT_CATEGORY
-from app.models import Transaction, User
+from app.models import Category, Transaction, User
 from app.services.transactions import _resolve_or_create_category
 
 MAX_CLEANED_LENGTH = 255
 
-_ALLOWED_CATEGORIES = {*CATEGORY_RULES.keys(), DEFAULT_CATEGORY}
+_ALLOWED_CATEGORIES = set(CATEGORY_RULES.keys())
 
 
 def _normalize_category(value: str | None) -> str | None:
@@ -103,10 +103,11 @@ def enrich_saved_transactions(
     user_id: UUID,
     source_file: str,
 ) -> int:
-    """Обогатить уже сохранённые операции AI-результатами (фоновая задача).
+    """Обогатить уже сохранённые операции из «Прочее» AI-результатами.
 
-    Читает созданные выпиской транзакции, вызывает AI-классификацию и
-    обновляет category/cleaned_description. Возвращает число обновлённых.
+    Читает созданные выпиской транзакции с категорией «Прочее», вызывает
+    AI-классификацию и перераспределяет их по конкретным категориям, а также
+    проставляет cleaned_description. Возвращает число обновлённых.
     """
     user = db.query(User).filter(User.id == user_id).first()
     if not user or not user.ai_api_key_encrypted or not is_supported(user.ai_provider):
@@ -118,10 +119,12 @@ def enrich_saved_transactions(
 
     transactions = (
         db.query(Transaction)
+        .join(Category, Transaction.category_id == Category.id)
         .filter(
             Transaction.family_id == family_id,
             Transaction.user_id == user_id,
             Transaction.source_file == source_file,
+            Category.name == DEFAULT_CATEGORY,
         )
         .all()
     )
