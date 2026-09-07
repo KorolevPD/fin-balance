@@ -607,7 +607,11 @@ button[type="submit"]:disabled {
 }
 
 .demo-chart {
-  min-height: 280px;
+  min-height: 308px;
+}
+
+.demo-chart .recharts-legend-wrapper {
+  bottom: 0;
 }
 
 @media (max-width: 900px) {
