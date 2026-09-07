@@ -69,6 +69,7 @@
 | `SECRET_KEY` | Секрет для подписи JWT-токенов (сменить в продакшене) |
 | `AI_KEY_ENCRYPTION_KEY` | Ключ AES-GCM для шифрования AI-ключей пользователей (сменить в продакшене) |
 | `GIGACHAT_API_KEY` | Серверный GigaChat-ключ (Authorization Key). Заполнен — используется для всех пользователей, раздел «AI-ассистент» в профиле скрыт. Пуст — пользователь вводит свой ключ в профиле |
+| `GIGACHAT_CA_BUNDLE` | Путь к PEM-файлу корневого сертификата НУЦ Минцифры для TLS-доступа к GigaChat (`*.sberbank.ru`, `*.giga.chat`). Пуст — используется стандартный trust-store. TLS не отключает, только добавляет корень в цепочку доверия |
 | `BOT_TOKEN` | Токен Telegram-бота. Без значения бот запускается в «спящем» режиме (отключён) |
 | `API_URL` | URL бэкенда для бота (по умолчанию `http://backend:8000`) |
 | `DEPLOY_PORT` / `DEPLOY_PORT_SSL` | Порт nginx в проде (по умолчанию 80/443) |
@@ -146,3 +147,13 @@ cd frontend && npm run check && npm test
 ---
 
 Исполнительные документы проекта: `PLAN.md` (план и стратегия тестирования), `TASKS.md` (журнал задач), `docs/agent/tasks/` (timestamp-файлы попыток выполнения).
+
+## Авторы
+
+- Королев Павел [@korolevpd](https://github.com/korolevpd) — тимлид, бэкенд
+- Симонов Михаил [@ludovolk6666](https://github.com/ludovolk6666) — аналитик
+- Прокопенко Валерия [@wfxxyyy](https://github.com/wfxxyyy) — дизайнер
+- Болотов Яромир [@KonoLobster](https://github.com/KonoLobster) — фронтенд/дизайн
+- Иванов Илья [@TT_AZART](https://github.com/TT_AZART) — промпт
+- Попова Екатерина [@ritritsu](https://github.com/ritritsu) — фронтенд/дизайн
+- Туржевский Дмитрий [@hsdhhdjdjdhd](https://github.com/hsdhhdjdjdhd) — бэкенд
