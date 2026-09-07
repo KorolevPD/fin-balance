@@ -12,6 +12,7 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
+  Curve,
 } from 'recharts';
 import api from '../api';
 import { CATEGORIES } from '../categories';
@@ -304,6 +305,11 @@ export default function Dashboard() {
     });
   }, [categoryList, catSortBy, catSortDir, total]);
   const chartCategories = categoryList.filter((item) => Math.abs(Number(item.amount || 0)) > 0);
+  const chartTotal = chartCategories.reduce((sum, item) => sum + Math.abs(Number(item.amount || 0)), 0);
+  const shareOf = (entry) => (chartTotal > 0 ? (Math.abs(Number(entry.amount || 0)) / chartTotal) * 100 : 0);
+  const shouldLabelCategory = (entry) => (shareOf(entry) >= 1 ? entry.category : null);
+  const shouldLabelLine = (props) =>
+    shareOf(props) >= 1 ? <Curve type="linear" {...props} className="recharts-pie-label-line" /> : null;
   const payees = summary?.top_payees || [];
   const dynamics = DYNAMICS_PERIODS[dynamicsPeriod];
   const dynamicsData = summary?.[dynamics.source] || [];
@@ -399,6 +405,8 @@ export default function Dashboard() {
                         cx="50%"
                         cy="50%"
                         outerRadius={100}
+                        label={shouldLabelCategory}
+                        labelLine={shouldLabelLine}
                       >
                         {chartCategories.map((entry) => (
                           <Cell
