@@ -7,11 +7,15 @@
 # Использование (локально, для отладки на сервере):
 #   bash deploy/deploy.sh SECRET_KEY POSTGRES_USER POSTGRES_PASSWORD \
 #        POSTGRES_DB AI_KEY_ENCRYPTION_KEY GIGACHAT_API_KEY BOT_TOKEN \
-#        DEPLOY_DOMAIN CERTBOT_EMAIL
+#        DEPLOY_DOMAIN CERTBOT_EMAIL GIGACHAT_CA_BUNDLE
 #
 # DEPLOY_DOMAIN (8-й аргумент) — если задан, выпускается/обновляется
 # SSL-сертификат Let's Encrypt (certbot) для домена.
 # CERTBOT_EMAIL (9-й аргумент) — email для уведомлений Let's Encrypt.
+# GIGACHAT_CA_BUNDLE (10-й аргумент) — путь к PEM-файлу с корневым
+# сертификатом НУЦ Минцифры ВНУТРИ контейнера.
+# Значение должно совпадать с правой частью монтирования в compose.
+# Если задан, деплой проверяет наличие файла на хосте и fail-fast завершается.
 #
 set -euo pipefail
 
@@ -24,6 +28,7 @@ GIGACHAT_API_KEY="${6:-}"
 BOT_TOKEN="${7:-}"
 DEPLOY_DOMAIN="${8:-}"
 CERTBOT_EMAIL="${9:-}"
+GIGACHAT_CA_BUNDLE="${10:-}"
 
 APP_DIR="${HOME}/fin-balance"
 CERT_DIR="/etc/letsencrypt/live/finbalance"
@@ -47,6 +52,17 @@ fi
 
 cd "${APP_DIR}"
 
+# Если GIGACHAT_CA_BUNDLE задан — проверяем, что файл сертификата есть на хосте.
+# Без этой проверки Docker создаст ДИРЕКТОРИЮ вместо файла, и TLS будет молча
+# отклоняться (verify=<directory>).
+GIGACHAT_HOST_CERT="/etc/ssl/gigachat-ca.pem"
+if [ -n "${GIGACHAT_CA_BUNDLE}" ] && [ ! -s "${GIGACHAT_HOST_CERT}" ]; then
+  echo "FinBalance: ошибка — GIGACHAT_CA_BUNDLE задан, но файл ${GIGACHAT_HOST_CERT} не найден или пуст." >&2
+  echo "Получите корневой сертификат НУЦ Минцифры и сохраните его на сервере:" >&2
+  echo "  sudo openssl s_client -showcerts -connect ngw.devices.sberbank.ru:9443 -servername ngw.devices.sberbank.ru -tls1_2 </dev/null 2>/dev/null | python3 -c \"import sys,re; c=re.findall(r'-----BEGIN CERTIFICATE-----.*?-----END CERTIFICATE-----',sys.stdin.read(),re.S); open('/etc/ssl/gigachat-ca.pem','w').write(c[-1]+chr(10))\"" >&2
+  exit 1
+fi
+
 # Собираем .env из переданных секретов.
 cat > .env <<EOF
 POSTGRES_USER=${POSTGRES_USER}
@@ -58,6 +74,7 @@ GIGACHAT_API_KEY=${GIGACHAT_API_KEY}
 BOT_TOKEN=${BOT_TOKEN}
 DEPLOY_PORT=${DEPLOY_PORT:-80}
 DEPLOY_PORT_SSL=${DEPLOY_PORT_SSL:-443}
+GIGACHAT_CA_BUNDLE=${GIGACHAT_CA_BUNDLE}
 EOF
 
 # SSL: выпуск/продление сертификата выполняем ДО запуска стека,

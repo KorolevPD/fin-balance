@@ -90,25 +90,40 @@ python -c "import secrets; print(secrets.token_urlsafe(24))"   # POSTGRES_PASSWO
 
 ### Как исправить (проверка TLS остаётся включённой)
 
-1. **Получите корневой сертификат НУЦ Минцифры** в формате PEM (например, через
-   браузер: цепочка сертификатов эндпоинта → корневой «НУЦ Минцифры» → экспорт,
-   или из официального распространителя доверенных корней Минцифры).
-2. **Локальный запуск (не в Docker):** задайте переменную окружения
-   `GIGACHAT_CA_BUNDLE=<путь к .pem>` для процесса backend (uvicorn). Backend
-   использует её только для GigaChat-запросов — общий trust-store не меняется.
-3. **Docker (dev и prod):** смонтируйте файл сертификата в контейнер backend и
-   укажите путь внутри него, например:
-   ```yaml
-   services:
-     backend:
-       volumes:
-         - /etc/ssl/gigachat-ca.pem:/etc/ssl/certs/gigachat-ca.pem:ro
-       environment:
-         - GIGACHAT_CA_BUNDLE=/etc/ssl/certs/gigachat-ca.pem
+**Для продакшена (Docker на сервере):**
+
+1. **На сервере (один раз, от root):** положите корневой сертификат НУЦ Минцифры
+   в `/etc/ssl/gigachat-ca.pem`:
+   ```bash
+   sudo openssl s_client -showcerts -connect ngw.devices.sberbank.ru:9443 \
+     -servername ngw.devices.sberbank.ru -tls1_2 </dev/null 2>/dev/null \
+     | sudo python3 -c "import sys,re; c=re.findall(r'-----BEGIN CERTIFICATE-----.*?-----END CERTIFICATE-----',sys.stdin.read(),re.S); open('/etc/ssl/gigachat-ca.pem','w').write(c[-1]+'\n')"
    ```
-   Базовый `docker-compose.yml` уже пробрасывает `GIGACHAT_CA_BUNDLE`, поэтому в
-   prod достаточно положить сертификат на сервер и раскомментировать/добавить
-   монтирование (пример выше). Без переменной поведение прежнее (fail-closed).
+   Если `openssl s_client` не поднимает хендшейк (GOST TLS) — скачайте PEM
+   корня «НУЦ Минцифры России» с официального распространителя доверенных
+   корней (e-trust.gosuslugi.ru / сайт НУЦ) и сохраните как
+   `/etc/ssl/gigachat-ca.pem`.
+
+2. **GitHub Secrets:** создайте/проверьте секрет `GIGACHAT_CA_BUNDLE` со
+   значением `/etc/ssl/certs/gigachat-ca.pem` (путь **внутри контейнера**,
+   совпадает с правой частью монтирования в compose).
+
+3. **Монтирование** уже настроено в `docker-compose.prod.yml` (сервис `backend`).
+   Скрипт `deploy.sh` проверяет наличие файла на хосте (`/etc/ssl/gigachat-ca.pem`)
+   и при его отсутствии fail-fast завершается с инструкцией.
+
+4. **Проверка после деплоя:**
+   ```bash
+   docker compose exec backend printenv GIGACHAT_CA_BUNDLE  # → /etc/ssl/certs/gigachat-ca.pem
+   docker compose exec backend python -c "import httpx; httpx.post('https://ngw.devices.sberbank.ru:9443/api/v2/oauth', verify='/etc/ssl/certs/gigachat-ca.pem', timeout=15)"
+   ```
+   Если команда не упала с SSL-ошибкой — всё готово.
+
+**Для локальной разработки (не Docker):**
+
+Задайте переменную окружения `GIGACHAT_CA_BUNDLE=<абсолютный путь к .pem>`.
+Backend использует её только для GigaChat-запросов — общий trust-store не
+меняется.
 
 ## HTTPS (Let's Encrypt)
 

@@ -76,15 +76,17 @@ jobs:
           BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
           DEPLOY_DOMAIN: ${{ secrets.DEPLOY_DOMAIN }}
           CERTBOT_EMAIL: ${{ secrets.CERTBOT_EMAIL }}
+          GIGACHAT_CA_BUNDLE: ${{ secrets.GIGACHAT_CA_BUNDLE }}
         with:
           host: ${{ secrets.DEPLOY_HOST }}
           port: ${{ secrets.DEPLOY_SSH_PORT }}
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
-          envs: SECRET_KEY,POSTGRES_USER,POSTGRES_PASSWORD,POSTGRES_DB,AI_KEY_ENCRYPTION_KEY,GIGACHAT_API_KEY,BOT_TOKEN,DEPLOY_DOMAIN,CERTBOT_EMAIL
+          envs: SECRET_KEY,POSTGRES_USER,POSTGRES_PASSWORD,POSTGRES_DB,AI_KEY_ENCRYPTION_KEY,GIGACHAT_API_KEY,BOT_TOKEN,DEPLOY_DOMAIN,CERTBOT_EMAIL,GIGACHAT_CA_BUNDLE
           script: |
             set -e
             bash ~/fin-balance/deploy/deploy.sh \
               "$SECRET_KEY" "$POSTGRES_USER" "$POSTGRES_PASSWORD" \
               "$POSTGRES_DB" "$AI_KEY_ENCRYPTION_KEY" "$GIGACHAT_API_KEY" \
-              "$BOT_TOKEN" "$DEPLOY_DOMAIN" "$CERTBOT_EMAIL"
+              "$BOT_TOKEN" "$DEPLOY_DOMAIN" "$CERTBOT_EMAIL" \
+              "$GIGACHAT_CA_BUNDLE"
