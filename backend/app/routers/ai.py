@@ -13,7 +13,14 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, ConfigDict
 from sqlalchemy.orm import Session
 
-from app.ai import AIError, decrypt_key, generate_advice, is_supported
+from app.ai import (
+    AIError,
+    decrypt_key,
+    generate_advice,
+    has_server_gemini_key,
+    is_supported,
+    server_gemini_key,
+)
 from app.database import get_db
 from app.models import AiAdvice, User
 from app.routers.transactions import _require_membership
@@ -83,22 +90,29 @@ def create_advice(
 ):
     _require_membership(db, family_id, current_user.id)
 
-    if not current_user.ai_api_key_encrypted:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="У вас не сохранён AI-ключ. Добавьте его в профиле.",
-        )
-    if not is_supported(current_user.ai_provider):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="AI-провайдер не настроен. Укажите его в профиле.",
-        )
+    if has_server_gemini_key():
+        api_key = server_gemini_key()
+        provider = "gemini"
+        base_url = None
+    else:
+        if not current_user.ai_api_key_encrypted:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="У вас не сохранён AI-ключ. Добавьте его в профиле.",
+            )
+        if not is_supported(current_user.ai_provider):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="AI-провайдер не настроен. Укажите его в профиле.",
+            )
+        api_key = decrypt_key(current_user.ai_api_key_encrypted)
+        provider = current_user.ai_provider
+        base_url = current_user.ai_base_url
 
-    api_key = decrypt_key(current_user.ai_api_key_encrypted)
     if not api_key:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Не удалось расшифровать AI-ключ. Обновите его в профиле.",
+            detail="Не удалось получить AI-ключ. Обратитесь к администратору.",
         )
 
     summary = get_family_summary(db, family_id, current_user.id)
@@ -106,8 +120,8 @@ def create_advice(
         text = generate_advice(
             summary,
             api_key=api_key,
-            provider=current_user.ai_provider,
-            base_url=current_user.ai_base_url,
+            provider=provider,
+            base_url=base_url,
         )
     except AIError as exc:
         raise HTTPException(
@@ -124,7 +138,7 @@ def create_advice(
         family_id=family_id,
         user_id=current_user.id,
         text=text.strip(),
-        provider=current_user.ai_provider,
+        provider=provider,
     )
     db.add(advice)
     db.commit()

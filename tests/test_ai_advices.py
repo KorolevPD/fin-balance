@@ -212,3 +212,33 @@ class TestCreateAdvice:
         response = client.post(f"/api/families/{family.id}/advices")
 
         assert response.status_code == 401
+
+
+class TestServerKeyAdvice:
+    def test_совет_генерируется_серверным_ключом_без_ключа_пользователя(
+        self, encryption_key, client_db, monkeypatch
+    ):
+        monkeypatch.setenv("GEMINI_API_KEY", "AIza-Server-Key-123")
+        client, session = client_db
+        user, family = _prepare(session)
+        token = _token(user)
+
+        captured = {}
+
+        def fake_advice(summary, api_key, provider, base_url):
+            captured["api_key"] = api_key
+            captured["provider"] = provider
+            return "Совет от серверного ключа."
+
+        monkeypatch.setattr("app.routers.ai.generate_advice", fake_advice)
+
+        response = client.post(
+            f"/api/families/{family.id}/advices",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+        assert response.status_code == 201
+        body = response.json()["advice"]
+        assert body["text"] == "Совет от серверного ключа."
+        assert captured["api_key"] == "AIza-Server-Key-123"
+        assert captured["provider"] == "gemini"
