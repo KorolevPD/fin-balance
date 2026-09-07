@@ -31,7 +31,7 @@ jobs:
           ssh-keyscan -p ${{ secrets.DEPLOY_SSH_PORT }} \
             ${{ secrets.DEPLOY_HOST }} >> ~/.ssh/known_hosts
 
-- name: Copy deploy files to server
+      - name: Copy deploy files to server
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.DEPLOY_HOST }}
