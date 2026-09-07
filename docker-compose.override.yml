@@ -1,0 +1,10 @@
+# Локальная разработка: nginx без HTTPS.
+#
+# Docker Compose автоматически подхватывает docker-compose.override.yml
+# при запуске `docker compose up` (без -f). Прод-деплой использует
+# `docker compose -f docker-compose.yml -f docker-compose.prod.yml`, поэтому
+# этот override на проде не применяется.
+services:
+  nginx:
+    volumes:
+      - ./nginx/nginx.local.conf:/etc/nginx/nginx.conf:ro
