@@ -22,12 +22,33 @@ jobs:
       - name: Install ruff
         run: pip install ruff
 
-      - name: Lint backend and bot
-        run: ruff check backend bot
+      - name: Lint backend, bot and tests
+        run: ruff check backend bot tests
+
+  python-tests:
+    name: Python tests (pytest)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r backend/requirements.txt pytest
+
+      - name: Run tests
+        run: pytest -q tests
 
   js-tests:
     name: JS tests
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -37,9 +58,13 @@ jobs:
         with:
           node-version: "20"
           cache: npm
+          cache-dependency-path: frontend/package-lock.json
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Run tests
-        run: npm test
+        run: npm test -- --watchAll=false
+
+      - name: Build frontend
+        run: npm run check

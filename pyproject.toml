@@ -1,7 +1,11 @@
 [tool.ruff]
 target-version = "py311"
 line-length = 88
-extend-exclude = ["backend/entrypoint.sh"]
+extend-exclude = [
+    "backend/entrypoint.sh",
+    # Автогенерируемые Alembic-миграции: длинные строки генерирует autogenerate.
+    "backend/alembic/versions",
+]
 
 [tool.ruff.lint]
 select = ["E", "F", "W"]

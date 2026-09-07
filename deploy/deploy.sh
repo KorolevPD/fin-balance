@@ -29,6 +29,17 @@ APP_DIR="${HOME}/fin-balance"
 CERT_DIR="/etc/letsencrypt/live/finbalance"
 DC="docker compose -f docker-compose.yml -f docker-compose.prod.yml"
 
+# certbot пишет в /etc/letsencrypt и биндит порт 80 — нужны права root.
+SUDO=""
+if [ "$(id -u)" -ne 0 ]; then
+  if command -v sudo >/dev/null 2>&1; then
+    SUDO="sudo"
+  else
+    echo "Ошибка: certbot требуется выполнить от root, но sudo недоступен." >&2
+    exit 1
+  fi
+fi
+
 if [ ! -d "${APP_DIR}" ]; then
   echo "Ошибка: каталог ${APP_DIR} не найден." >&2
   exit 1
@@ -57,7 +68,7 @@ if [ -n "${DEPLOY_DOMAIN}" ]; then
   elif [ ! -f "${CERT_DIR}/fullchain.pem" ]; then
     echo "FinBalance: выпускаю SSL-сертификат для ${DEPLOY_DOMAIN}..."
     ${DC} stop nginx >/dev/null 2>&1 || true
-    certbot certonly \
+    ${SUDO} certbot certonly \
       --standalone \
       --non-interactive \
       --agree-tos \
@@ -67,7 +78,7 @@ if [ -n "${DEPLOY_DOMAIN}" ]; then
   else
     echo "FinBalance: продлеваю SSL-сертификат для ${DEPLOY_DOMAIN}..."
     ${DC} stop nginx >/dev/null 2>&1 || true
-    certbot renew --non-interactive || true
+    ${SUDO} certbot renew --non-interactive || true
   fi
 fi
 

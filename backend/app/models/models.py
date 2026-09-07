@@ -117,7 +117,9 @@ class UserCorrection(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
-    transaction_id = Column(UUID(as_uuid=True), ForeignKey("transactions.id"), nullable=False)
+    transaction_id = Column(
+        UUID(as_uuid=True), ForeignKey("transactions.id"), nullable=False
+    )
     field_name = Column(String(100), nullable=False)  # category или cleaned_description
     old_value = Column(Text, nullable=True)
     new_value = Column(Text, nullable=True)
