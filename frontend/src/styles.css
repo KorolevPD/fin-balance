@@ -579,6 +579,10 @@ button[type="submit"]:disabled {
   min-width: 0;
 }
 
+.demo-block-wide {
+  grid-column: 1 / -1;
+}
+
 .demo-block-empty {
   display: flex;
   flex-direction: column;
@@ -1231,9 +1235,41 @@ button[type="submit"]:disabled {
 .advice-controls {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
   flex-wrap: wrap;
   margin-top: 12px;
+}
+
+.advice-counter {
+  margin-left: auto;
+}
+
+.advice-generate-btn {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+  flex-shrink: 0;
+  line-height: 0;
+}
+
+.advice-generate-btn img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: inherit;
+}
+
+.advice-generate-btn:hover:not(:disabled) {
+  box-shadow: 0 0 0 2px #dfe3ee;
+}
+
+.advice-generate-btn:disabled {
+  cursor: default;
+  opacity: 0.5;
 }
 
 .advice-nav-btn {

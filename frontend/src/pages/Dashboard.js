@@ -363,31 +363,36 @@ export default function Dashboard() {
           )}
 
           <div className="demo-grid">
-            <section className="card demo-block" aria-label="Члены семьи">
-              <h2>Члены семьи</h2>
-              {members.length === 0 ? (
-                <p className="muted">В семье пока нет участников.</p>
-              ) : (
-                <table className="data-table">
-                  <thead>
-                    <tr>
-                      <th>Имя</th>
-                      <th className="num">Траты</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {members.map((member) => (
-                      <tr key={member.user_id || member.email}>
-                        <td>{member.name || member.email}</td>
-                        <td className="num">{formatAmountPlain(member.total_expenses)}</td>
+            {effectiveScope === 'family' && (
+              <section className="card demo-block" aria-label="Члены семьи">
+                <h2>Члены семьи</h2>
+                {members.length === 0 ? (
+                  <p className="muted">В семье пока нет участников.</p>
+                ) : (
+                  <table className="data-table">
+                    <thead>
+                      <tr>
+                        <th>Имя</th>
+                        <th className="num">Траты</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-            </section>
+                    </thead>
+                    <tbody>
+                      {members.map((member) => (
+                        <tr key={member.user_id || member.email}>
+                          <td>{member.name || member.email}</td>
+                          <td className="num">{formatAmountPlain(member.total_expenses)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </section>
+            )}
 
-            <section className="card demo-block" aria-label="Траты по категориям">
+            <section
+              className={`card demo-block${effectiveScope === 'family' ? '' : ' demo-block-wide'}`}
+              aria-label="Траты по категориям"
+            >
               <h2>Траты по категориям</h2>
               {chartCategories.length === 0 ? (
                 <p className="muted">Категорий пока нет.</p>
@@ -424,9 +429,16 @@ export default function Dashboard() {
               <div className="card-header">
                 <h2>Совет от AI</h2>
                 {currentAdvice && (
-                  <span className="muted">
-                    Совет {adviceIndex + 1} из {advices.length}
-                  </span>
+                  <button
+                    type="button"
+                    className="advice-generate-btn"
+                    onClick={() => generateAdvice()}
+                    disabled={adviceGenerating}
+                    aria-label={adviceGenerating ? 'Генерация...' : 'Новый совет'}
+                    title={adviceGenerating ? 'Генерация...' : 'Новый совет'}
+                  >
+                    <img src="/pale-button.png" alt="" />
+                  </button>
                 )}
               </div>
               {!hasAiAccess ? (
@@ -474,14 +486,6 @@ export default function Dashboard() {
                     </button>
                     <button
                       type="button"
-                      className="btn btn-small"
-                      onClick={() => generateAdvice()}
-                      disabled={adviceGenerating}
-                    >
-                      {adviceGenerating ? 'Генерация...' : 'Новый совет'}
-                    </button>
-                    <button
-                      type="button"
                       className="advice-nav-btn"
                       disabled={adviceIndex >= advices.length - 1 || adviceGenerating}
                       aria-label="Следующий совет"
@@ -499,6 +503,9 @@ export default function Dashboard() {
                         />
                       </svg>
                     </button>
+                    <span className="muted advice-counter">
+                      Совет {adviceIndex + 1} из {advices.length}
+                    </span>
                   </div>
                 </>
               ) : (
