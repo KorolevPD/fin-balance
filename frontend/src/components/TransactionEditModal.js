@@ -57,6 +57,18 @@ export default function TransactionEditModal({ transaction, familyId, categories
       >
         <h2>Редактирование операции</h2>
         <form onSubmit={handleSubmit}>
+          {transaction.cleaned_description && (
+            <div className="form-group">
+              <label htmlFor="txnOriginal">Оригинальное название</label>
+              <input
+                id="txnOriginal"
+                type="text"
+                value={transaction.original_description || ''}
+                disabled
+                readOnly
+              />
+            </div>
+          )}
           <div className="form-group">
             <label htmlFor="txnTitle">Название</label>
             <input
