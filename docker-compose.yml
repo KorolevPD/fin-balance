@@ -19,8 +19,10 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     restart: unless-stopped
-    ports:
-      - "8000:8000"
+    # Наружу порт не публикуется: единственная точка входа — nginx.
+    # Dev-маппинг 8000:8000 и bind-mount задаются в docker-compose.override.yml.
+    expose:
+      - "8000"
     environment:
       - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-finbalance}
       - SECRET_KEY=${SECRET_KEY:-your-secret-key-change-in-production}
@@ -29,17 +31,14 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    volumes:
-      - ./backend:/app
-    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    command: uvicorn main:app --host 0.0.0.0 --port 8000
 
   nginx:
     build:
       context: .
       dockerfile: nginx/Dockerfile
     restart: unless-stopped
-    ports:
-      - "8080:80"
+    # Публикация портов задаётся в override (dev: 8080:80) и prod (80/443).
     depends_on:
       - backend
 
