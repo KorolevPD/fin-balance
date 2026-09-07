@@ -230,12 +230,10 @@ export default function Dashboard() {
     setAdviceGenerating(true);
     setAdviceError('');
     try {
-      const res = await api.post(`/families/${id}/advices`, null, {
-        params: { replace: true },
-      });
+      const res = await api.post(`/families/${id}/advices`);
       const advice = res.data?.advice;
       if (advice) {
-        setAdvices([advice]);
+        setAdvices((prev) => [advice, ...prev]);
         setAdviceIndex(0);
       }
     } catch (err) {
@@ -503,9 +501,11 @@ export default function Dashboard() {
                         />
                       </svg>
                     </button>
-                    <span className="muted advice-counter">
-                      Совет {adviceIndex + 1} из {advices.length}
-                    </span>
+                    {advices.length > 1 && (
+                      <span className="muted advice-counter">
+                        Совет {adviceIndex + 1} из {advices.length}
+                      </span>
+                    )}
                   </div>
                 </>
               ) : (

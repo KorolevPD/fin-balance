@@ -16,13 +16,17 @@ from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy.orm import Session
 
 from app.categorization import categorize_transactions
+from app.ai import AIError
 from app.database import get_db
 from app.models import FamilyMember, Transaction, User, UserCorrection
 from app.parsers import extract_account_owner, parse_csv_bytes, parse_pdf_bytes
 from app.security import get_current_user
 from app.services import save_transactions
 from app.services.analytics import get_family_summary
-from app.services.ai_transactions import run_enrich_in_background
+from app.services.ai_transactions import (
+    generate_single_description,
+    run_enrich_in_background,
+)
 from app.services.names import mark_self_transfers
 from app.services.transactions import _resolve_or_create_category
 
@@ -184,6 +188,53 @@ class TransactionUpdate(BaseModel):
         default=None, min_length=1, max_length=255
     )
     category: str | None = Field(default=None, min_length=1, max_length=255)
+
+
+class AIDescriptionResponse(BaseModel):
+    cleaned_description: str
+
+
+@router.post(
+    "/{family_id}/transactions/{transaction_id}/ai-description",
+    response_model=AIDescriptionResponse,
+    summary="Сгенерировать ИИ-описание названия операции (без сохранения)",
+)
+def generate_transaction_ai_description(
+    family_id: UUID,
+    transaction_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    _require_membership(db, family_id, current_user.id)
+    transaction = (
+        db.query(Transaction)
+        .filter(
+            Transaction.id == transaction_id,
+            Transaction.family_id == family_id,
+        )
+        .first()
+    )
+    if transaction is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Операция не найдена",
+        )
+    try:
+        cleaned_description = generate_single_description(
+            transaction=transaction,
+            user=current_user,
+        )
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(exc),
+        ) from exc
+    except AIError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=str(exc),
+        ) from exc
+    return AIDescriptionResponse(cleaned_description=cleaned_description)
 
 
 @router.delete(

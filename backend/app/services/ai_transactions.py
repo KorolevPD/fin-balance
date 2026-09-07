@@ -201,3 +201,39 @@ def run_enrich_in_background(
         return
     finally:
         db.close()
+
+
+def generate_single_description(*, transaction: Transaction, user: User) -> str:
+    """Сгенерировать ИИ-описание названия одной операции без сохранения.
+
+    Возвращает нормализованное описание. Бросает ``ValueError``, если у
+    пользователя нет доступного AI-ключа, и ``AIError`` при сбое AI или пустом
+    ответе.
+    """
+    if has_server_gigachat_key():
+        api_key = server_gigachat_key()
+        provider = "gigachat"
+    else:
+        if not user.ai_api_key_encrypted or not is_supported(user.ai_provider):
+            raise ValueError(
+                "AI не настроен. Добавьте ключ GigaChat в профиле."
+            )
+        api_key = decrypt_key(user.ai_api_key_encrypted)
+        provider = user.ai_provider
+
+    if not api_key:
+        raise ValueError("AI не настроен. Добавьте ключ GigaChat в профиле.")
+
+    try:
+        results = classify_descriptions(
+            [transaction.original_description],
+            api_key=api_key,
+            provider=provider,
+        )
+    except AIError as exc:
+        raise AIError(f"Не удалось сгенерировать описание: {exc}") from exc
+
+    cleaned = _normalize_cleaned(results[0].cleaned_description) if results else None
+    if not cleaned:
+        raise AIError("AI не смог сформировать описание для этой операции.")
+    return cleaned

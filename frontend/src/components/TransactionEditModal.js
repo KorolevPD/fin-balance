@@ -9,6 +9,7 @@ export default function TransactionEditModal({ transaction, familyId, categories
   const [title, setTitle] = useState(transaction.cleaned_description || transaction.original_description || '');
   const [category, setCategory] = useState(transaction.category || categories[0] || 'Прочее');
   const [saving, setSaving] = useState(false);
+  const [generating, setGenerating] = useState(false);
   const [error, setError] = useState('');
   const titleRef = useRef(null);
 
@@ -46,6 +47,28 @@ export default function TransactionEditModal({ transaction, familyId, categories
     }
   };
 
+const handleGenerate = async () => {
+    if (generating) return;
+    setGenerating(true);
+    setError('');
+    try {
+      const res = await api.post(
+        `/families/${familyId}/transactions/${transaction.id}/ai-description`
+      );
+      const cleaned = res.data?.cleaned_description;
+      if (cleaned) {
+        setTitle(cleaned);
+        titleRef.current?.focus();
+      } else {
+        setError('AI не смог сформировать описание для этой операции');
+      }
+    } catch (err) {
+      setError(formatError(err));
+    } finally {
+      setGenerating(false);
+    }
+  };
+
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div
@@ -71,14 +94,26 @@ export default function TransactionEditModal({ transaction, familyId, categories
           )}
           <div className="form-group">
             <label htmlFor="txnTitle">Название</label>
-            <input
-              id="txnTitle"
-              type="text"
-              ref={titleRef}
-              value={title}
-              onChange={(event) => setTitle(event.target.value)}
-              maxLength={255}
-            />
+            <div className="field-with-action">
+              <input
+                id="txnTitle"
+                type="text"
+                ref={titleRef}
+                value={title}
+                onChange={(event) => setTitle(event.target.value)}
+                maxLength={255}
+              />
+              <button
+                type="button"
+                className="advice-generate-btn"
+                onClick={handleGenerate}
+                disabled={generating}
+                aria-label={generating ? 'Генерация...' : 'Сгенерировать название с помощью ИИ'}
+                title={generating ? 'Генерация...' : 'Сгенерировать название с помощью ИИ'}
+              >
+                <img src="/pale-button.png" alt="" />
+              </button>
+            </div>
           </div>
           <div className="form-group">
             <label htmlFor="txnCategory">Категория</label>
