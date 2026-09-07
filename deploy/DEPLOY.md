@@ -12,8 +12,9 @@
    - собирает Docker-образы (nginx — тонкий, из готовых статиков) и разворачивает
      стек, применяет миграции Alembic и перезапускает сервисы.
 2. Отдельный workflow **CI** уже есть: линт Python (ruff), **Python-тесты (pytest)** и JS-тесты/сборка фронтенда.
-3. Серверный Gemini-ключ: если в секретах GitHub заполнен `GEMINI_API_KEY`,
-   все пользователи используют его, а поле ввода своего ключа на сайте скрыто.
+3. Серверный GigaChat-ключ: если в секретах GitHub заполнен `GIGACHAT_API_KEY`
+   (Authorization Key из личного кабинета Сбера), все пользователи используют его,
+   а раздел «AI-ассистент» в профиле скрывается.
 
 ## Что мне нужно от вас (данные сервера)
 
@@ -66,7 +67,7 @@
 | `POSTGRES_PASSWORD` | Пароль PostgreSQL |
 | `POSTGRES_DB` | Имя базы данных (например `finbalance`) |
 | `AI_KEY_ENCRYPTION_KEY` | Ключ шифрования AI-ключей пользователей (AES-GCM) |
-| `GEMINI_API_KEY` | **Серверный Gemini-ключ** (пустой = пользователи вводят свой) |
+| `GIGACHAT_API_KEY` | **Серверный GigaChat-ключ** (Authorization Key из личного кабинета Сбера; пустой = пользователи вводят свой ключ в профиле) |
 | `BOT_TOKEN` | Токен Telegram-бота (пустой = бот выключен) |
 | `DEPLOY_DOMAIN` | **Домен**, указывающий на IP сервера (например `app.example.com`). Если не задан — SSL не выпускается. |
 | `CERTBOT_EMAIL` | Email для уведомлений Let's Encrypt (при выпуске сертификата) |
@@ -77,6 +78,15 @@ python -c "import secrets; print(secrets.token_urlsafe(48))"   # SECRET_KEY
 python -c "import secrets; print(secrets.token_urlsafe(32))"   # AI_KEY_ENCRYPTION_KEY
 python -c "import secrets; print(secrets.token_urlsafe(24))"   # POSTGRES_PASSWORD
 ```
+
+## Требования GigaChat API
+
+- Ключ `GIGACHAT_API_KEY` — это **Authorization Key** из проекта GigaChat API в
+  личном кабинете Сбера (Studio → Настройки API → «Получить ключ»).
+- Для доступа к `*.sberbank.ru` / `*.giga.chat` бэкенду нужны корневые
+  сертификаты НУЦ Минцифры. При работе в Docker установите их в образ или
+  смонтируйте системный trust-store с добавленным сертификатом; иначе запросы к
+  API будут падать с ошибкой проверки TLS-сертификата.
 
 ## HTTPS (Let's Encrypt)
 

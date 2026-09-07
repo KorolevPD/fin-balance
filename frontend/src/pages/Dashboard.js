@@ -137,6 +137,7 @@ export default function Dashboard() {
   const otherMembersHaveStatements = !!summary?.other_members_have_statements;
   const personalOnly = userIsAlone || !otherMembersHaveStatements;
   const effectiveScope = personalOnly ? 'personal' : viewScope;
+  const hasAiAccess = user?.server_ai_key || user?.has_ai_key;
 
   const handleSort = (key) => {
     if (sortBy === key) {
@@ -253,7 +254,7 @@ export default function Dashboard() {
       const list = res.data || [];
       setAdvices(list);
       setAdviceIndex(0);
-      if (list.length === 0 && user?.has_ai_key) {
+      if (list.length === 0 && hasAiAccess) {
         await generateAdvice();
       }
     } catch (err) {
@@ -261,15 +262,15 @@ export default function Dashboard() {
     } finally {
       setAdvicesLoading(false);
     }
-  }, [id, user?.has_ai_key, generateAdvice]);
+  }, [id, hasAiAccess, generateAdvice]);
 
   useEffect(() => {
     loadAdvices();
-  }, [id, user?.has_ai_key, loadAdvices]);
+  }, [id, hasAiAccess, loadAdvices]);
 
   const handleUploaded = () => {
     loadData();
-    if (user?.has_ai_key) {
+    if (hasAiAccess) {
       generateAdvice().catch(() => {});
     }
   };
@@ -428,10 +429,10 @@ export default function Dashboard() {
                   </span>
                 )}
               </div>
-              {!user?.has_ai_key ? (
+              {!hasAiAccess ? (
                 <p className="muted">
-                  Добавьте бесплатный AI-ключ в профиле, чтобы получать советы
-                  по расходам.{' '}
+                  Подключите ключ GigaChat в профиле, чтобы получать советы по
+                  расходам.{' '}
                   <Link to="/profile" className="card-header-link">
                     Настроить →
                   </Link>

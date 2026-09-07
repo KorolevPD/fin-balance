@@ -15,9 +15,9 @@ from app.ai import (
     AIError,
     classify_descriptions,
     decrypt_key,
-    has_server_gemini_key,
+    has_server_gigachat_key,
     is_supported,
-    server_gemini_key,
+    server_gigachat_key,
 )
 from app.ai.client import ClassifyResult
 from app.categorization import CategorizedTransaction
@@ -120,16 +120,16 @@ def enrich_saved_transactions(
     if not user:
         return 0
 
-    if has_server_gemini_key():
-        api_key = server_gemini_key()
-        provider = "gemini"
+    if has_server_gigachat_key():
+        api_key = server_gigachat_key()
+        provider = "gigachat"
         base_url = None
     else:
         if not user.ai_api_key_encrypted or not is_supported(user.ai_provider):
             return 0
         api_key = decrypt_key(user.ai_api_key_encrypted)
         provider = user.ai_provider
-        base_url = user.ai_base_url
+        base_url = None
 
     if not api_key:
         return 0

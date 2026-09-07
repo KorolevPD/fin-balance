@@ -26,6 +26,44 @@ from app.services.ai_transactions import (
 DUMMY_KEY = "test-encryption-key-00000000000000000000000000"
 
 
+class _OAuthResponse:
+    status_code = 200
+
+    @staticmethod
+    def json():
+        return {"access_token": "token-123", "expires_at": 1234567890}
+
+
+class _ChatResponse:
+    def __init__(self, content, status_code=200):
+        self.status_code = status_code
+        self._content = content
+        self.text = content
+
+    def json(self):
+        return {
+            "choices": [{"message": {"content": self._content}}],
+        }
+
+
+class _ErrorResponse:
+    def __init__(self, status_code, text=""):
+        self.status_code = status_code
+        self.text = text
+
+    def json(self):
+        return {"error": {"message": self.text}}
+
+
+def _fake_gigachat_post(chat_text, chat_status=200):
+    def fake_post(url, *args, **kwargs):
+        if "oauth" in url:
+            return _OAuthResponse()
+        return _ChatResponse(chat_text, chat_status)
+
+    return fake_post
+
+
 @pytest.fixture()
 def encryption_key(monkeypatch):
     monkeypatch.setenv("AI_KEY_ENCRYPTION_KEY", DUMMY_KEY)
@@ -33,7 +71,7 @@ def encryption_key(monkeypatch):
 
 
 def test_encrypt_decrypt_roundtrip(encryption_key):
-    plaintext = "AIzaSyVeryLongFakeKey123"
+    plaintext = "Авторизационный-ключ-GigaChat"
     encrypted = encrypt_key(plaintext)
     assert encrypted != plaintext
     assert decrypt_key(encrypted) == plaintext
@@ -44,18 +82,19 @@ def test_decrypt_невалидного_значения_возвращает_no
 
 
 def test_normalized_provider():
-    assert normalized_provider("gemini") == "gemini"
-    assert normalized_provider("Gemini") == "gemini"
-    assert normalized_provider("google") == "gemini"
-    assert normalized_provider("openai_compatible") == "openai_compatible"
-    assert normalized_provider("groq") == "openai_compatible"
+    assert normalized_provider("gigachat") == "gigachat"
+    assert normalized_provider("GigaChat") == "gigachat"
+    assert normalized_provider("giga_chat") == "gigachat"
+    assert normalized_provider("gemini") is None
+    assert normalized_provider("openai_compatible") is None
     assert normalized_provider("unknown") is None
     assert normalized_provider(None) is None
 
 
 def test_is_supported():
-    assert is_supported("gemini") is True
-    assert is_supported("openai_compatible") is True
+    assert is_supported("gigachat") is True
+    assert is_supported("gemini") is False
+    assert is_supported("openai_compatible") is False
     assert is_supported("unknown") is False
 
 
@@ -96,44 +135,27 @@ def test_parse_advice_response_plain_text():
     assert "откладывать" in text
 
 
-def test_classify_descriptions_gemini_сетевая_ошибка(monkeypatch):
+def test_classify_descriptions_gigachat_сетевая_ошибка(monkeypatch):
     def fake_post(*args, **kwargs):
         raise RuntimeError("network down")
 
-    monkeypatch.setattr("app.ai.gemini.httpx.post", fake_post)
+    monkeypatch.setattr("app.ai.gigachat.httpx.post", fake_post)
     with pytest.raises(AIError):
         classify_descriptions(
-            ["Покупка продуктов"], api_key="fake", provider="gemini"
+            ["Покупка продуктов"], api_key="fake", provider="gigachat"
         )
 
 
-def test_classify_descriptions_gemini_успех(monkeypatch):
-    class FakeResponse:
-        status_code = 200
-
-        @staticmethod
-        def json():
-            return {
-                "candidates": [
-                    {
-                        "content": {
-                            "parts": [
-                                {
-                                    "text": '[{"category": "Продукты", '
-                                    '"cleaned_description": "Покупка в магазине"}]'
-                                }
-                            ]
-                        }
-                    }
-                ]
-            }
-
-    def fake_post(*args, **kwargs):
-        return FakeResponse()
-
-    monkeypatch.setattr("app.ai.gemini.httpx.post", fake_post)
+def test_classify_descriptions_gigachat_успех(monkeypatch):
+    chat_text = (
+        '[{"category": "Продукты", '
+        '"cleaned_description": "Покупка в магазине"}]'
+    )
+    monkeypatch.setattr(
+        "app.ai.gigachat.httpx.post", _fake_gigachat_post(chat_text)
+    )
     results = classify_descriptions(
-        ["Покупка продуктов"], api_key="fake", provider="gemini"
+        ["Покупка продуктов"], api_key="fake", provider="gigachat"
     )
     assert len(results) == 1
     assert results[0].category == "Продукты"
@@ -146,7 +168,7 @@ def test_enrich_with_ai_без_ключа_возвращает_как_есть()
             date=date(2026, 1, 1), amount=100.0, description="MAGNIT", type="expense"
         )
     ]
-    result = enrich_with_ai(txns, provider="gemini", api_key_encrypted=None)
+    result = enrich_with_ai(txns, provider="gigachat", api_key_encrypted=None)
     assert result == txns
 
 
@@ -167,104 +189,74 @@ def test_enrich_with_ai_fallback_при_ошибке(encryption_key, monkeypatch
     monkeypatch.setattr(
         "app.services.ai_transactions.classify_descriptions", raise_error
     )
-    result = enrich_with_ai(txns, provider="gemini", api_key_encrypted=key)
+    result = enrich_with_ai(txns, provider="gigachat", api_key_encrypted=key)
     assert result == txns
 
 
-def test_gemini_запрос_идет_на_актуальную_модель(monkeypatch):
-    class FakeAdviceResponse:
-        status_code = 200
-
-        @staticmethod
-        def json():
-            return {
-                "candidates": [
-                    {
-                        "content": {
-                            "parts": [
-                                {
-                                    "text": '{"advice": "Сократите траты на кафе."}'
-                                }
-                            ]
-                        }
-                    }
-                ]
-            }
-
+def test_gigachat_запрос_идет_на_chat_completions(monkeypatch):
     captured = {}
 
     def fake_post(url, *args, **kwargs):
         captured["url"] = url
-        return FakeAdviceResponse()
+        if "oauth" not in url:
+            captured["payload"] = kwargs.get("json")
+        if "oauth" in url:
+            return _OAuthResponse()
+        return _ChatResponse('{"advice": "Сократите траты на кафе."}')
 
-    monkeypatch.setattr("app.ai.gemini.httpx.post", fake_post)
+    monkeypatch.setattr("app.ai.gigachat.httpx.post", fake_post)
     text = generate_advice(
         {"by_category": {"Продукты": 500.0}},
-        api_key="fake",
-        provider="gemini",
+        api_key="fake-key",
+        provider="gigachat",
     )
     assert text == "Сократите траты на кафе."
-    assert "gemini-3.6-flash" in captured["url"]
-    assert "gemini-2.0-flash" not in captured["url"]
+    assert "api.giga.chat/v1/chat/completions" in captured["url"]
+    assert captured["payload"]["model"] == "GigaChat"
+    assert captured["payload"]["stream"] is False
 
 
-def test_gemini_404_отозванной_модели_бросает_aierror(monkeypatch):
-    class NotFoundResponse:
-        status_code = 404
-        text = (
-            '{"error": {"code": 404, "message": "This model '
-            'models/gemini-2.0-flash is no longer available", '
-            '"status": "NOT_FOUND"}}'
-        )
-
-        @staticmethod
-        def json():
-            return {
-                "error": {
-                    "code": 404,
-                    "message": "This model models/gemini-2.0-flash "
-                    "is no longer available. Please update your code "
-                    "to use models/gemini-3.6-flash",
-                    "status": "NOT_FOUND",
-                }
-            }
-
+def test_gigachat_404_от_oauth_бросает_aierror(monkeypatch):
     def fake_post(url, *args, **kwargs):
-        return NotFoundResponse()
+        if "oauth" in url:
+            return _ErrorResponse(401, "Unauthorized")
+        raise AssertionError("oauth должен вернуть ошибку")
 
-    monkeypatch.setattr("app.ai.gemini.httpx.post", fake_post)
+    monkeypatch.setattr("app.ai.gigachat.httpx.post", fake_post)
     with pytest.raises(AIError) as exc_info:
         generate_advice(
             {"by_category": {"Продукты": 500.0}},
-            api_key="fake",
-            provider="gemini",
+            api_key="bad-key",
+            provider="gigachat",
         )
-    assert "HTTP 404" in str(exc_info.value)
+    assert "HTTP 401" in str(exc_info.value)
 
 
-class FakeGeminiResponse:
-    """Ответ Gemini API, всегда возвращающий категорию «Продукты»."""
+def test_gigachat_ошибка_chat_completions_бросает_aierror(monkeypatch):
+    monkeypatch.setattr(
+        "app.ai.gigachat.httpx.post", _fake_gigachat_post("", chat_status=500)
+    )
+    with pytest.raises(AIError) as exc_info:
+        generate_advice(
+            {"by_category": {"Продукты": 500.0}},
+            api_key="fake-key",
+            provider="gigachat",
+        )
+    assert "HTTP 500" in str(exc_info.value)
+
+
+class FakeGigaChatHttp:
+    """Фейковый httpx.post для GigaChat: /oauth → токен, /chat/completions → ответ."""
 
     status_code = 200
 
-    @staticmethod
-    def json():
-        return {
-            "candidates": [
-                {
-                    "content": {
-                        "parts": [
-                            {
-                                "text": '[{"category": "Продукты", '
-                                '"cleaned_description": "Покупка в магазине"}, '
-                                '{"category": "Продукты", '
-                                '"cleaned_description": "Ещё покупка"}]'
-                            }
-                        ]
-                    }
-                }
-            ]
-        }
+    def __call__(self, url, *args, **kwargs):
+        if "oauth" in url:
+            return _OAuthResponse()
+        return _ChatResponse(
+            '[{"category": "Продукты", "cleaned_description": "Покупка в магазине"}, '
+            '{"category": "Продукты", "cleaned_description": "Ещё покупка"}]'
+        )
 
 
 def _import_via_api(session, monkeypatch):
@@ -281,7 +273,7 @@ def _import_via_api(session, monkeypatch):
     user = User(
         email="ai-import@example.com",
         password_hash=hash_password("secret1"),
-        ai_provider="gemini",
+        ai_provider="gigachat",
         ai_api_key_encrypted=encrypt_key("fake-key"),
     )
     session.add(user)
@@ -313,9 +305,7 @@ def test_импорт_с_ai_перераспределяет_прочее(monkey
     from app.database import get_db
     from main import app
 
-    monkeypatch.setattr(
-        "app.ai.gemini.httpx.post", lambda *a, **k: FakeGeminiResponse()
-    )
+    monkeypatch.setattr("app.ai.gigachat.httpx.post", FakeGigaChatHttp())
     session = session_factory()
     try:
         resp, client, token, family_id = _import_via_api(session, monkeypatch)

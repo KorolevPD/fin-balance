@@ -39,7 +39,7 @@ def _family():
     return Family(invite_code="AIDEMO01")
 
 
-def _prepare(session, user=None, family=None, ai_key=None, provider="gemini"):
+def _prepare(session, user=None, family=None, ai_key=None, provider="gigachat"):
     user = user or _user()
     if ai_key:
         user.ai_provider = provider
@@ -131,7 +131,7 @@ class TestCreateAdvice:
         assert response.status_code == 201
         body = response.json()["advice"]
         assert body["text"] == "Сократите траты на кафе."
-        assert body["provider"] == "gemini"
+        assert body["provider"] == "gigachat"
 
     def test_советы_накапливаются(
         self,
@@ -218,7 +218,7 @@ class TestServerKeyAdvice:
     def test_совет_генерируется_серверным_ключом_без_ключа_пользователя(
         self, encryption_key, client_db, monkeypatch
     ):
-        monkeypatch.setenv("GEMINI_API_KEY", "AIza-Server-Key-123")
+        monkeypatch.setenv("GIGACHAT_API_KEY", "Server-GigaChat-Key-123")
         client, session = client_db
         user, family = _prepare(session)
         token = _token(user)
@@ -240,5 +240,5 @@ class TestServerKeyAdvice:
         assert response.status_code == 201
         body = response.json()["advice"]
         assert body["text"] == "Совет от серверного ключа."
-        assert captured["api_key"] == "AIza-Server-Key-123"
-        assert captured["provider"] == "gemini"
+        assert captured["api_key"] == "Server-GigaChat-Key-123"
+        assert captured["provider"] == "gigachat"

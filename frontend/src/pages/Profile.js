@@ -16,11 +16,6 @@ const EDITABLE_FIELDS = [
   { key: 'name', label: 'Имя', type: 'text', maxLength: 255 },
 ];
 
-const AI_PROVIDERS = [
-  { value: 'gemini', label: 'Google Gemini (бесплатный ключ AI Studio)', hint: 'https://aistudio.google.com' },
-  { value: 'openai_compatible', label: 'OpenAI-совместимый (Groq / OpenRouter)', hint: 'документация провайдера' },
-];
-
 function formatDate(iso) {
   if (!iso) return '';
   const date = new Date(iso);
@@ -54,9 +49,7 @@ export default function Profile() {
   const [joinLoading, setJoinLoading] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  const [aiProvider, setAiProvider] = useState(user?.ai_provider || 'gemini');
   const [aiApiKey, setAiApiKey] = useState('');
-  const [aiBaseUrl, setAiBaseUrl] = useState(user?.ai_base_url || 'https://api.openai.com/v1');
   const [aiSaving, setAiSaving] = useState(false);
   const [aiError, setAiError] = useState('');
   const [aiSuccess, setAiSuccess] = useState('');
@@ -196,10 +189,7 @@ export default function Profile() {
 
   const handleSaveAi = async (e) => {
     e.preventDefault();
-    const payload = { ai_provider: aiProvider };
-    if (aiProvider === 'openai_compatible') {
-      payload.ai_base_url = aiBaseUrl.trim();
-    }
+    const payload = { ai_provider: 'gigachat' };
     if (aiApiKey.trim()) {
       payload.ai_api_key = aiApiKey.trim();
     }
@@ -209,7 +199,7 @@ export default function Profile() {
   const handleRemoveAi = async () => {
     const confirmed = window.confirm('Удалить сохранённый AI-ключ?');
     if (!confirmed) return;
-    await saveAi({ ai_provider: aiProvider, ai_api_key: '' });
+    await saveAi({ ai_provider: 'gigachat', ai_api_key: '' });
   };
 
   return (
@@ -264,114 +254,73 @@ export default function Profile() {
         </button>
       </form>
 
-      <form className="card" onSubmit={handleSaveAi}>
-        <div className="card-header">
-          <h2>AI-ассистент</h2>
-          <span className="muted">
-            {user?.server_ai_key
-              ? 'Серверный ключ'
-              : user?.has_ai_key
-                ? 'Ключ сохранён'
-                : 'Ключ не добавлен'}
-          </span>
-        </div>
-        {aiError && <div className="error">{aiError}</div>}
-        {aiSuccess && <div className="success">{aiSuccess}</div>}
+      {user?.server_ai_key ? null : (
+        <form className="card" onSubmit={handleSaveAi}>
+          <div className="card-header">
+            <h2>AI-ассистент</h2>
+            <span className="muted">
+              {user?.has_ai_key ? 'Ключ сохранён' : 'Ключ не добавлен'}
+            </span>
+          </div>
+          {aiError && <div className="error">{aiError}</div>}
+          {aiSuccess && <div className="success">{aiSuccess}</div>}
 
-        {user?.server_ai_key ? (
           <p className="muted">
-            AI-ключ предоставляется сервером. Он используется для всех
-            пользователей автоматически, вводить свой ключ не нужно.
+            Введите ключ авторизации GigaChat (Authorization Key), чтобы AI
+            определял категории операций, переписывал их названия понятным
+            языком и давал советы на дашборде.
           </p>
-        ) : (
-          <>
+          <div className="form-group">
+            <label htmlFor="aiApiKey">
+              {user?.has_ai_key ? 'Новый ключ (заменить)' : 'API-ключ GigaChat'}
+            </label>
+            <input
+              id="aiApiKey"
+              type="password"
+              value={aiApiKey}
+              onChange={(e) => setAiApiKey(e.target.value)}
+              placeholder={
+                user?.has_ai_key
+                  ? 'Введите новый ключ или оставьте пустым'
+                  : 'Вставьте Authorization Key'
+              }
+              maxLength={2000}
+              autoComplete="off"
+            />
+          </div>
+          <p className="muted">
+            Получить ключ:{' '}
+            <a
+              href="https://developers.sber.ru/studio/workspaces/my-space/get/gigachat-api"
+              target="_blank"
+              rel="noreferrer"
+            >
+              личный кабинет GigaChat
+            </a>
+          </p>
+          {user?.has_ai_key && (
             <p className="muted">
-              Введите бесплатный API-ключ, чтобы AI определял категории
-              операций, переписывал их названия понятным языком и давал советы
-              на дашборде.
+              Текущий ключ не отображается и не передаётся на клиент.
+              Оставьте поле пустым, чтобы не менять его.
             </p>
-            <div className="form-group">
-              <label htmlFor="aiProvider">Провайдер</label>
-              <select
-                id="aiProvider"
-                value={aiProvider}
-                onChange={(e) => setAiProvider(e.target.value)}
-              >
-                {AI_PROVIDERS.map((provider) => (
-                  <option key={provider.value} value={provider.value}>
-                    {provider.label}
-                  </option>
-                ))}
-              </select>
-              <p className="muted">
-                Получить бесплатный ключ:{' '}
-                <a
-                  href={AI_PROVIDERS.find((p) => p.value === aiProvider)?.hint}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  {aiProvider === 'gemini'
-                    ? 'Google AI Studio'
-                    : 'документация провайдера'}
-                </a>
-              </p>
-            </div>
-            {aiProvider === 'openai_compatible' && (
-              <div className="form-group">
-                <label htmlFor="aiBaseUrl">Base URL API</label>
-                <input
-                  id="aiBaseUrl"
-                  type="text"
-                  value={aiBaseUrl}
-                  onChange={(e) => setAiBaseUrl(e.target.value)}
-                  placeholder="https://api.groq.com/openai/v1"
-                  maxLength={255}
-                  autoComplete="off"
-                />
-              </div>
-            )}
-            <div className="form-group">
-              <label htmlFor="aiApiKey">
-                {user?.has_ai_key ? 'Новый API-ключ (заменить)' : 'API-ключ'}
-              </label>
-              <input
-                id="aiApiKey"
-                type="password"
-                value={aiApiKey}
-                onChange={(e) => setAiApiKey(e.target.value)}
-                placeholder={
-                  user?.has_ai_key
-                    ? 'Введите новый ключ или оставьте пустым'
-                    : 'Вставьте API-ключ'
-                }
-                maxLength={2000}
-                autoComplete="off"
-              />
-            </div>
+          )}
+          <div className="profile-actions">
+            <button type="submit" className="btn" disabled={aiSaving}>
+              {aiSaving ? 'Сохранение...' : 'Сохранить AI-настройки'}
+            </button>
             {user?.has_ai_key && (
-              <p className="muted">
-                Текущий ключ не отображается и не передаётся на клиент.
-                Оставьте поле пустым, чтобы не менять его.
-              </p>
-            )}
-            <div className="profile-actions">
-              <button type="submit" className="btn" disabled={aiSaving}>
-                {aiSaving ? 'Сохранение...' : 'Сохранить AI-настройки'}
+              <button
+                type="button"
+                className="btn btn-danger"
+                onClick={handleRemoveAi}
+                disabled={aiSaving}
+              >
+                Удалить ключ
               </button>
-              {user?.has_ai_key && (
-                <button
-                  type="button"
-                  className="btn btn-danger"
-                  onClick={handleRemoveAi}
-                  disabled={aiSaving}
-                >
-                  Удалить ключ
-                </button>
-              )}
-            </div>
-          </>
-        )}
-      </form>
+            )}
+          </div>
+        </form>
+      )}
 
       <div className="card">
         <h2>Семья</h2>
