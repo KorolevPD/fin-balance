@@ -1040,19 +1040,26 @@ button[type="submit"]:disabled {
 }
 
 .landing-content {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 32px;
+  display: flex;
+  flex-direction: row;
+  gap: 40px;
   align-items: center;
 }
 
+.landing-text {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
 .landing-logo {
+  flex: 0 0 auto;
   display: flex;
   justify-content: center;
   align-items: center;
 }
 
 .landing-logo img {
+  display: block;
   max-width: 100%;
   height: auto;
 }
@@ -1105,7 +1112,7 @@ button[type="submit"]:disabled {
 }
 
 .landing-auth-link a {
-  color: #5b5bea;
+  color: #24a647;
   font-weight: 600;
   text-decoration: none;
 }
@@ -1116,7 +1123,7 @@ button[type="submit"]:disabled {
 
 @media (max-width: 720px) {
   .landing-content {
-    grid-template-columns: 1fr;
+    flex-direction: column;
   }
 
   .landing-title {
