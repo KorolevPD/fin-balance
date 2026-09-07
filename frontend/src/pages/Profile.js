@@ -329,64 +329,112 @@ export default function Profile() {
           <p className="muted">Загрузка...</p>
         ) : (
           <>
-            <p className="muted">
-              Семья создаётся автоматически при регистрации. По коду
-              приглашения группы объединяются в общий семейный бюджет (до 5
-              участников).
-            </p>
-            <div className="invite-row">
-              <span className="family-code">
-                Код приглашения: {family ? family.invite_code : '—'}
-              </span>
-              {family && (
-                <button type="button" className="copy-btn" onClick={handleCopy}>
-                  {copied ? 'Скопировано' : 'Копировать'}
+            {family && (
+              <div className="invite-row">
+                <button
+                  type="button"
+                  className="family-code"
+                  onClick={handleCopy}
+                  title="Нажмите, чтобы скопировать код приглашения"
+                >
+                  Код приглашения: {family.invite_code}
+                </button>
+                <button
+                  type="button"
+                  className="copy-btn"
+                  onClick={handleCopy}
+                  aria-label="Скопировать код приглашения"
+                  title="Скопировать код"
+                >
+                  {copied ? (
+                    <svg
+                      className="copy-icon"
+                      viewBox="0 0 16 16"
+                      width="16"
+                      height="16"
+                      aria-hidden="true"
+                    >
+                      <path
+                        fill="currentColor"
+                        d="M6.5 11.2 3 7.7l1.1-1.1 2.4 2.4 5.4-5.4L13 4.7z"
+                      />
+                    </svg>
+                  ) : (
+                    <svg
+                      className="copy-icon"
+                      viewBox="0 0 16 16"
+                      width="16"
+                      height="16"
+                      aria-hidden="true"
+                    >
+                      <rect
+                        x="5"
+                        y="5"
+                        width="8"
+                        height="8"
+                        rx="1"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.4"
+                      />
+                      <path
+                        d="M11 4V3.5A1.5 1.5 0 0 0 9.5 2h-6A1.5 1.5 0 0 0 2 3.5v6A1.5 1.5 0 0 0 3.5 11H4"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.4"
+                      />
+                    </svg>
+                  )}
+                </button>
+              </div>
+            )}
+            {members.length > 1 && (
+              <>
+                <h3>Участники ({members.length})</h3>
+                <ul className="member-list">
+                  {members.map((member) => (
+                    <li key={member.user_id}>
+                      <span className="member-email">
+                        {member.name || member.email}
+                      </span>
+                      <span className="member-role">
+                        {roleLabel(member.role)}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
+            <div className="family-actions-row">
+              <form onSubmit={handleJoin} className="family-join-form">
+                <label htmlFor="familyInviteCode">Код приглашения</label>
+                <div className="family-join-fields">
+                  <input
+                    id="familyInviteCode"
+                    type="text"
+                    value={inviteCode}
+                    onChange={(e) => setInviteCode(e.target.value)}
+                    placeholder="Например, ABC12345"
+                    maxLength={32}
+                    autoComplete="off"
+                  />
+                  <button type="submit" className="btn" disabled={joinLoading}>
+                    {joinLoading
+                      ? 'Присоединение...'
+                      : 'Присоединиться к семье'}
+                  </button>
+                </div>
+              </form>
+              {members.length > 1 && (
+                <button
+                  type="button"
+                  className="btn btn-danger family-leave-btn"
+                  onClick={handleLeave}
+                  disabled={joinLoading}
+                >
+                  {joinLoading ? 'Выход...' : 'Выйти из семьи'}
                 </button>
               )}
-            </div>
-            <h3>Участники ({members.length})</h3>
-            {members.length === 0 ? (
-              <p className="muted">В семье пока нет участников.</p>
-            ) : (
-              <ul className="member-list">
-                {members.map((member) => (
-                  <li key={member.user_id}>
-                    <span className="member-email">
-                      {member.name || member.email}
-                    </span>
-                    <span className="member-role">
-                      {roleLabel(member.role)}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            )}
-            <form onSubmit={handleJoin}>
-              <div className="form-group">
-                <label htmlFor="familyInviteCode">Код приглашения</label>
-                <input
-                  id="familyInviteCode"
-                  type="text"
-                  value={inviteCode}
-                  onChange={(e) => setInviteCode(e.target.value)}
-                  placeholder="Например, ABC12345"
-                  maxLength={32}
-                  autoComplete="off"
-                />
-              </div>
-              <button type="submit" className="btn" disabled={joinLoading}>
-                {joinLoading ? 'Присоединение...' : 'Присоединиться к семье'}
-              </button>
-            </form>
-            <div className="profile-actions family-actions">
-              <button
-                type="button"
-                className="btn btn-danger"
-                onClick={handleLeave}
-                disabled={joinLoading}
-              >
-                {joinLoading ? 'Выход...' : 'Выйти из семьи'}
-              </button>
             </div>
           </>
         )}
