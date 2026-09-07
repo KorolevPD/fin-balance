@@ -8,6 +8,11 @@
 
 services:
   nginx:
+    # Прод использует тонкий образ из готового frontend/build:
+    # SPA собран на CI runner, сервер не выполняет npm ci / npm run build.
+    build:
+      context: .
+      dockerfile: nginx/Dockerfile.prod
     ports:
       - "${DEPLOY_PORT:-80}:80"
       - "${DEPLOY_PORT_SSL:-443}:443"
