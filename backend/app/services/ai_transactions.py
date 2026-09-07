@@ -11,7 +11,14 @@ from uuid import UUID
 from sqlalchemy.orm import Session
 
 from app import database
-from app.ai import AIError, classify_descriptions, decrypt_key, is_supported
+from app.ai import (
+    AIError,
+    classify_descriptions,
+    decrypt_key,
+    has_server_gemini_key,
+    is_supported,
+    server_gemini_key,
+)
 from app.ai.client import ClassifyResult
 from app.categorization import CategorizedTransaction
 from app.categorization.rules import CATEGORY_RULES, DEFAULT_CATEGORY
@@ -109,10 +116,20 @@ def enrich_saved_transactions(
     обновляет category/cleaned_description. Возвращает число обновлённых.
     """
     user = db.query(User).filter(User.id == user_id).first()
-    if not user or not user.ai_api_key_encrypted or not is_supported(user.ai_provider):
+    if not user:
         return 0
 
-    api_key = decrypt_key(user.ai_api_key_encrypted)
+    if has_server_gemini_key():
+        api_key = server_gemini_key()
+        provider = "gemini"
+        base_url = None
+    else:
+        if not user.ai_api_key_encrypted or not is_supported(user.ai_provider):
+            return 0
+        api_key = decrypt_key(user.ai_api_key_encrypted)
+        provider = user.ai_provider
+        base_url = user.ai_base_url
+
     if not api_key:
         return 0
 
@@ -132,8 +149,8 @@ def enrich_saved_transactions(
         results = classify_descriptions(
             [t.original_description for t in transactions],
             api_key=api_key,
-            provider=user.ai_provider,
-            base_url=user.ai_base_url,
+            provider=provider,
+            base_url=base_url,
         )
     except AIError:
         return 0

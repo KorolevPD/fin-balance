@@ -7,7 +7,7 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy.orm import Session
 
-from app.ai import encrypt_key, normalized_provider
+from app.ai import encrypt_key, has_server_gemini_key, normalized_provider
 from app.database import get_db
 from app.models import User
 from app.routers.families import create_default_family
@@ -50,6 +50,7 @@ class UserOut(BaseModel):
     telegram_id: str | None = None
     ai_provider: str | None = None
     has_ai_key: bool = False
+    server_ai_key: bool = False
     created_at: datetime
 
     @classmethod
@@ -63,6 +64,7 @@ class UserOut(BaseModel):
             telegram_id=user.telegram_id,
             ai_provider=user.ai_provider,
             has_ai_key=bool(user.ai_api_key_encrypted),
+            server_ai_key=has_server_gemini_key(),
             created_at=user.created_at,
         )
 
@@ -147,6 +149,11 @@ def update_me(
 
     fields = payload.model_fields_set
     if "ai_api_key" in fields:
+        if has_server_gemini_key():
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Используется серверный AI-ключ. Свои ключи вводить нельзя.",
+            )
         raw_key = (payload.ai_api_key or "").strip()
         if raw_key:
             try:

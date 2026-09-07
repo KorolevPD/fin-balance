@@ -264,3 +264,67 @@ class TestAiKey:
     def test_поле_ai_поля_есть_в_модели(self):
         assert "ai_provider" in User.__table__.columns
         assert "ai_api_key_encrypted" in User.__table__.columns
+
+
+class TestServerAiKey:
+    def test_server_ai_key_флаг_в_me_при_заданном_ключе(self, client_db, monkeypatch):
+        monkeypatch.setenv("GEMINI_API_KEY", "AIza-Server-Key-123")
+        client, session = client_db
+        user = _prepare(session)
+        token = _token(user)
+
+        response = client.get(
+            "/api/auth/me",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+        assert response.status_code == 200
+        assert response.json()["server_ai_key"] is True
+
+    def test_server_ai_key_флаг_выключен_без_ключа(self, client_db, monkeypatch):
+        monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+        client, session = client_db
+        user = _prepare(session)
+        token = _token(user)
+
+        response = client.get(
+            "/api/auth/me",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+        assert response.status_code == 200
+        assert response.json()["server_ai_key"] is False
+
+    def test_при_серверном_ключе_нельзя_сохранить_свой(
+        self, client_db, monkeypatch
+    ):
+        monkeypatch.setenv("GEMINI_API_KEY", "AIza-Server-Key-123")
+        client, session = client_db
+        user = _prepare(session)
+        token = _token(user)
+
+        response = client.patch(
+            "/api/auth/me",
+            json={"ai_provider": "gemini", "ai_api_key": "my-own-key"},
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+        assert response.status_code == 400
+        assert "серверный" in response.json()["detail"]
+
+    def test_без_серверного_ключа_свой_ключ_сохраняется(
+        self, client_db, monkeypatch
+    ):
+        monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+        client, session = client_db
+        user = _prepare(session)
+        token = _token(user)
+
+        response = client.patch(
+            "/api/auth/me",
+            json={"ai_provider": "gemini", "ai_api_key": "my-own-key"},
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+        assert response.status_code == 200
+        assert response.json()["has_ai_key"] is True
