@@ -51,15 +51,17 @@ jobs:
           AI_KEY_ENCRYPTION_KEY: ${{ secrets.AI_KEY_ENCRYPTION_KEY }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+          DEPLOY_DOMAIN: ${{ secrets.DEPLOY_DOMAIN }}
+          CERTBOT_EMAIL: ${{ secrets.CERTBOT_EMAIL }}
         with:
           host: ${{ secrets.DEPLOY_HOST }}
           port: ${{ secrets.DEPLOY_SSH_PORT }}
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
-          envs: SECRET_KEY,POSTGRES_USER,POSTGRES_PASSWORD,POSTGRES_DB,AI_KEY_ENCRYPTION_KEY,GEMINI_API_KEY,BOT_TOKEN
+          envs: SECRET_KEY,POSTGRES_USER,POSTGRES_PASSWORD,POSTGRES_DB,AI_KEY_ENCRYPTION_KEY,GEMINI_API_KEY,BOT_TOKEN,DEPLOY_DOMAIN,CERTBOT_EMAIL
           script: |
             set -e
             bash ~/fin-balance/deploy/deploy.sh \
               "$SECRET_KEY" "$POSTGRES_USER" "$POSTGRES_PASSWORD" \
               "$POSTGRES_DB" "$AI_KEY_ENCRYPTION_KEY" "$GEMINI_API_KEY" \
-              "$BOT_TOKEN"
+              "$BOT_TOKEN" "$DEPLOY_DOMAIN" "$CERTBOT_EMAIL"

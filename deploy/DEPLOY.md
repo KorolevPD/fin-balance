@@ -65,6 +65,8 @@
 | `AI_KEY_ENCRYPTION_KEY` | Ключ шифрования AI-ключей пользователей (AES-GCM) |
 | `GEMINI_API_KEY` | **Серверный Gemini-ключ** (пустой = пользователи вводят свой) |
 | `BOT_TOKEN` | Токен Telegram-бота (пустой = бот выключен) |
+| `DEPLOY_DOMAIN` | **Домен**, указывающий на IP сервера (например `app.example.com`). Если не задан — SSL не выпускается. |
+| `CERTBOT_EMAIL` | Email для уведомлений Let's Encrypt (при выпуске сертификата) |
 
 Рекомендуемые значения (сгенерировать):
 ```bash
@@ -73,19 +75,35 @@ python -c "import secrets; print(secrets.token_urlsafe(32))"   # AI_KEY_ENCRYPTI
 python -c "import secrets; print(secrets.token_urlsafe(24))"   # POSTGRES_PASSWORD
 ```
 
+## HTTPS (Let's Encrypt)
+
+SSL выпускается автоматически при деплое, если задан секрет `DEPLOY_DOMAIN`:
+
+1. Сертификат Let's Encrypt выпускается через `certbot` при первом деплое
+   (сервис `nginx` временно останавливается, затем поднимается уже по HTTPS).
+2. При последующих деплоях сертификат продлевается (`certbot renew`),
+   nginx перезагружается.
+3. HTTP (порт 80) переадресует на HTTPS (порт 443).
+
+**Требования на сервере (установить один раз):**
+```bash
+sudo apt-get update
+sudo apt-get install -y certbot
+```
+
+Порт `443` должен быть открыт в файрволе/провайдере, а домен — указывать на
+IP этого сервера (A-запись).
+
+**Ручное продление** (если деплой долго не запускался):
+```bash
+sudo certbot renew
+```
+
 ## Файлы деплоя
 
 - `.github/workflows/deploy.yml` — workflow деплоя (push в `main` + ручной запуск).
-- `deploy/deploy.sh` — скрипт на сервере: пишет `.env`, собирает и поднимает стек.
+- `deploy/deploy.sh` — скрипт на сервере: пишет `.env`, выпускает/обновляет
+  SSL-сертификат, собирает и поднимает стек.
 - `docker-compose.prod.yml` — переопределения для продакшена (без `--reload`,
-  без bind-mount, только nginx наружу).
-
-## HTTPS / домен (следующий шаг)
-
-Сейчас сервис отдаётся по HTTP на порту `80` (переменная `DEPLOY_PORT`, плюс
-сайт доступен по `http://<IP>`). Чтобы включить HTTPS по домену, после того как
-домен будет настроен на сервер, добавьте:
-- certbot + Let's Encrypt (nginx-плагин) для выпуска сертификата;
-- в `nginx/nginx.conf` блок `listen 443 ssl` и `server_name <домен>`.
-
-Это удобно сделать отдельной задачей, когда появятся реальные домен и сервер.
+  без bind-mount, только nginx наружу; монтирует `/etc/letsencrypt`).
+- `nginx/nginx.conf` — HTTP→HTTPS: ACME-challenge на 80, сайт на 443.
