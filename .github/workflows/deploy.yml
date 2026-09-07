@@ -31,14 +31,14 @@ jobs:
           ssh-keyscan -p ${{ secrets.DEPLOY_SSH_PORT }} \
             ${{ secrets.DEPLOY_HOST }} >> ~/.ssh/known_hosts
 
-      - name: Copy deploy script and .env to server
+- name: Copy deploy files to server
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.DEPLOY_HOST }}
           port: ${{ secrets.DEPLOY_SSH_PORT }}
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
-          source: "deploy/deploy.sh,docker-compose.yml,nginx"
+          source: "deploy/deploy.sh,docker-compose.yml,docker-compose.prod.yml,backend,bot,frontend,nginx"
           target: "~/fin-balance"
 
       - name: Run deploy on server
