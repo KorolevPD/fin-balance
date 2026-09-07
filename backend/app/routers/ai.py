@@ -17,9 +17,9 @@ from app.ai import (
     AIError,
     decrypt_key,
     generate_advice,
-    has_server_gemini_key,
+    has_server_gigachat_key,
     is_supported,
-    server_gemini_key,
+    server_gigachat_key,
 )
 from app.database import get_db
 from app.models import AiAdvice, User
@@ -90,9 +90,9 @@ def create_advice(
 ):
     _require_membership(db, family_id, current_user.id)
 
-    if has_server_gemini_key():
-        api_key = server_gemini_key()
-        provider = "gemini"
+    if has_server_gigachat_key():
+        api_key = server_gigachat_key()
+        provider = "gigachat"
         base_url = None
     else:
         if not current_user.ai_api_key_encrypted:
@@ -107,7 +107,7 @@ def create_advice(
             )
         api_key = decrypt_key(current_user.ai_api_key_encrypted)
         provider = current_user.ai_provider
-        base_url = current_user.ai_base_url
+        base_url = None
 
     if not api_key:
         raise HTTPException(

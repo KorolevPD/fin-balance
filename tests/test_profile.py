@@ -200,13 +200,13 @@ class TestAiKey:
 
         response = client.patch(
             "/api/auth/me",
-            json={"ai_provider": "gemini", "ai_api_key": "super-secret-key"},
+            json={"ai_provider": "gigachat", "ai_api_key": "super-secret-key"},
             headers={"Authorization": f"Bearer {token}"},
         )
 
         assert response.status_code == 200
         body = response.json()
-        assert body["ai_provider"] == "gemini"
+        assert body["ai_provider"] == "gigachat"
         assert body["has_ai_key"] is True
         session.refresh(user)
         assert user.ai_api_key_encrypted
@@ -215,7 +215,7 @@ class TestAiKey:
     def test_patch_me_не_возвращает_сам_ключ(self, client_db):
         client, session = client_db
         user = _prepare(session)
-        user.ai_provider = "gemini"
+        user.ai_provider = "gigachat"
         user.ai_api_key_encrypted = "encrypted-blob"
         session.commit()
         token = _token(user)
@@ -233,7 +233,7 @@ class TestAiKey:
     def test_patch_me_пустой_ключ_удаляет(self, client_db):
         client, session = client_db
         user = _prepare(session)
-        user.ai_provider = "gemini"
+        user.ai_provider = "gigachat"
         user.ai_api_key_encrypted = "encrypted-blob"
         session.commit()
         token = _token(user)
@@ -268,7 +268,7 @@ class TestAiKey:
 
 class TestServerAiKey:
     def test_server_ai_key_флаг_в_me_при_заданном_ключе(self, client_db, monkeypatch):
-        monkeypatch.setenv("GEMINI_API_KEY", "AIza-Server-Key-123")
+        monkeypatch.setenv("GIGACHAT_API_KEY", "Server-GigaChat-Key-123")
         client, session = client_db
         user = _prepare(session)
         token = _token(user)
@@ -282,7 +282,7 @@ class TestServerAiKey:
         assert response.json()["server_ai_key"] is True
 
     def test_server_ai_key_флаг_выключен_без_ключа(self, client_db, monkeypatch):
-        monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+        monkeypatch.delenv("GIGACHAT_API_KEY", raising=False)
         client, session = client_db
         user = _prepare(session)
         token = _token(user)
@@ -298,14 +298,14 @@ class TestServerAiKey:
     def test_при_серверном_ключе_нельзя_сохранить_свой(
         self, client_db, monkeypatch
     ):
-        monkeypatch.setenv("GEMINI_API_KEY", "AIza-Server-Key-123")
+        monkeypatch.setenv("GIGACHAT_API_KEY", "Server-GigaChat-Key-123")
         client, session = client_db
         user = _prepare(session)
         token = _token(user)
 
         response = client.patch(
             "/api/auth/me",
-            json={"ai_provider": "gemini", "ai_api_key": "my-own-key"},
+            json={"ai_provider": "gigachat", "ai_api_key": "my-own-key"},
             headers={"Authorization": f"Bearer {token}"},
         )
 
@@ -315,14 +315,14 @@ class TestServerAiKey:
     def test_без_серверного_ключа_свой_ключ_сохраняется(
         self, client_db, monkeypatch
     ):
-        monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+        monkeypatch.delenv("GIGACHAT_API_KEY", raising=False)
         client, session = client_db
         user = _prepare(session)
         token = _token(user)
 
         response = client.patch(
             "/api/auth/me",
-            json={"ai_provider": "gemini", "ai_api_key": "my-own-key"},
+            json={"ai_provider": "gigachat", "ai_api_key": "my-own-key"},
             headers={"Authorization": f"Bearer {token}"},
         )
 

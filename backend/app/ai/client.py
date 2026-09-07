@@ -1,6 +1,6 @@
 """Реестр AI-провайдеров и точка входа для классификации и советов.
 
-Каждый провайдер — модуль с функциями:
+Единственный поддерживаемый провайдер — GigaChat. Модуль с функциями:
 - ``classify_transactions(descriptions, api_key, base_url) -> list[ClassifyResult]``
 - ``generate_advice(summary, api_key, base_url) -> str``
 
@@ -10,10 +10,9 @@
 
 from dataclasses import dataclass
 
-PROVIDER_GEMINI = "gemini"
-PROVIDER_OPENAI_COMPAT = "openai_compatible"
+PROVIDER_GIGACHAT = "gigachat"
 
-DEFAULT_PROVIDER = PROVIDER_GEMINI
+DEFAULT_PROVIDER = PROVIDER_GIGACHAT
 
 
 @dataclass
@@ -33,23 +32,18 @@ def normalized_provider(provider: str | None) -> str | None:
     if not provider:
         return None
     p = provider.strip().lower()
-    if p in ("gemini", "google", "ai_studio"):
-        return PROVIDER_GEMINI
-    if p in ("openai", "openai_compatible", "groq", "openrouter"):
-        return PROVIDER_OPENAI_COMPAT
+    if p in ("gigachat", "giga_chat", "giga-chat"):
+        return PROVIDER_GIGACHAT
     return None
 
 
 def is_supported(provider: str | None) -> bool:
-    return normalized_provider(provider) in (PROVIDER_GEMINI, PROVIDER_OPENAI_COMPAT)
+    return normalized_provider(provider) == PROVIDER_GIGACHAT
 
 
 def _load(provider: str):
-    norm = normalized_provider(provider)
-    if norm == PROVIDER_OPENAI_COMPAT:
-        from app.ai import openai_compat as module
-    else:
-        from app.ai import gemini as module
+    from app.ai import gigachat as module
+
     return module
 
 

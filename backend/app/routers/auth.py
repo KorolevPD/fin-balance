@@ -7,7 +7,7 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy.orm import Session
 
-from app.ai import encrypt_key, has_server_gemini_key, normalized_provider
+from app.ai import encrypt_key, has_server_gigachat_key, normalized_provider
 from app.database import get_db
 from app.models import User
 from app.routers.families import create_default_family
@@ -64,7 +64,7 @@ class UserOut(BaseModel):
             telegram_id=user.telegram_id,
             ai_provider=user.ai_provider,
             has_ai_key=bool(user.ai_api_key_encrypted),
-            server_ai_key=has_server_gemini_key(),
+            server_ai_key=has_server_gigachat_key(),
             created_at=user.created_at,
         )
 
@@ -73,7 +73,6 @@ class UserUpdate(BaseModel):
     name: str | None = Field(default=None, max_length=255)
     ai_provider: str | None = Field(default=None, max_length=50)
     ai_api_key: str | None = Field(default=None, max_length=2000)
-    ai_base_url: str | None = Field(default=None, max_length=255)
 
 
 class TokenOut(BaseModel):
@@ -149,7 +148,7 @@ def update_me(
 
     fields = payload.model_fields_set
     if "ai_api_key" in fields:
-        if has_server_gemini_key():
+        if has_server_gigachat_key():
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Используется серверный AI-ключ. Свои ключи вводить нельзя.",
@@ -174,9 +173,6 @@ def update_me(
                 detail=f"Неподдерживаемый AI-провайдер: {payload.ai_provider}",
             )
         current_user.ai_provider = provider
-
-    if "ai_base_url" in fields:
-        current_user.ai_base_url = (payload.ai_base_url or "").strip() or None
 
     db.commit()
     db.refresh(current_user)
