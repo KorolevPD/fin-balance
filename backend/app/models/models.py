@@ -2,6 +2,7 @@ import uuid
 from datetime import datetime
 
 from sqlalchemy import (
+    Boolean,
     Column,
     DateTime,
     Float,
@@ -86,6 +87,9 @@ class Transaction(Base):
     )
     original_description = Column(Text, nullable=False)
     cleaned_description = Column(Text, nullable=True)
+    is_self_transfer = Column(
+        Boolean, nullable=False, default=False, server_default="0"
+    )
     source_file = Column(String(255), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 

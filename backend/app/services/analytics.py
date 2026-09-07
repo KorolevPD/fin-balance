@@ -32,7 +32,10 @@ def get_family_summary(
     считаются только по операциям этого пользователя (режим «Личные» на
     дашборде); иначе — по всей семье.
     """
-    query = db.query(Transaction).filter(Transaction.family_id == family_id)
+    query = db.query(Transaction).filter(
+        Transaction.family_id == family_id,
+        Transaction.is_self_transfer.is_not(True),
+    )
     if filter_user_id is not None:
         query = query.filter(Transaction.user_id == filter_user_id)
     rows = query.all()

@@ -21,6 +21,7 @@ class CategorizedTransaction(ParsedTransaction):
 
     category: str = DEFAULT_CATEGORY
     cleaned_description: str | None = None
+    is_self_transfer: bool = False
 
 
 def _normalize(text: str) -> str:

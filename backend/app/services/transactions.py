@@ -112,6 +112,7 @@ def save_transactions(
                 type=item.type if item.type in ("income", "expense") else "expense",
                 original_description=item.description,
                 cleaned_description=item.cleaned_description,
+                is_self_transfer=item.is_self_transfer,
                 source_file=source_file,
             )
         )

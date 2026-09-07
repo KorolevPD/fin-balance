@@ -23,6 +23,7 @@ from app.security import get_current_user
 from app.services import save_transactions
 from app.services.analytics import get_family_summary
 from app.services.ai_transactions import run_enrich_in_background
+from app.services.names import mark_self_transfers
 from app.services.transactions import _resolve_or_create_category
 
 router = APIRouter(prefix="/families", tags=["transactions"])
@@ -55,6 +56,7 @@ class TransactionOut(BaseModel):
     type: str = "expense"
     original_description: str
     cleaned_description: str | None = None
+    is_self_transfer: bool = False
     source_file: str | None = None
     created_at: datetime
 
@@ -99,6 +101,7 @@ def import_transactions(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Не удалось разобрать файл: {exc}",
         )
+    mark_self_transfers(parsed, current_user.name)
 
     result = save_transactions(
         db,
@@ -162,6 +165,7 @@ def list_transactions(
             type=t.type or "expense",
             original_description=t.original_description,
             cleaned_description=t.cleaned_description,
+            is_self_transfer=t.is_self_transfer,
             source_file=t.source_file,
             created_at=t.created_at,
         )
@@ -308,6 +312,7 @@ def update_transaction(
         type=transaction.type or "expense",
         original_description=transaction.original_description,
         cleaned_description=transaction.cleaned_description,
+        is_self_transfer=transaction.is_self_transfer,
         source_file=transaction.source_file,
         created_at=transaction.created_at,
     )
