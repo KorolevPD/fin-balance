@@ -363,31 +363,36 @@ export default function Dashboard() {
           )}
 
           <div className="demo-grid">
-            <section className="card demo-block" aria-label="Члены семьи">
-              <h2>Члены семьи</h2>
-              {members.length === 0 ? (
-                <p className="muted">В семье пока нет участников.</p>
-              ) : (
-                <table className="data-table">
-                  <thead>
-                    <tr>
-                      <th>Имя</th>
-                      <th className="num">Траты</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {members.map((member) => (
-                      <tr key={member.user_id || member.email}>
-                        <td>{member.name || member.email}</td>
-                        <td className="num">{formatAmountPlain(member.total_expenses)}</td>
+            {effectiveScope === 'family' && (
+              <section className="card demo-block" aria-label="Члены семьи">
+                <h2>Члены семьи</h2>
+                {members.length === 0 ? (
+                  <p className="muted">В семье пока нет участников.</p>
+                ) : (
+                  <table className="data-table">
+                    <thead>
+                      <tr>
+                        <th>Имя</th>
+                        <th className="num">Траты</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-            </section>
+                    </thead>
+                    <tbody>
+                      {members.map((member) => (
+                        <tr key={member.user_id || member.email}>
+                          <td>{member.name || member.email}</td>
+                          <td className="num">{formatAmountPlain(member.total_expenses)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </section>
+            )}
 
-            <section className="card demo-block" aria-label="Траты по категориям">
+            <section
+              className={`card demo-block${effectiveScope === 'family' ? '' : ' demo-block-wide'}`}
+              aria-label="Траты по категориям"
+            >
               <h2>Траты по категориям</h2>
               {chartCategories.length === 0 ? (
                 <p className="muted">Категорий пока нет.</p>
