@@ -22,7 +22,7 @@ from app.services.names import (
 from app.services.transactions import save_transactions
 from main import app
 
-SBER_PDF = Path(__file__).resolve().parents[1] / "examples" / "sber.pdf"
+SBER_PDF = Path(__file__).resolve().parents[1] / "pdf_examples" / "sber.pdf"
 
 
 @pytest.fixture()
@@ -289,7 +289,7 @@ class TestMarkAndSave:
 
 
 class TestImportSelfTransfer:
-    def test_импорт_помечает_перевод_самому_себе_по_владельцу_из_выписки(
+    def test_импорт_не_загружает_перевод_самому_себе_по_владельцу_из_выписки(
         self, client_db
     ):
         client, session = client_db
@@ -321,20 +321,15 @@ class TestImportSelfTransfer:
             headers={"Authorization": f"Bearer {token}"},
         ).json()
 
-        self_transfer = next(
-            item
-            for item in transactions
-            if item["original_description"]
-            == "Перевод для И. Иван Иванович. Операция по карте"
-        )
-        assert self_transfer["is_self_transfer"] is True
-        assert self_transfer["type"] == "expense"
+        descriptions = {item["original_description"] for item in transactions}
+        assert "Перевод для И. Иван Иванович. Операция по карте" not in descriptions
+        assert "Перевод от И. Иван Иванович. Операция по карте" not in descriptions
 
         other_transfer = next(
             item
             for item in transactions
             if item["original_description"]
-            == "Перевод для М. Ксения Андреевна. Операция по карте"
+            == "Перевод от С. Алексей Анатольевич. Операция по карте"
         )
         assert other_transfer["is_self_transfer"] is False
 

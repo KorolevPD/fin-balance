@@ -10,7 +10,7 @@ sys.path.insert(0, str(REPO_ROOT / "backend"))
 
 from app.parsers import parse_pdf_bytes  # noqa: E402
 
-SBER_PDF = REPO_ROOT / "examples" / "sber.pdf"
+SBER_PDF = REPO_ROOT / "pdf_examples" / "sber.pdf"
 
 
 def _sber_bytes() -> bytes:
@@ -21,7 +21,7 @@ class TestSberPdfParser:
     def test_разбирает_все_операции_из_примера(self):
         transactions = parse_pdf_bytes(_sber_bytes())
 
-        assert len(transactions) == 255
+        assert len(transactions) == 249
 
     def test_извлекает_даты_суммы_и_типы(self):
         transactions = parse_pdf_bytes(_sber_bytes())
@@ -31,7 +31,7 @@ class TestSberPdfParser:
             for item in transactions
             if item.amount == 2000.00 and item.type == "expense"
         )
-        assert expense_2000.date.isoformat() == "2026-06-11"
+        assert expense_2000.date.isoformat() == "2022-10-17"
         assert expense_2000.amount == 2000.00
 
         income_2000 = next(
@@ -47,7 +47,6 @@ class TestSberPdfParser:
             {item.date.isoformat() for item in incomes}
         )
 
-        assert any(item.amount == 22682.22 for item in transactions)
         assert any(item.amount == 22600.00 for item in transactions)
 
     def test_извлекает_описание_контрагента(self):

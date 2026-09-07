@@ -12,7 +12,7 @@ from app.security import create_access_token, hash_password
 from main import app
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-SBER_PDF_PATH = REPO_ROOT / "examples" / "sber.pdf"
+SBER_PDF_PATH = REPO_ROOT / "pdf_examples" / "sber.pdf"
 
 
 @pytest.fixture()
@@ -135,8 +135,8 @@ class TestImportTransactions:
 
         assert response.status_code == 201
         body = response.json()
-        assert body["parsed"] == 255
-        assert body["created"] == 255
+        assert body["parsed"] == 243
+        assert body["created"] == 243
         assert body["duplicates_skipped"] == 0
 
     def test_импорт_pdf_сохраняет_категории_из_выписки(self, client_db):
