@@ -4,7 +4,7 @@ from app.parsers.csv_parser import (
     parse_csv,
     parse_csv_bytes,
 )
-from app.parsers.pdf_parser import parse_pdf_bytes
+from app.parsers.pdf_parser import extract_account_owner, parse_pdf_bytes
 
 __all__ = [
     "ParsedTransaction",
@@ -12,4 +12,5 @@ __all__ = [
     "parse_csv",
     "parse_csv_bytes",
     "parse_pdf_bytes",
+    "extract_account_owner",
 ]

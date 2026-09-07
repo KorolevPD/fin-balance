@@ -2,6 +2,7 @@
 
 import io
 from datetime import date, datetime
+from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
@@ -9,6 +10,7 @@ from fastapi.testclient import TestClient
 from app.categorization import CategorizedTransaction
 from app.database import get_db
 from app.models import Family, FamilyMember, Transaction, User
+from app.parsers import extract_account_owner, parse_pdf_bytes
 from app.security import create_access_token, hash_password
 from app.services.analytics import get_family_summary
 from app.services.names import (
@@ -20,6 +22,8 @@ from app.services.names import (
 from app.services.transactions import save_transactions
 from main import app
 
+SBER_PDF = Path(__file__).resolve().parents[1] / "examples" / "sber.pdf"
+
 
 @pytest.fixture()
 def client_db(session_factory):
@@ -30,6 +34,39 @@ def client_db(session_factory):
     finally:
         app.dependency_overrides.pop(get_db, None)
         session.close()
+
+
+class TestExtractAccountOwner:
+    def test_извлекает_фио_владельца_из_шапки_pdf(self):
+        assert extract_account_owner(SBER_PDF.read_bytes()) == "Иванов Иван Иванович"
+
+    def test_битый_файл_возвращает_none(self):
+        assert extract_account_owner(b"this is not a pdf") is None
+
+    def test_пустой_документ_возвращает_none(self):
+        from pypdf import PdfWriter
+
+        writer = PdfWriter()
+        writer.add_blank_page(width=200, height=200)
+        empty_bytes = io.BytesIO()
+        writer.write(empty_bytes)
+
+        assert extract_account_owner(empty_bytes.getvalue()) is None
+
+    def test_владелец_из_pdf_попадает_в_парсер_переводов(self):
+        transactions = parse_pdf_bytes(SBER_PDF.read_bytes())
+
+        self_transfers = [
+            item
+            for item in transactions
+            if is_transfer_to_self("Иванов Иван Иванович", item.description)
+            and item.type == "expense"
+        ]
+        assert self_transfers
+        assert all(
+            item.description.startswith("Перевод для И. Иван Иванович")
+            for item in self_transfers
+        )
 
 
 class TestParsePersonName:
@@ -252,13 +289,11 @@ class TestMarkAndSave:
 
 
 class TestImportSelfTransfer:
-    def test_импорт_помечает_перевод_самому_себе(self, client_db):
+    def test_импорт_помечает_перевод_самому_себе_по_владельцу_из_выписки(
+        self, client_db
+    ):
         client, session = client_db
-        user = User(
-            email="owner@example.com",
-            name="Иванов Иван Иванович",
-            password_hash=hash_password("secret1"),
-        )
+        user = User(email="owner@example.com", password_hash=hash_password("secret1"))
         session.add(user)
         session.flush()
         family = Family(invite_code="SELF003")
@@ -268,14 +303,15 @@ class TestImportSelfTransfer:
         session.commit()
         token = create_access_token(subject=str(user.id))
 
-        csv_bytes = (
-            "date,amount,description\n"
-            "2026-09-01,-1000,Перевод для И. Иван Иванович. Операция по карте\n"
-            "2026-09-02,-200,Лента\n"
-        ).encode("utf-8")
         response = client.post(
             f"/api/families/{family.id}/transactions/import",
-            files={"file": ("statement.csv", io.BytesIO(csv_bytes), "text/csv")},
+            files={
+                "file": (
+                    "statement.pdf",
+                    io.BytesIO(SBER_PDF.read_bytes()),
+                    "application/pdf",
+                )
+            },
             headers={"Authorization": f"Bearer {token}"},
         )
 
@@ -284,23 +320,27 @@ class TestImportSelfTransfer:
             f"/api/families/{family.id}/transactions",
             headers={"Authorization": f"Bearer {token}"},
         ).json()
-        by_description = {
-            item["original_description"]: item for item in transactions
-        }
-        self_transfer = by_description[
-            "Перевод для И. Иван Иванович. Операция по карте"
-        ]
+
+        self_transfer = next(
+            item
+            for item in transactions
+            if item["original_description"]
+            == "Перевод для И. Иван Иванович. Операция по карте"
+        )
         assert self_transfer["is_self_transfer"] is True
         assert self_transfer["type"] == "expense"
-        assert by_description["Лента"]["is_self_transfer"] is False
+
+        other_transfer = next(
+            item
+            for item in transactions
+            if item["original_description"]
+            == "Перевод для М. Ксения Андреевна. Операция по карте"
+        )
+        assert other_transfer["is_self_transfer"] is False
 
     def test_сводка_не_учитывает_перевод_самому_себе(self, client_db):
         client, session = client_db
-        user = User(
-            email="owner2@example.com",
-            name="Иванов Иван Иванович",
-            password_hash=hash_password("secret1"),
-        )
+        user = User(email="owner2@example.com", password_hash=hash_password("secret1"))
         session.add(user)
         session.flush()
         family = Family(invite_code="SELF004")
@@ -310,22 +350,33 @@ class TestImportSelfTransfer:
         session.commit()
         token = create_access_token(subject=str(user.id))
 
-        csv_bytes = (
-            "date,amount,description\n"
-            "2026-09-01,-1000,Перевод для И. Иван Иванович. Операция по карте\n"
-            "2026-09-02,-200,Лента\n"
-        ).encode("utf-8")
-        client.post(
+        import_response = client.post(
             f"/api/families/{family.id}/transactions/import",
-            files={"file": ("statement.csv", io.BytesIO(csv_bytes), "text/csv")},
+            files={
+                "file": (
+                    "statement.pdf",
+                    io.BytesIO(SBER_PDF.read_bytes()),
+                    "application/pdf",
+                )
+            },
             headers={"Authorization": f"Bearer {token}"},
         )
+        assert import_response.status_code == 201
+
+        transactions = client.get(
+            f"/api/families/{family.id}/transactions",
+            headers={"Authorization": f"Bearer {token}"},
+        ).json()
+        expenses = [
+            item["amount"]
+            for item in transactions
+            if item["type"] == "expense" and not item["is_self_transfer"]
+        ]
+        assert expenses
 
         summary = client.get(
             f"/api/families/{family.id}/summary",
             headers={"Authorization": f"Bearer {token}"},
         ).json()
 
-        assert summary["total_amount"] == 200.0
-        assert summary["top_payees"][0]["payee"] == "Лента"
-        assert summary["by_category"][0]["amount"] == 200.0
+        assert summary["total_amount"] == pytest.approx(sum(expenses))

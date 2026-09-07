@@ -18,7 +18,7 @@ from sqlalchemy.orm import Session
 from app.categorization import categorize_transactions
 from app.database import get_db
 from app.models import FamilyMember, Transaction, User, UserCorrection
-from app.parsers import parse_csv_bytes, parse_pdf_bytes
+from app.parsers import extract_account_owner, parse_csv_bytes, parse_pdf_bytes
 from app.security import get_current_user
 from app.services import save_transactions
 from app.services.analytics import get_family_summary
@@ -29,11 +29,17 @@ from app.services.transactions import _resolve_or_create_category
 router = APIRouter(prefix="/families", tags=["transactions"])
 
 
-def _parse_file(raw: bytes, filename: str) -> list:
-    """Разобрать выписку по расширению файла: PDF или CSV."""
+def _parse_file(
+    raw: bytes, filename: str
+) -> tuple[list, str | None]:
+    """Разобрать выписку по расширению файла: PDF или CSV.
+
+    Возвращает список операций и имя владельца счёта из самой выписки
+    (для CSV владелец в файле не указывается, поэтому None).
+    """
     if (filename or "").lower().endswith(".pdf"):
-        return parse_pdf_bytes(raw)
-    return parse_csv_bytes(raw)
+        return parse_pdf_bytes(raw), extract_account_owner(raw)
+    return parse_csv_bytes(raw), None
 
 
 class ImportResult(BaseModel):
@@ -93,15 +99,15 @@ def import_transactions(
     _require_membership(db, family_id, current_user.id)
 
     try:
-        parsed = categorize_transactions(
-            _parse_file(file.file.read(), file.filename or "")
-        )
+        raw = file.file.read()
+        parsed, owner_name = _parse_file(raw, file.filename or "")
+        parsed = categorize_transactions(parsed)
     except ValueError as exc:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Не удалось разобрать файл: {exc}",
         )
-    mark_self_transfers(parsed, current_user.name)
+    mark_self_transfers(parsed, owner_name)
 
     result = save_transactions(
         db,

@@ -13,7 +13,6 @@ from app.parsers import parse_csv_bytes
 from app.security import get_current_user
 from app.services import save_transactions
 from app.services.analytics import get_family_summary
-from app.services.names import mark_self_transfers
 from app.storage import ALLOWED_CONTENT_TYPES, validate_filename
 
 router = APIRouter(prefix="/bot", tags=["bot"])
@@ -195,7 +194,6 @@ def upload_from_bot(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Не удалось разобрать файл: {exc}",
         )
-    mark_self_transfers(parsed, user.name)
 
     result = save_transactions(
         db,

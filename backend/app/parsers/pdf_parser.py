@@ -34,6 +34,14 @@ _CARD_RE = re.compile(r"^\*{2,4}\d{4}$")
 _CODE_RE = re.compile(r"^\d{4,6}$")
 _CARD_SUFFIX_RE = re.compile(r"\s+\*{2,4}\d{4}\s*$")
 
+_OWNER_LABELS = (
+    "Владелец счёта",
+    "Владелец счета",
+    "Держатель счёта",
+    "Держатель счета",
+)
+_OWNER_NAME_RE = re.compile(r"^[A-Za-zА-Яа-яЁё\s\-]+$")
+
 
 def _clean_description(text: str) -> str:
     return _CARD_SUFFIX_RE.sub("", text).strip()
@@ -74,6 +82,37 @@ def _collect_description(lines: list[str], index: int) -> str:
         elif _is_noise(candidate) and text is None:
             continue
     return " ".join(parts)
+
+
+def extract_account_owner(data: bytes) -> str | None:
+    """Извлечь ФИО владельца счёта из шапки PDF-выписки Сбербанка.
+
+    В шапке есть строка с меткой «Владелец счёта», а следующей непустой
+    строкой идёт ФИО владельца в левой колонке (до крупного пробела).
+    Возвращает None, если владелец не найден или файл не прочитался.
+    """
+    try:
+        reader = PdfReader(io.BytesIO(data))
+        lines = [
+            line
+            for page in reader.pages
+            for line in (page.extract_text(extraction_mode="layout") or "").splitlines()
+        ]
+    except Exception:  # noqa: BLE001
+        return None
+
+    for i, line in enumerate(lines):
+        stripped = line.strip()
+        if not any(label in stripped for label in _OWNER_LABELS):
+            continue
+        for candidate in lines[i + 1 :]:
+            if not candidate.strip():
+                continue
+            chunk = re.split(r"\s{2,}", candidate.strip(), maxsplit=1)[0]
+            if _OWNER_NAME_RE.match(chunk) and len(chunk.split()) >= 2:
+                return chunk
+            return None
+    return None
 
 
 def parse_pdf_bytes(data: bytes) -> list[ParsedTransaction]:
