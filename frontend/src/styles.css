@@ -52,14 +52,16 @@ body {
   margin-bottom: 16px;
 }
 
-.form-group label {
+.form-group label,
+.family-join-form label {
   display: block;
   margin-bottom: 6px;
   font-weight: 600;
   font-size: 0.9rem;
 }
 
-.form-group input {
+.form-group input,
+.family-join-fields input {
   width: 100%;
   padding: 12px;
   border: 1px solid #dfe3ee;
@@ -68,7 +70,8 @@ body {
   box-sizing: border-box;
 }
 
-.form-group input:focus {
+.form-group input:focus,
+.family-join-fields input:focus {
   outline: none;
   border-color: #24a647;
   box-shadow: 0 0 0 3px rgb(36 166 71 / 15%);
@@ -320,8 +323,20 @@ button[type="submit"]:disabled {
 }
 
 .family-code {
-  font-size: 0.85rem;
-  color: #666;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #24a647;
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+
+.family-code:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .invite-row {
@@ -332,18 +347,55 @@ button[type="submit"]:disabled {
 }
 
 .copy-btn {
-  padding: 8px 16px;
-  background: #24a647;
-  color: white;
-  border: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  background: white;
+  color: #24a647;
+  border: 1px solid #24a647;
   border-radius: 8px;
-  font-size: 0.9rem;
-  font-weight: 600;
   cursor: pointer;
+  flex-shrink: 0;
 }
 
 .copy-btn:hover {
-  background: #1a8a39;
+  background: #eafaf0;
+}
+
+.copy-btn:focus-visible {
+  outline: 2px solid #24a647;
+  outline-offset: 2px;
+}
+
+.family-actions-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+}
+
+.family-join-form {
+  flex: 1 1 320px;
+}
+
+.family-join-fields {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.family-join-fields input {
+  flex: 1 1 180px;
+  min-width: 160px;
+}
+
+.family-leave-btn {
+  flex-shrink: 0;
 }
 
 .member-list {
@@ -1252,10 +1304,6 @@ button[type="submit"]:disabled {
   align-items: center;
   gap: 12px;
   flex-wrap: wrap;
-}
-
-.family-actions {
-  margin-top: 16px;
 }
 
 .advice-text {
