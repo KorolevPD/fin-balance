@@ -15,7 +15,7 @@ import httpx
 from app.ai import _common
 from app.ai.client import AIError, ClassifyResult
 
-DEFAULT_MODEL = "GigaChat"
+DEFAULT_MODEL = "GigaChat-2-Max"
 DEFAULT_BASE_URL = "https://api.giga.chat/v1"
 _OAUTH_URL = "https://ngw.devices.sberbank.ru:9443/api/v2/oauth"
 _OAUTH_SCOPE = "GIGACHAT_API_PERS"
