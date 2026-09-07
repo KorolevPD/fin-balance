@@ -28,6 +28,12 @@ services:
       - SECRET_KEY=${SECRET_KEY:-your-secret-key-change-in-production}
       - AI_KEY_ENCRYPTION_KEY=${AI_KEY_ENCRYPTION_KEY:-}
       - GIGACHAT_API_KEY=${GIGACHAT_API_KEY:-}
+      - GIGACHAT_CA_BUNDLE=${GIGACHAT_CA_BUNDLE:-}
+    # TLS к GigaChat: монтируйте корневой сертификат НУЦ Минцифры в контейнер и
+    # укажите путь через GIGACHAT_CA_BUNDLE, например:
+    # volumes:
+    #   - ./deploy/certs/gigachat-ca.pem:/etc/ssl/certs/gigachat-ca.pem:ro
+    # GIGACHAT_CA_BUNDLE=/etc/ssl/certs/gigachat-ca.pem
     depends_on:
       db:
         condition: service_healthy

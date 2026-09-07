@@ -2,6 +2,7 @@
 
 from datetime import date
 
+import httpx
 import pytest
 
 from fastapi.testclient import TestClient
@@ -243,6 +244,63 @@ def test_gigachat_ошибка_chat_completions_бросает_aierror(monkeypat
             provider="gigachat",
         )
     assert "HTTP 500" in str(exc_info.value)
+
+
+def test_gigachat_ssl_ошибка_содержит_подсказку_ca(monkeypatch):
+    def fake_post(url, *args, **kwargs):
+        raise httpx.ConnectError(
+            "[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: "
+            "self-signed certificate in certificate chain"
+        )
+
+    monkeypatch.setattr("app.ai.gigachat.httpx.post", fake_post)
+    with pytest.raises(AIError) as exc_info:
+        generate_advice(
+            {"by_category": {"Продукты": 500.0}},
+            api_key="fake-key",
+            provider="gigachat",
+        )
+    message = str(exc_info.value)
+    assert "GIGACHAT_CA_BUNDLE" in message
+    assert "НУЦ Минцифры" in message
+
+
+def test_gigachat_verify_путь_бандла_из_env(monkeypatch):
+    monkeypatch.setenv("GIGACHAT_CA_BUNDLE", "/etc/ssl/certs/gigachat-ca.pem")
+    captured = {}
+
+    def fake_post(url, *args, **kwargs):
+        captured["verify"] = kwargs.get("verify")
+        if "oauth" in url:
+            return _OAuthResponse()
+        return _ChatResponse('{"advice": "Сократите траты на кафе."}')
+
+    monkeypatch.setattr("app.ai.gigachat.httpx.post", fake_post)
+    generate_advice(
+        {"by_category": {"Продукты": 500.0}},
+        api_key="fake-key",
+        provider="gigachat",
+    )
+    assert captured["verify"] == "/etc/ssl/certs/gigachat-ca.pem"
+
+
+def test_gigachat_verify_по_умолчанию_включен(monkeypatch):
+    monkeypatch.delenv("GIGACHAT_CA_BUNDLE", raising=False)
+    captured = {}
+
+    def fake_post(url, *args, **kwargs):
+        captured["verify"] = kwargs.get("verify")
+        if "oauth" in url:
+            return _OAuthResponse()
+        return _ChatResponse('{"advice": "Сократите траты на кафе."}')
+
+    monkeypatch.setattr("app.ai.gigachat.httpx.post", fake_post)
+    generate_advice(
+        {"by_category": {"Продукты": 500.0}},
+        api_key="fake-key",
+        provider="gigachat",
+    )
+    assert captured["verify"] is True
 
 
 class FakeGigaChatHttp:
