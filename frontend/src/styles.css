@@ -70,8 +70,8 @@ body {
 
 .form-group input:focus {
   outline: none;
-  border-color: #5b5bea;
-  box-shadow: 0 0 0 3px rgb(91 91 234 / 15%);
+  border-color: #24a647;
+  box-shadow: 0 0 0 3px rgb(36 166 71 / 15%);
 }
 
 .form-group select {
@@ -138,7 +138,7 @@ button[type="submit"]:disabled {
 }
 
 .auth-link a {
-  color: #5b5bea;
+  color: #24a647;
   text-decoration: none;
   font-weight: 600;
 }
@@ -209,7 +209,7 @@ button[type="submit"]:disabled {
 }
 
 .user-info-name:hover {
-  color: #5b5bea;
+  color: #24a647;
   text-decoration: underline;
 }
 
@@ -312,7 +312,7 @@ button[type="submit"]:disabled {
 }
 
 .family-list a:hover .family-name {
-  color: #5b5bea;
+  color: #24a647;
 }
 
 .family-name {
@@ -391,11 +391,11 @@ button[type="submit"]:disabled {
 
 .upload-zone.drag-over {
   background: #eef0fe;
-  border-color: #5b5bea;
+  border-color: #24a647;
 }
 
 .upload-zone:hover {
-  border-color: #5b5bea;
+  border-color: #24a647;
 }
 
 .upload-input {
@@ -408,7 +408,7 @@ button[type="submit"]:disabled {
 
 .upload-icon {
   font-size: 2rem;
-  color: #5b5bea;
+  color: #24a647;
   line-height: 1;
 }
 
@@ -460,8 +460,8 @@ button[type="submit"]:disabled {
 }
 
 .upload-reset:hover {
-  border-color: #5b5bea;
-  color: #5b5bea;
+  border-color: #24a647;
+  color: #24a647;
 }
 
 .upload-progress {
@@ -475,7 +475,7 @@ button[type="submit"]:disabled {
 
 .progress-bar {
   height: 100%;
-  background: #5b5bea;
+  background: #24a647;
   transition: width 0.2s ease;
 }
 
@@ -541,7 +541,7 @@ button[type="submit"]:disabled {
 }
 
 .card-header-link {
-  color: #5b5bea;
+  color: #24a647;
   font-weight: 600;
   font-size: 0.9rem;
   text-decoration: none;
@@ -788,7 +788,7 @@ button[type="submit"]:disabled {
 }
 
 .sort-btn:hover {
-  color: #5b5bea;
+  color: #24a647;
 }
 
 .sort-indicator {
@@ -798,7 +798,7 @@ button[type="submit"]:disabled {
 }
 
 .sort-indicator.active {
-  color: #5b5bea;
+  color: #24a647;
 }
 
 .data-table th.num,
@@ -829,7 +829,7 @@ button[type="submit"]:disabled {
 .percent-bar {
   display: inline-block;
   height: 8px;
-  background: #5b5bea;
+  background: #24a647;
   border-radius: 4px;
 }
 
@@ -1018,8 +1018,8 @@ button[type="submit"]:disabled {
 
 .modal select:focus {
   outline: none;
-  border-color: #5b5bea;
-  box-shadow: 0 0 0 3px rgb(91 91 234 / 15%);
+  border-color: #24a647;
+  box-shadow: 0 0 0 3px rgb(36 166 71 / 15%);
 }
 
 .modal-actions {
@@ -1219,7 +1219,7 @@ button[type="submit"]:disabled {
   width: 120px;
   height: 120px;
   border-radius: 50%;
-  background: #5b5bea;
+  background: #24a647;
   color: white;
   display: flex;
   align-items: center;
@@ -1330,7 +1330,7 @@ button[type="submit"]:disabled {
   border-radius: 50%;
   overflow: hidden;
   text-decoration: none;
-  background: #5b5bea;
+  background: #24a647;
   flex-shrink: 0;
 }
 
