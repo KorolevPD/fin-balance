@@ -1205,6 +1205,23 @@ button[type="submit"]:disabled {
   margin-top: 12px;
 }
 
+.advice-nav-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 34px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+.advice-nav-btn:disabled {
+  cursor: default;
+  opacity: 0.35;
+}
+
 .avatar-upload-label {
   display: inline-block;
   cursor: pointer;

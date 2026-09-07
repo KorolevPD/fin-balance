@@ -456,11 +456,20 @@ export default function Dashboard() {
                   <div className="advice-controls">
                     <button
                       type="button"
-                      className="btn btn-small"
+                      className="advice-nav-btn"
                       disabled={adviceIndex === 0 || adviceGenerating}
+                      aria-label="Предыдущий совет"
                       onClick={() => setAdviceIndex((i) => Math.max(0, i - 1))}
                     >
-                      ◀
+                      <svg viewBox="0 0 24 24" width="28" height="28" fill="none" aria-hidden="true">
+                        <path
+                          d="M15 5 L8 12 L15 19"
+                          stroke="#BDBDBD"
+                          strokeWidth="3"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
                     </button>
                     <button
                       type="button"
@@ -472,13 +481,22 @@ export default function Dashboard() {
                     </button>
                     <button
                       type="button"
-                      className="btn btn-small"
+                      className="advice-nav-btn"
                       disabled={adviceIndex >= advices.length - 1 || adviceGenerating}
+                      aria-label="Следующий совет"
                       onClick={() =>
                         setAdviceIndex((i) => Math.min(advices.length - 1, i + 1))
                       }
                     >
-                      ▶
+                      <svg viewBox="0 0 24 24" width="28" height="28" fill="none" aria-hidden="true">
+                        <path
+                          d="M9 5 L16 12 L9 19"
+                          stroke="#BDBDBD"
+                          strokeWidth="3"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
                     </button>
                   </div>
                 </>
