@@ -449,16 +449,25 @@ export default function Dashboard() {
                 </p>
               ) : advicesLoading ? (
                 <p className="muted">Загрузка советов...</p>
+              ) : adviceGenerating ? (
+                <div className="advice-skeleton" role="status" aria-label="Генерация совета">
+                  <span className="advice-skeleton-line" />
+                  <span className="advice-skeleton-line" />
+                  <span className="advice-skeleton-line" />
+                </div>
               ) : adviceError ? (
                 <>
-                  <p className="muted">{adviceError}</p>
+                  <p className="advice-error">
+                    Не удалось сгенерировать совет. Проверьте подключение и
+                    попробуйте ещё раз.
+                  </p>
                   <button
                     type="button"
                     className="btn btn-small"
                     onClick={() => generateAdvice()}
                     disabled={adviceGenerating}
                   >
-                    {adviceGenerating ? 'Генерация...' : 'Получить совет'}
+                    Попробовать снова
                   </button>
                 </>
               ) : currentAdvice ? (
