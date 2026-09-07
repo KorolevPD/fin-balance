@@ -762,7 +762,7 @@ export default function Dashboard() {
                             );
                           }}
                         />
-                        <Bar dataKey="amount" fill="#5b5bea" radius={[4, 4, 0, 0]} />
+                        <Bar dataKey="amount" fill="#24a647" radius={[4, 4, 0, 0]} />
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
