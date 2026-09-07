@@ -49,18 +49,26 @@ DEPLOY_PORT=${DEPLOY_PORT:-80}
 DEPLOY_PORT_SSL=${DEPLOY_PORT_SSL:-443}
 EOF
 
-# SSL: если сертификата ещё нет — выпускаем его ДО запуска стека
-# (standalone слушает порт 80, который пока свободен).
-if [ -n "${DEPLOY_DOMAIN}" ] && [ ! -f "${CERT_DIR}/fullchain.pem" ]; then
-  echo "FinBalance: выпускаю SSL-сертификат для ${DEPLOY_DOMAIN}..."
-  ${DC} stop nginx >/dev/null 2>&1 || true
-  certbot certonly \
-    --standalone \
-    --non-interactive \
-    --agree-tos \
-    --email "${CERTBOT_EMAIL}" \
-    --cert-name finbalance \
-    --domains "${DEPLOY_DOMAIN}"
+# SSL: выпуск/продление сертификата выполняем ДО запуска стека,
+# пока порт 80 свободен (standalone-режим certbot).
+if [ -n "${DEPLOY_DOMAIN}" ]; then
+  if [ -z "${CERTBOT_EMAIL}" ]; then
+    echo "FinBalance: предупреждение — задан DEPLOY_DOMAIN, но не задан CERTBOT_EMAIL; SSL пропускается." >&2
+  elif [ ! -f "${CERT_DIR}/fullchain.pem" ]; then
+    echo "FinBalance: выпускаю SSL-сертификат для ${DEPLOY_DOMAIN}..."
+    ${DC} stop nginx >/dev/null 2>&1 || true
+    certbot certonly \
+      --standalone \
+      --non-interactive \
+      --agree-tos \
+      --email "${CERTBOT_EMAIL}" \
+      --cert-name finbalance \
+      --domains "${DEPLOY_DOMAIN}"
+  else
+    echo "FinBalance: продлеваю SSL-сертификат для ${DEPLOY_DOMAIN}..."
+    ${DC} stop nginx >/dev/null 2>&1 || true
+    certbot renew --non-interactive || true
+  fi
 fi
 
 echo "FinBalance: сборка и запуск контейнеров..."
@@ -68,14 +76,8 @@ echo "FinBalance: сборка и запуск контейнеров..."
 ${DC} build
 ${DC} up -d --remove-orphans
 
-# SSL: продление сертификата (порт 80 занят nginx → останавливаем на время renew).
-if [ -n "${DEPLOY_DOMAIN}" ] && [ -f "${CERT_DIR}/fullchain.pem" ]; then
-  echo "FinBalance: продлеваю SSL-сертификат для ${DEPLOY_DOMAIN}..."
-  ${DC} stop nginx
-  certbot renew --non-interactive || true
-  ${DC} start nginx
-  ${DC} exec nginx nginx -s reload || true
-fi
+# После подъёма nginx перечитывает сертификат.
+${DC} exec nginx nginx -s reload || true
 
 echo "FinBalance: проверка состояния сервисов..."
 ${DC} ps
