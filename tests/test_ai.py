@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import json
 from datetime import date, datetime
 
 import httpx
@@ -467,6 +468,25 @@ def test_промпт_требует_сохранять_суть_и_пункту
     assert "сохраняй суть" in prompt
     assert "не додумывай" in prompt
     assert "пунктуаци" in prompt
+
+
+def test_промпт_совета_игнорирует_переводы_но_оставляет_их_в_сводке():
+    summary = {
+        "total_amount": 1000.0,
+        "by_category": [
+            {"category": "Продукты", "amount": 600.0, "count": 5},
+            {"category": "Переводы", "amount": 300.0, "count": 2},
+            {"category": "Кафе", "amount": 100.0, "count": 1},
+        ],
+    }
+    prompt = _common.build_advice_prompt(summary)
+    assert "«Переводы»" in prompt
+    assert "игнорируй её" in prompt
+    assert "не давай по ней рекомендаций" in prompt
+    assert "не меняй процентное соотношение" in prompt
+    assert json.dumps(summary, ensure_ascii=False) in prompt
+    assert '"category": "Переводы"' in prompt
+    assert '"amount": 300.0' in prompt
 
 
 def test_ручная_генерация_описания_не_сохраняет(monkeypatch, session_factory):
