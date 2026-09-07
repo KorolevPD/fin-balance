@@ -268,94 +268,109 @@ export default function Profile() {
         <div className="card-header">
           <h2>AI-ассистент</h2>
           <span className="muted">
-            {user?.has_ai_key ? 'Ключ сохранён' : 'Ключ не добавлен'}
+            {user?.server_ai_key
+              ? 'Серверный ключ'
+              : user?.has_ai_key
+                ? 'Ключ сохранён'
+                : 'Ключ не добавлен'}
           </span>
         </div>
         {aiError && <div className="error">{aiError}</div>}
         {aiSuccess && <div className="success">{aiSuccess}</div>}
-        <p className="muted">
-          Введите бесплатный API-ключ, чтобы AI определял категории операций,
-          переписывал их названия понятным языком и давал советы на дашборде.
-        </p>
-        <div className="form-group">
-          <label htmlFor="aiProvider">Провайдер</label>
-          <select
-            id="aiProvider"
-            value={aiProvider}
-            onChange={(e) => setAiProvider(e.target.value)}
-          >
-            {AI_PROVIDERS.map((provider) => (
-              <option key={provider.value} value={provider.value}>
-                {provider.label}
-              </option>
-            ))}
-          </select>
+
+        {user?.server_ai_key ? (
           <p className="muted">
-            Получить бесплатный ключ:{' '}
-            <a
-              href={AI_PROVIDERS.find((p) => p.value === aiProvider)?.hint}
-              target="_blank"
-              rel="noreferrer"
-            >
-              {aiProvider === 'gemini'
-                ? 'Google AI Studio'
-                : 'документация провайдера'}
-            </a>
+            AI-ключ предоставляется сервером. Он используется для всех
+            пользователей автоматически, вводить свой ключ не нужно.
           </p>
-        </div>
-        {aiProvider === 'openai_compatible' && (
-          <div className="form-group">
-            <label htmlFor="aiBaseUrl">Base URL API</label>
-            <input
-              id="aiBaseUrl"
-              type="text"
-              value={aiBaseUrl}
-              onChange={(e) => setAiBaseUrl(e.target.value)}
-              placeholder="https://api.groq.com/openai/v1"
-              maxLength={255}
-              autoComplete="off"
-            />
-          </div>
+        ) : (
+          <>
+            <p className="muted">
+              Введите бесплатный API-ключ, чтобы AI определял категории
+              операций, переписывал их названия понятным языком и давал советы
+              на дашборде.
+            </p>
+            <div className="form-group">
+              <label htmlFor="aiProvider">Провайдер</label>
+              <select
+                id="aiProvider"
+                value={aiProvider}
+                onChange={(e) => setAiProvider(e.target.value)}
+              >
+                {AI_PROVIDERS.map((provider) => (
+                  <option key={provider.value} value={provider.value}>
+                    {provider.label}
+                  </option>
+                ))}
+              </select>
+              <p className="muted">
+                Получить бесплатный ключ:{' '}
+                <a
+                  href={AI_PROVIDERS.find((p) => p.value === aiProvider)?.hint}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  {aiProvider === 'gemini'
+                    ? 'Google AI Studio'
+                    : 'документация провайдера'}
+                </a>
+              </p>
+            </div>
+            {aiProvider === 'openai_compatible' && (
+              <div className="form-group">
+                <label htmlFor="aiBaseUrl">Base URL API</label>
+                <input
+                  id="aiBaseUrl"
+                  type="text"
+                  value={aiBaseUrl}
+                  onChange={(e) => setAiBaseUrl(e.target.value)}
+                  placeholder="https://api.groq.com/openai/v1"
+                  maxLength={255}
+                  autoComplete="off"
+                />
+              </div>
+            )}
+            <div className="form-group">
+              <label htmlFor="aiApiKey">
+                {user?.has_ai_key ? 'Новый API-ключ (заменить)' : 'API-ключ'}
+              </label>
+              <input
+                id="aiApiKey"
+                type="password"
+                value={aiApiKey}
+                onChange={(e) => setAiApiKey(e.target.value)}
+                placeholder={
+                  user?.has_ai_key
+                    ? 'Введите новый ключ или оставьте пустым'
+                    : 'Вставьте API-ключ'
+                }
+                maxLength={2000}
+                autoComplete="off"
+              />
+            </div>
+            {user?.has_ai_key && (
+              <p className="muted">
+                Текущий ключ не отображается и не передаётся на клиент.
+                Оставьте поле пустым, чтобы не менять его.
+              </p>
+            )}
+            <div className="profile-actions">
+              <button type="submit" className="btn" disabled={aiSaving}>
+                {aiSaving ? 'Сохранение...' : 'Сохранить AI-настройки'}
+              </button>
+              {user?.has_ai_key && (
+                <button
+                  type="button"
+                  className="btn btn-danger"
+                  onClick={handleRemoveAi}
+                  disabled={aiSaving}
+                >
+                  Удалить ключ
+                </button>
+              )}
+            </div>
+          </>
         )}
-        <div className="form-group">
-          <label htmlFor="aiApiKey">
-            {user?.has_ai_key ? 'Новый API-ключ (заменить)' : 'API-ключ'}
-          </label>
-          <input
-            id="aiApiKey"
-            type="password"
-            value={aiApiKey}
-            onChange={(e) => setAiApiKey(e.target.value)}
-            placeholder={
-              user?.has_ai_key
-                ? 'Введите новый ключ или оставьте пустым'
-                : 'Вставьте API-ключ'
-            }
-            maxLength={2000}
-            autoComplete="off"
-          />
-        </div>
-        {user?.has_ai_key && (
-          <p className="muted">
-            Текущий ключ не отображается и не передаётся на клиент. Оставьте поле
-            пустым, чтобы не менять его.
-          </p>
-        )}
-        <div className="profile-actions">
-          <button type="submit" className="btn" disabled={aiSaving}>
-            {aiSaving ? 'Сохранение...' : 'Сохранить AI-настройки'}
-          </button>
-          {user?.has_ai_key && (
-            <button
-              type="button"
-              className="btn btn-danger"
-              onClick={handleRemoveAi}
-              disabled={aiSaving}
-            >
-              Удалить ключ
-            </button>
-          )}
-        </div>
       </form>
 
       <div className="card">
