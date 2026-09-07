@@ -7,6 +7,7 @@ GigaChat требует получения access-токена (действуе
 Поток: ключ авторизации → POST /oauth (access-токен) → POST /chat/completions.
 """
 
+import os
 import uuid
 
 import httpx
@@ -18,8 +19,22 @@ DEFAULT_MODEL = "GigaChat"
 DEFAULT_BASE_URL = "https://api.giga.chat/v1"
 _OAUTH_URL = "https://ngw.devices.sberbank.ru:9443/api/v2/oauth"
 _OAUTH_SCOPE = "GIGACHAT_API_PERS"
+_CA_ENV = "GIGACHAT_CA_BUNDLE"
 
-_SSL_HINT = " Возможно, требуются сертификаты НУЦ Минцифры (см. deploy/DEPLOY.md)."
+_SSL_HINT = (
+    " Установите корневой сертификат НУЦ Минцифры и укажите его через переменную "
+    f"окружения {_CA_ENV} (путь к PEM-файлу), см. deploy/DEPLOY.md."
+)
+
+
+def _cacert() -> str | bool:
+    """Путь к PEM-бандлу с корневым сертификатом НУЦ Минцифры или ``True``.
+
+    Глобальный trust-store не трогается: параметр применяется только к запросам
+    GigaChat. Без переменной поведение прежнее — проверка TLS включена.
+    """
+    path = (os.getenv(_CA_ENV) or "").strip()
+    return path or True
 
 
 def _access_token(auth_key: str) -> str:
@@ -38,6 +53,7 @@ def _access_token(auth_key: str) -> str:
                 headers=headers,
                 data={"scope": _OAUTH_SCOPE},
                 timeout=60,
+                verify=_cacert(),
             )
         except httpx.HTTPError as exc:
             last_error = AIError(
@@ -77,7 +93,9 @@ def _chat(auth_key: str, base_url: str, model: str, prompt: str) -> str:
     }
     headers = {"Content-Type": "application/json", "Authorization": f"Bearer {token}"}
     try:
-        resp = httpx.post(url, headers=headers, json=payload, timeout=60)
+        resp = httpx.post(
+            url, headers=headers, json=payload, timeout=60, verify=_cacert()
+        )
     except httpx.HTTPError as exc:
         raise AIError(f"GigaChat: сеть/таймаут: {exc}{_SSL_HINT}") from exc
     if resp.status_code != 200:

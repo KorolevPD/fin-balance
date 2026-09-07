@@ -84,9 +84,31 @@ python -c "import secrets; print(secrets.token_urlsafe(24))"   # POSTGRES_PASSWO
 - Ключ `GIGACHAT_API_KEY` — это **Authorization Key** из проекта GigaChat API в
   личном кабинете Сбера (Studio → Настройки API → «Получить ключ»).
 - Для доступа к `*.sberbank.ru` / `*.giga.chat` бэкенду нужны корневые
-  сертификаты НУЦ Минцифры. При работе в Docker установите их в образ или
-  смонтируйте системный trust-store с добавленным сертификатом; иначе запросы к
-  API будут падать с ошибкой проверки TLS-сертификата.
+  сертификаты НУЦ Минцифры. Их нет в стандартном trust-store (certifi / Debian),
+  поэтому TLS-запросы падают с `[SSL: CERTIFICATE_VERIFY_FAILED] ... self-signed
+  certificate in certificate chain`.
+
+### Как исправить (проверка TLS остаётся включённой)
+
+1. **Получите корневой сертификат НУЦ Минцифры** в формате PEM (например, через
+   браузер: цепочка сертификатов эндпоинта → корневой «НУЦ Минцифры» → экспорт,
+   или из официального распространителя доверенных корней Минцифры).
+2. **Локальный запуск (не в Docker):** задайте переменную окружения
+   `GIGACHAT_CA_BUNDLE=<путь к .pem>` для процесса backend (uvicorn). Backend
+   использует её только для GigaChat-запросов — общий trust-store не меняется.
+3. **Docker (dev и prod):** смонтируйте файл сертификата в контейнер backend и
+   укажите путь внутри него, например:
+   ```yaml
+   services:
+     backend:
+       volumes:
+         - /etc/ssl/gigachat-ca.pem:/etc/ssl/certs/gigachat-ca.pem:ro
+       environment:
+         - GIGACHAT_CA_BUNDLE=/etc/ssl/certs/gigachat-ca.pem
+   ```
+   Базовый `docker-compose.yml` уже пробрасывает `GIGACHAT_CA_BUNDLE`, поэтому в
+   prod достаточно положить сертификат на сервер и раскомментировать/добавить
+   монтирование (пример выше). Без переменной поведение прежнее (fail-closed).
 
 ## HTTPS (Let's Encrypt)
 
