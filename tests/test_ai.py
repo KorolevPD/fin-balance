@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from datetime import date
+from datetime import date, datetime
 
 import httpx
 import pytest
@@ -467,3 +467,112 @@ def test_промпт_требует_сохранять_суть_и_пункту
     assert "сохраняй суть" in prompt
     assert "не додумывай" in prompt
     assert "пунктуаци" in prompt
+
+
+def test_ручная_генерация_описания_не_сохраняет(monkeypatch, session_factory):
+    from app.database import get_db
+    from app.models import Category, Family, FamilyMember, Transaction, User
+    from app.security import create_access_token, hash_password
+    from main import app
+
+    monkeypatch.setenv("AI_KEY_ENCRYPTION_KEY", DUMMY_KEY)
+    monkeypatch.setattr(
+        "app.ai.gigachat.httpx.post",
+        _fake_gigachat_post(
+            '[{"category": "Продукты", '
+            '"cleaned_description": "Покупка в магазине"}]'
+        ),
+    )
+
+    session = session_factory()
+    user = User(
+        email="manual-ai@example.com",
+        password_hash=hash_password("secret1"),
+        ai_provider="gigachat",
+        ai_api_key_encrypted=encrypt_key("fake-key"),
+    )
+    session.add(user)
+    session.flush()
+    family = Family(invite_code="MANUALAI1")
+    session.add(family)
+    session.flush()
+    session.add(FamilyMember(user_id=user.id, family_id=family.id, role="owner"))
+    category = Category(name="Прочее")
+    session.add(category)
+    session.flush()
+    txn = Transaction(
+        family_id=family.id,
+        user_id=user.id,
+        category_id=category.id,
+        date=datetime(2026, 9, 1),
+        amount=100.0,
+        type="expense",
+        original_description="Пятёрочка 1 МОСКВА",
+    )
+    session.add(txn)
+    session.commit()
+
+    app.dependency_overrides[get_db] = lambda: session
+    client = TestClient(app)
+    token = create_access_token(subject=str(user.id))
+    try:
+        resp = client.post(
+            f"/api/families/{family.id}/transactions/{txn.id}/ai-description",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        assert resp.status_code == 200
+        assert resp.json()["cleaned_description"] == "Покупка в магазине"
+
+        session.refresh(txn)
+        assert txn.cleaned_description is None
+    finally:
+        app.dependency_overrides.pop(get_db, None)
+        session.close()
+
+
+def test_ручная_генерация_без_ключа_400(monkeypatch, session_factory):
+    from app.database import get_db
+    from app.models import Category, Family, FamilyMember, Transaction, User
+    from app.security import create_access_token, hash_password
+    from main import app
+
+    monkeypatch.setenv("AI_KEY_ENCRYPTION_KEY", DUMMY_KEY)
+    session = session_factory()
+    user = User(
+        email="manual-ai-none@example.com",
+        password_hash=hash_password("secret1"),
+    )
+    session.add(user)
+    session.flush()
+    family = Family(invite_code="MANUALAI2")
+    session.add(family)
+    session.flush()
+    session.add(FamilyMember(user_id=user.id, family_id=family.id, role="owner"))
+    category = Category(name="Прочее")
+    session.add(category)
+    session.flush()
+    txn = Transaction(
+        family_id=family.id,
+        user_id=user.id,
+        category_id=category.id,
+        date=datetime(2026, 9, 1),
+        amount=100.0,
+        type="expense",
+        original_description="Пятёрочка 1 МОСКВА",
+    )
+    session.add(txn)
+    session.commit()
+
+    app.dependency_overrides[get_db] = lambda: session
+    client = TestClient(app)
+    token = create_access_token(subject=str(user.id))
+    try:
+        resp = client.post(
+            f"/api/families/{family.id}/transactions/{txn.id}/ai-description",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        assert resp.status_code == 400
+        assert "GigaChat" in resp.json()["detail"]
+    finally:
+        app.dependency_overrides.pop(get_db, None)
+        session.close()
