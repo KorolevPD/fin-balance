@@ -31,6 +31,29 @@ jobs:
           ssh-keyscan -p ${{ secrets.DEPLOY_SSH_PORT }} \
             ${{ secrets.DEPLOY_HOST }} >> ~/.ssh/known_hosts
 
+      # Фронтенд собирается здесь, а не на слабом сервере (1 vCPU / 1 ГБ RAM).
+      # На сервер передаются готовые статики frontend/build, nginx-образ
+      # собирается из них без node-стадии (nginx/Dockerfile.prod).
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Build frontend (SPA)
+        working-directory: frontend
+        env:
+          REACT_APP_API_URL: /api
+        run: npm run build
+
+      - name: Remove node_modules before upload
+        run: rm -rf frontend/node_modules
+
       - name: Copy deploy files to server
         uses: appleboy/scp-action@v0.1.7
         with:
