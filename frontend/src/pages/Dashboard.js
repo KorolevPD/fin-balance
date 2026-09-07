@@ -157,8 +157,9 @@ export default function Dashboard() {
   };
 
   const visibleTransactions = useMemo(() => {
-    if (!hideIncomes) return transactions;
-    return transactions.filter((txn) => txn.type !== 'income');
+    const visible = transactions.filter((txn) => !txn.is_self_transfer);
+    if (!hideIncomes) return visible;
+    return visible.filter((txn) => txn.type !== 'income');
   }, [transactions, hideIncomes]);
 
   const sortedTransactions = useMemo(() => {
