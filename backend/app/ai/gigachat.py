@@ -8,6 +8,7 @@ GigaChat требует получения access-токена (действуе
 """
 
 import os
+import time
 import uuid
 
 import httpx
@@ -20,6 +21,10 @@ DEFAULT_BASE_URL = "https://api.giga.chat/v1"
 _OAUTH_URL = "https://ngw.devices.sberbank.ru:9443/api/v2/oauth"
 _OAUTH_SCOPE = "GIGACHAT_API_PERS"
 _CA_ENV = "GIGACHAT_CA_BUNDLE"
+
+CLASSIFY_BATCH_SIZE = 30
+_CHAT_MAX_ATTEMPTS = 4
+_RETRY_BASE_DELAY = 1.0
 
 _SSL_HINT = (
     " Установите корневой сертификат НУЦ Минцифры и укажите его через переменную "
@@ -79,6 +84,18 @@ def _access_token(auth_key: str) -> str:
 
 def _chat(auth_key: str, base_url: str, model: str, prompt: str) -> str:
     token = _access_token(auth_key)
+    return _chat_with_token(token, base_url, model, prompt)
+
+
+def _chat_with_token(
+    token: str,
+    base_url: str,
+    model: str,
+    prompt: str,
+    *,
+    max_attempts: int = _CHAT_MAX_ATTEMPTS,
+) -> str:
+    """Запросить chat/completions с повтором при HTTP 429 (лимит запросов)."""
     url = f"{base_url.rstrip('/')}/chat/completions"
     payload = {
         "model": model,
@@ -92,22 +109,24 @@ def _chat(auth_key: str, base_url: str, model: str, prompt: str) -> str:
         "stream": False,
     }
     headers = {"Content-Type": "application/json", "Authorization": f"Bearer {token}"}
-    try:
-        resp = httpx.post(
-            url, headers=headers, json=payload, timeout=60, verify=_cacert()
-        )
-    except httpx.HTTPError as exc:
-        raise AIError(f"GigaChat: сеть/таймаут: {exc}{_SSL_HINT}") from exc
-    if resp.status_code != 200:
-        raise AIError(
-            f"GigaChat: HTTP {resp.status_code}: {resp.text[:300]}"
-        )
-    try:
-        return resp.json()["choices"][0]["message"]["content"]
-    except (KeyError, IndexError, ValueError) as exc:
-        raise AIError(
-            f"GigaChat: не удалось прочитать ответ: {resp.text[:300]}"
-        ) from exc
+    for attempt in range(max_attempts):
+        try:
+            resp = httpx.post(
+                url, headers=headers, json=payload, timeout=60, verify=_cacert()
+            )
+        except httpx.HTTPError as exc:
+            raise AIError(f"GigaChat: сеть/таймаут: {exc}{_SSL_HINT}") from exc
+        if resp.status_code == 200:
+            try:
+                return resp.json()["choices"][0]["message"]["content"]
+            except (KeyError, IndexError, ValueError) as exc:
+                raise AIError(
+                    f"GigaChat: не удалось прочитать ответ: {resp.text[:300]}"
+                ) from exc
+        if resp.status_code == 429 and attempt + 1 < max_attempts:
+            time.sleep(_RETRY_BASE_DELAY * (2**attempt))
+            continue
+        raise AIError(f"GigaChat: HTTP {resp.status_code}: {resp.text[:300]}")
 
 
 def classify_transactions(
@@ -119,9 +138,13 @@ def classify_transactions(
     if not descriptions:
         return []
     base = base_url or DEFAULT_BASE_URL
-    prompt = _common.build_classify_prompt(descriptions)
-    text = _chat(api_key, base, DEFAULT_MODEL, prompt)
-    results = _common.parse_classify_response(text, len(descriptions))
+    token = _access_token(api_key)
+    results: list[ClassifyResult] = []
+    for start in range(0, len(descriptions), CLASSIFY_BATCH_SIZE):
+        chunk = descriptions[start : start + CLASSIFY_BATCH_SIZE]
+        prompt = _common.build_classify_prompt(chunk)
+        text = _chat_with_token(token, base, DEFAULT_MODEL, prompt)
+        results.extend(_common.parse_classify_response(text, len(chunk)))
     while len(results) < len(descriptions):
         results.append(ClassifyResult(None, None))
     return results[: len(descriptions)]
