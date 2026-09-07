@@ -388,7 +388,7 @@ export default function Dashboard() {
             )}
 
             <section
-              className={`card demo-block${effectiveScope === 'family' ? '' : ' demo-block-wide'}`}
+              className={`card demo-block${effectiveScope === 'family' ? '' : ' demo-grid-order-2'}`}
               aria-label="Траты по категориям"
             >
               <h2>Траты по категориям</h2>
@@ -423,7 +423,10 @@ export default function Dashboard() {
               )}
             </section>
 
-            <section className="card demo-block" aria-label="AI-совет">
+            <section
+              className={`card demo-block${effectiveScope === 'family' ? '' : ' demo-grid-order-1'}`}
+              aria-label="AI-совет"
+            >
               <div className="card-header">
                 <h2>Совет от AI</h2>
                 {currentAdvice && (
@@ -532,7 +535,10 @@ export default function Dashboard() {
               )}
             </section>
 
-            <section className="card demo-block" aria-label="Банковские выписки">
+            <section
+              className={`card demo-block${effectiveScope === 'family' ? '' : ' demo-block-wide demo-grid-order-3'}`}
+              aria-label="Банковские выписки"
+            >
               <div className="card-header">
                 <h2>Банковские выписки</h2>
                 <button

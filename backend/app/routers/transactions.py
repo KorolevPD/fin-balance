@@ -112,6 +112,7 @@ def import_transactions(
             detail=f"Не удалось разобрать файл: {exc}",
         )
     mark_self_transfers(parsed, owner_name)
+    parsed = [item for item in parsed if not item.is_self_transfer]
 
     result = save_transactions(
         db,
