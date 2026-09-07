@@ -17,7 +17,11 @@ from app.ai import (
 )
 from app.ai import _common
 from app.categorization import CategorizedTransaction
-from app.services.ai_transactions import enrich_with_ai
+from app.services.ai_transactions import (
+    _ALLOWED_CATEGORIES,
+    _normalize_category,
+    enrich_with_ai,
+)
 
 DUMMY_KEY = "test-encryption-key-00000000000000000000000000"
 
@@ -293,8 +297,8 @@ def _import_via_api(session, monkeypatch):
     token = create_access_token(subject=str(user.id))
     csv_bytes = (
         "date,amount,description\n"
-        "2026-09-01,120,Лента\n"
-        "2026-09-02,60,Яндекс Такси\n"
+        "2026-09-01,120,Неопознанная покупка\n"
+        "2026-09-02,60,Ещё один неизвестный платёж\n"
     ).encode("utf-8")
     files = {"file": ("statement.csv", io.BytesIO(csv_bytes), "text/csv")}
     resp = client.post(
@@ -305,7 +309,7 @@ def _import_via_api(session, monkeypatch):
     return resp, client, token, str(family.id)
 
 
-def test_импорт_с_ai_сохраняет_clean_описание(monkeypatch, session_factory):
+def test_импорт_с_ai_перераспределяет_прочее(monkeypatch, session_factory):
     from app.database import get_db
     from main import app
 
@@ -330,3 +334,18 @@ def test_импорт_с_ai_сохраняет_clean_описание(monkeypatc
     finally:
         app.dependency_overrides.pop(get_db, None)
         session.close()
+
+
+def test_категория_прочее_не_входит_в_допустимые_для_ai():
+    assert "Прочее" not in _ALLOWED_CATEGORIES
+
+
+def test_normalize_category_отклоняет_прочее():
+    assert _normalize_category("Прочее") is None
+    assert _normalize_category("Продукты") == "Продукты"
+
+
+def test_промпт_классификации_не_содержит_прочее():
+    prompt = _common.build_classify_prompt(["Неопознанная покупка"])
+    assert "Прочее" not in prompt
+    assert "если не уверен" not in prompt.lower()
