@@ -397,3 +397,73 @@ def test_промпт_классификации_не_содержит_проч�
     prompt = _common.build_classify_prompt(["Неопознанная покупка"])
     assert "Прочее" not in prompt
     assert "если не уверен" not in prompt.lower()
+
+
+def _fake_gigachat_post_batched(fail_first_429=None):
+    """Фейк httpx.post для GigaChat, возвращающий JSON по числу операций в промпте."""
+    import re
+
+    calls = {"chat": 0}
+
+    def fake_post(url, *args, **kwargs):
+        if "oauth" in url:
+            return _OAuthResponse()
+        calls["chat"] += 1
+        if fail_first_429 and calls["chat"] == fail_first_429:
+            return _ErrorResponse(429, "Too Many Requests")
+        content = kwargs["json"]["messages"][-1]["content"]
+        count = len(re.findall(r"^\d+\. ", content, re.M))
+        items = ", ".join(
+            f'{{"category": "Продукты", "cleaned_description": "Покупка {i}"}}'
+            for i in range(1, count + 1)
+        )
+        return _ChatResponse(f"[{items}]")
+
+    return fake_post, calls
+
+
+def test_classify_transactions_разбивает_на_пачки(monkeypatch):
+    fake_post, calls = _fake_gigachat_post_batched()
+    monkeypatch.setattr("app.ai.gigachat.CLASSIFY_BATCH_SIZE", 2)
+    monkeypatch.setattr("app.ai.gigachat.httpx.post", fake_post)
+    descriptions = [f"Операция {i}" for i in range(5)]
+    results = classify_descriptions(
+        descriptions, api_key="fake", provider="gigachat"
+    )
+    assert len(results) == 5
+    assert all(item.category == "Продукты" for item in results)
+    assert calls["chat"] == 3
+
+
+def test_classify_gigachat_429_повтор_запроса(monkeypatch):
+    fake_post, calls = _fake_gigachat_post_batched(fail_first_429=1)
+    monkeypatch.setattr("app.ai.gigachat.time.sleep", lambda _: None)
+    monkeypatch.setattr("app.ai.gigachat.httpx.post", fake_post)
+    results = classify_descriptions(
+        ["Покупка продуктов"], api_key="fake", provider="gigachat"
+    )
+    assert len(results) == 1
+    assert results[0].category == "Продукты"
+    assert calls["chat"] == 2
+
+
+def test_classify_gigachat_429_после_всех_повторов_бросает(monkeypatch):
+    def fake_post(url, *args, **kwargs):
+        if "oauth" in url:
+            return _OAuthResponse()
+        return _ErrorResponse(429, "Too Many Requests")
+
+    monkeypatch.setattr("app.ai.gigachat.time.sleep", lambda _: None)
+    monkeypatch.setattr("app.ai.gigachat.httpx.post", fake_post)
+    with pytest.raises(AIError) as exc_info:
+        classify_descriptions(
+            ["Покупка продуктов"], api_key="fake", provider="gigachat"
+        )
+    assert "429" in str(exc_info.value)
+
+
+def test_промпт_требует_сохранять_суть_и_пунктуацию():
+    prompt = _common.build_classify_prompt(["Оплата в кафе"])
+    assert "сохраняй суть" in prompt
+    assert "не додумывай" in prompt
+    assert "пунктуаци" in prompt
