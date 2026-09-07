@@ -213,7 +213,7 @@ def test_gigachat_запрос_идет_на_chat_completions(monkeypatch):
     )
     assert text == "Сократите траты на кафе."
     assert "api.giga.chat/v1/chat/completions" in captured["url"]
-    assert captured["payload"]["model"] == "GigaChat"
+    assert captured["payload"]["model"] == "GigaChat-2-Max"
     assert captured["payload"]["stream"] is False
 
 
