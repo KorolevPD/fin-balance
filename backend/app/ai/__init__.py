@@ -10,6 +10,7 @@ from app.ai.client import (
     normalized_provider,
 )
 from app.ai.security import decrypt_key, encrypt_key
+from app.ai.server_key import has_server_gemini_key, server_gemini_key
 
 __all__ = [
     "AIError",
@@ -21,6 +22,8 @@ __all__ = [
     "decrypt_key",
     "encrypt_key",
     "generate_advice",
+    "has_server_gemini_key",
     "is_supported",
     "normalized_provider",
+    "server_gemini_key",
 ]
