@@ -23,6 +23,11 @@ from app.parsers import extract_account_owner, parse_csv_bytes, parse_pdf_bytes
 from app.security import get_current_user
 from app.services import save_transactions
 from app.services.analytics import get_family_summary
+from app.services.ai_advices import (
+    invalidate_family_advices,
+    invalidate_personal_advices,
+    regenerate_advice_in_background,
+)
 from app.services.ai_transactions import (
     generate_single_description,
     run_enrich_in_background,
@@ -96,6 +101,7 @@ def _require_membership(
 def import_transactions(
     family_id: UUID,
     file: UploadFile = File(...),
+    advice_scope: str = Query(default="personal", pattern="^(family|personal)$"),
     background_tasks: BackgroundTasks = BackgroundTasks(),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
@@ -129,6 +135,18 @@ def import_transactions(
             user_id=current_user.id,
             source_file=file.filename,
         )
+
+    if result.created > 0:
+        invalidate_family_advices(db, family_id)
+        invalidate_personal_advices(db, family_id, current_user.id)
+        db.commit()
+        if file.filename:
+            background_tasks.add_task(
+                regenerate_advice_in_background,
+                family_id=family_id,
+                user_id=current_user.id,
+                scope=advice_scope,
+            )
 
     return ImportResult(
         family_id=family_id,
@@ -245,6 +263,8 @@ def generate_transaction_ai_description(
 def delete_transactions_by_file(
     family_id: UUID,
     source_file: str = Query(..., min_length=1, max_length=255),
+    advice_scope: str = Query(default="personal", pattern="^(family|personal)$"),
+    background_tasks: BackgroundTasks = BackgroundTasks(),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -271,7 +291,15 @@ def delete_transactions_by_file(
     db.query(Transaction).filter(
         Transaction.id.in_(transaction_ids)
     ).delete(synchronize_session=False)
+    invalidate_family_advices(db, family_id)
+    invalidate_personal_advices(db, family_id, current_user.id)
     db.commit()
+    background_tasks.add_task(
+        regenerate_advice_in_background,
+        family_id=family_id,
+        user_id=current_user.id,
+        scope=advice_scope,
+    )
     remaining = (
         db.query(Transaction)
         .filter(
@@ -308,6 +336,8 @@ def update_transaction(
     family_id: UUID,
     transaction_id: UUID,
     payload: TransactionUpdate,
+    advice_scope: str = Query(default="personal", pattern="^(family|personal)$"),
+    background_tasks: BackgroundTasks = BackgroundTasks(),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -326,11 +356,13 @@ def update_transaction(
             detail="Операция не найдена",
         )
 
+    changed = False
     if payload.category is not None:
         old_category = transaction.category.name if transaction.category else None
         if payload.category != old_category:
             category = _resolve_or_create_category(db, payload.category)
             transaction.category_id = category.id
+            changed = True
             db.add(
                 UserCorrection(
                     user_id=current_user.id,
@@ -345,6 +377,7 @@ def update_transaction(
         old_description = transaction.cleaned_description
         if payload.cleaned_description != old_description:
             transaction.cleaned_description = payload.cleaned_description
+            changed = True
             db.add(
                 UserCorrection(
                     user_id=current_user.id,
@@ -354,6 +387,16 @@ def update_transaction(
                     new_value=payload.cleaned_description,
                 )
             )
+
+    if changed:
+        invalidate_family_advices(db, family_id)
+        invalidate_personal_advices(db, family_id, transaction.user_id)
+        background_tasks.add_task(
+            regenerate_advice_in_background,
+            family_id=family_id,
+            user_id=current_user.id,
+            scope=advice_scope,
+        )
 
     db.commit()
     db.refresh(transaction)
