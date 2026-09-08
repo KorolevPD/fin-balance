@@ -382,22 +382,24 @@ export default function Dashboard() {
                 {members.length === 0 ? (
                   <p className="muted">В семье пока нет участников.</p>
                 ) : (
-                  <table className="data-table">
-                    <thead>
-                      <tr>
-                        <th>Имя</th>
-                        <th className="num">Траты</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {members.map((member) => (
-                        <tr key={member.user_id || member.email}>
-                          <td>{member.name || member.email}</td>
-                          <td className="num">{formatAmountPlain(member.total_expenses)}</td>
+                  <div className="table-scroll">
+                    <table className="data-table">
+                      <thead>
+                        <tr>
+                          <th>Имя</th>
+                          <th className="num">Траты</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody>
+                        {members.map((member) => (
+                          <tr key={member.user_id || member.email}>
+                            <td>{member.name || member.email}</td>
+                            <td className="num">{formatAmountPlain(member.total_expenses)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 )}
               </section>
             )}
@@ -567,51 +569,53 @@ export default function Dashboard() {
               {files.length === 0 ? (
                 <p className="muted">Выписки пока не загружались.</p>
               ) : (
-                <table className="data-table">
-                  <thead>
-                    <tr>
-                      <th>Файл</th>
-                      <th>Период</th>
-                      <th className="num">Операций</th>
-                      <th></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {files.map((file) => (
-                      <tr key={file.filename}>
-                        <td>{file.filename}</td>
-                        <td className="nowrap">
-                          {formatDate(file.period_start)} — {formatDate(file.period_end)}
-                        </td>
-                        <td className="num">{file.operations_count}</td>
-                        <td className="files-remove-cell">
-                          <button
-                            type="button"
-                            className="icon-btn icon-btn-danger"
-                            aria-label={`Удалить выписку ${file.filename}`}
-                            title="Удалить"
-                            onClick={() => handleDeleteFile(file.filename)}
-                          >
-                            <svg
-                              viewBox="0 0 24 24"
-                              width="18"
-                              height="18"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              aria-hidden="true"
-                            >
-                              <line x1="18" y1="6" x2="6" y2="18" />
-                              <line x1="6" y1="6" x2="18" y2="18" />
-                            </svg>
-                          </button>
-                        </td>
+                <div className="table-scroll">
+                  <table className="data-table">
+                    <thead>
+                      <tr>
+                        <th>Файл</th>
+                        <th>Период</th>
+                        <th className="num">Операций</th>
+                        <th></th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {files.map((file) => (
+                        <tr key={file.filename}>
+                          <td>{file.filename}</td>
+                          <td className="nowrap">
+                            {formatDate(file.period_start)} — {formatDate(file.period_end)}
+                          </td>
+                          <td className="num">{file.operations_count}</td>
+                          <td className="files-remove-cell">
+                            <button
+                              type="button"
+                              className="icon-btn icon-btn-danger"
+                              aria-label={`Удалить выписку ${file.filename}`}
+                              title="Удалить"
+                              onClick={() => handleDeleteFile(file.filename)}
+                            >
+                              <svg
+                                viewBox="0 0 24 24"
+                                width="18"
+                                height="18"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                aria-hidden="true"
+                              >
+                                <line x1="18" y1="6" x2="6" y2="18" />
+                                <line x1="6" y1="6" x2="18" y2="18" />
+                              </svg>
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               )}
             </section>
           </div>
@@ -634,7 +638,8 @@ export default function Dashboard() {
             <>
               <section className="card" aria-label="Разбивка по категориям">
                 <h2>Расходы по категориям</h2>
-                <table className="data-table">
+                <div className="table-scroll">
+                  <table className="data-table">
                   <thead>
                     <tr>
                       <th
@@ -743,7 +748,8 @@ export default function Dashboard() {
                       );
                     })}
                   </tbody>
-                </table>
+                  </table>
+                </div>
               </section>
 
               {dynamicsData.length > 0 && (
